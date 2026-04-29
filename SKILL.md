@@ -9,23 +9,20 @@ Markdown in, signable .docx out. Pandoc handles the prose; custom fenced blocks 
 
 Use it for agreements, assignments, licenses, NDAs, addenda, work-for-hire releases, sample clearances, schedules. Skip it for plain prose (use the `docx` skill), spreadsheets (`xlsx`), or PDFs (`pdf`).
 
-## Setup
+## Run it
 
-The skill is self-contained — only the source `.md` lives in the work dir. `$SKILL_DIR` is wherever the skill is mounted; substitute the real path.
+The skill ships a single self-contained bundle. `node $SKILL_DIR <input.md>` resolves to the bundle via `package.json`'s `main` field — no `node_modules`, no `NODE_PATH`, no install step. `$SKILL_DIR` is wherever the skill is mounted (typically `/mnt/skills/...`); substitute the real path.
 
 ```bash
 mkdir -p /home/claude/work && cd /home/claude/work
 cp $SKILL_DIR/examples/songwriter-agreement.md ./my-agreement.md
+# edit my-agreement.md (front-matter values + body), then:
+node $SKILL_DIR my-agreement.md
 ```
 
-`docx` and `js-yaml` are installed at `/home/claude/.npm-global/lib/node_modules`; `pandoc` is at `/usr/bin/pandoc`. Run with:
+The bundle inlines `docx` and `js-yaml`, so it runs from any cwd against any input path. `pandoc` is the only external dependency (already at `/usr/bin/pandoc` in this environment).
 
-```bash
-NODE_PATH=/home/claude/.npm-global/lib/node_modules \
-  node $SKILL_DIR/scripts/md-to-docx.js my-agreement.md
-```
-
-Output path comes from the front-matter `output:` field.
+Output path precedence (highest first): `--output <path>` flag → `$OUTPUT_DIR` env → front-matter `output:` → `<input-basename>.docx` next to the input.
 
 ## Document shape
 
@@ -158,7 +155,7 @@ If a project needs a different look, edit `lib/defaults.js`. Goal: 95% of docume
 
 1. Read the user's request: document type, parties, prefilled values.
 2. `mkdir -p /home/claude/work && cd /home/claude/work`, copy an example, edit.
-3. Run `node $SKILL_DIR/scripts/md-to-docx.js <input.md>` (with `NODE_PATH` as above).
+3. Run `node $SKILL_DIR <input.md>`.
 4. Validate: `python3 /mnt/skills/public/docx/scripts/office/validate.py <output.docx>`.
 5. Render to PDF + page image to visually check (use `soffice` and `pdftoppm` from the `docx` skill).
 6. Copy the final `.docx` to `/mnt/user-data/outputs/` and `present_files` to the user, along with the source `.md` so they can re-run with new values.

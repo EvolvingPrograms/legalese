@@ -1,20 +1,32 @@
 {
   "name": "legal-doc-builder",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
+  "main": "dist/md-to-docx.js",
+  "module": "dist/md-to-docx.js",
+  "bin": {
+    "md-to-docx": "dist/md-to-docx.js"
+  },
+  "files": [
+    "dist/",
+    "examples/",
+    "README.md",
+    "SKILL.md"
+  ],
   "scripts": {
     "typecheck": "tsc -p .",
-    "test": "bun test"
+    "test": "bun test",
+    "build": "bun build scripts/md-to-docx.js --target=node --minify --outfile=dist/md-to-docx.js && chmod +x dist/md-to-docx.js",
+    "pack": "bun run build && zip -FSqr plugin.zip dist examples README.md SKILL.md package.json"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/js-yaml": "^4.0.9"
+    "@types/js-yaml": "^4.0.9",
+    "docx": "^9.6.1",
+    "js-yaml": "^4.1.1"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "docx": "^9.6.1",
-    "js-yaml": "^4.1.1"
   }
 }
