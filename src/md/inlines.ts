@@ -15,9 +15,11 @@ function makeRun(text: string, bold: boolean, italic: boolean): Run {
   });
 }
 
-// Scan plain text for {{Term}} markers, emitting defined-term runs.
+// Scan plain text for defined-term markers, emitting runs.
+//   {{Term}}   → (the *“Term”*)        — common-noun definition
+//   {{!Name}}  → (*“Name”*)             — proper-noun (no article)
 function emitText(text: string, bold: boolean, italic: boolean, out: Run[]): void {
-  const re = /\{\{([^}]+)\}\}/g;
+  const re = /\{\{(!?)([^}]+)\}\}/g;
   let last = 0;
   let m: RegExpExecArray | null;
 
@@ -25,8 +27,9 @@ function emitText(text: string, bold: boolean, italic: boolean, out: Run[]): voi
     if (m.index > last) {
       out.push(makeRun(text.slice(last, m.index), bold, italic));
     }
-    out.push(makeRun('(the ', bold, italic));
-    out.push(makeRun(`“${m[1]!.trim()}”`, true, true));
+    const proper = m[1] === '!';
+    out.push(makeRun(proper ? '(' : '(the ', bold, italic));
+    out.push(makeRun(`“${m[2]!.trim()}”`, true, true));
     out.push(makeRun(')', bold, italic));
     last = m.index + m[0].length;
   }

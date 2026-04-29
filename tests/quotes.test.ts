@@ -30,3 +30,14 @@ test('multi-word {{Term}} (spans Str+Space tokens) renders with curly quotes', a
   expect(xml).toContain('“Human Writer”');
   expect(xml).not.toMatch(/"Human Writer"/);
 });
+
+test('{{!Name}} (proper-noun sigil) drops the "the" article', async () => {
+  const xml = await renderToXml(
+    '_curly_quotes_proper',
+    'The artificial intelligence collaborator {{!Claude}} signs below.',
+  );
+  // Strip XML tags so we can assert against the rendered plain text.
+  const plain = xml.replace(/<[^>]+>/g, '');
+  expect(plain).toContain('collaborator (“Claude”)');
+  expect(plain).not.toContain('the “Claude”');
+});

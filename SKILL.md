@@ -73,7 +73,8 @@ Date                          || Date
 | `## Section` | Section heading (Heading 2) |
 | `## Section {.pageBreak}` | Section heading starting a new page |
 | `**bold**` / `*italic*` / `***both***` | Inline formatting |
-| `{{Term}}` | Defined term — renders as `(the *"Term"*)` |
+| `{{Term}}` | Defined term — renders as `(the *“Term”*)` |
+| `{{!Name}}` | Defined proper noun — renders as `(*“Name”*)` (no `the`). Use for AI agents, products, or anything that reads awkwardly with an article. |
 | `1. 2. 3.` or `a. b. c.` | Lettered sublist `(a) (b) (c)` |
 | `"text"`, `Writer's`, `--`, `---` | Smart quotes, en/em dashes — auto |
 | `---` (hr) | Vertical spacer |
