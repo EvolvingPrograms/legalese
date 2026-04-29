@@ -1,54 +1,44 @@
 # legal-doc-builder
 
-An installable Claude plugin (skill) for generating signable .docx
-legal/business documents — agreements, assignments, licenses, NDAs, addenda,
-schedules — in a consistent house style. When this skill is loaded, Claude can
-produce polished, fillable Word documents end-to-end from a short user request,
-instead of writing raw `docx-js` boilerplate by hand.
+A TypeScript library for composing signable legal-style `.docx` documents from
+markdown. Out of the box it knows about the structures legal documents tend to
+need — defined-term shorthand, field/value tables, side-by-side or single-party
+signature blocks, and schedule/inventory grids — and renders them in a
+consistent house style (Times New Roman, US Letter, full-grid tables).
 
-The plugin ships as a single `plugin.zip` containing:
+It also ships as a [Claude skill](https://claude.ai/customize/skills) so Claude
+can draft and fill in legal documents end-to-end on top of the library, without
+hand-rolling `docx-js` boilerplate.
 
-- A bundled CLI (`dist/md-to-docx.js`) — one self-contained file, no
-  `node_modules` install step, callable as `node $SKILL_DIR my-doc.md`.
-- The skill manifest ([`SKILL.md`](./SKILL.md)) — instructs Claude when and how
-  to use the helpers.
-- Worked examples ([`examples/`](./examples)) — full markdown templates Claude
-  copies and edits.
-- The pure-TS library ([`src/`](./src)) — for programmatic use, or for
-  re-bundling.
+## Install
 
-## Installing the plugin
+### As a Claude skill (recommended for use inside Claude)
 
-Build the zip from source:
+The skill teaches Claude *how* to draft legal documents using this library —
+picking an appropriate template, filling values, and producing the `.docx`.
+
+1. Build the plugin:
+
+   ```bash
+   bun install
+   bun run pack       # → plugin.zip
+   ```
+
+   Or grab `plugin.zip` from the latest [GitHub
+   release](https://github.com/SpellcraftAI/legal-doc-builder/releases).
+
+2. Open <https://claude.ai/customize/skills> → **Create skill** → **Upload
+   skill** → upload `plugin.zip`.
+
+Once installed, Claude reads [`SKILL.md`](./SKILL.md) and uses the bundled CLI
+to produce documents from any conversational request ("draft an exclusive
+songwriter agreement between …").
+
+### As a Node/Bun library
 
 ```bash
-bun install      # dev deps
-bun run pack     # → plugin.zip
+bun add legal-doc-builder      # or: npm i legal-doc-builder
 ```
-
-Then load `plugin.zip` into your Claude environment per its plugin/skill loader
-instructions. Once mounted at `$SKILL_DIR` (typically `/mnt/skills/...`), Claude
-follows the directions in [`SKILL.md`](./SKILL.md) to produce documents.
-
-## How Claude uses it
-
-For each request, Claude:
-
-1. Picks an example from [`examples/`](./examples) closest to the user's
-   document type.
-2. Edits the front-matter `values:` map (party names, dates, governing law, …)
-   and the body (replacing placeholder prose with the user's content).
-3. Runs the bundled CLI: `node $SKILL_DIR my-agreement.md`.
-4. Validates the output and presents the `.docx` (and source `.md`) to the user.
-
-The full authoring DSL — front-matter shape, supported markdown features, and
-the four custom fenced blocks (`fields`, `sig`, `grid`, `grids`) — is documented
-in [`SKILL.md`](./SKILL.md).
-
-## Library use (outside the plugin)
-
-The same helpers are usable as a regular TS library if you want to generate docs
-programmatically rather than through Claude:
 
 ```ts
 import { build, h2, p, dt, fieldTable, signatureTable } from 'legal-doc-builder';
@@ -70,6 +60,20 @@ await build({
 
 The full public surface is re-exported from [`src/index.ts`](./src/index.ts).
 
+### As a global CLI
+
+```bash
+bun add -g legal-doc-builder   # or: npm i -g legal-doc-builder
+md-to-docx my-agreement.md
+md-to-docx my-agreement.md --output ./out/agreement.docx
+OUTPUT_DIR=./out md-to-docx my-agreement.md
+```
+
+The CLI takes a markdown file with front-matter (`title`, `output`, `values`)
+and the four supported fenced blocks (`fields`, `sig`, `grid`, `grids`). See
+[`examples/`](./examples) for ready-to-edit templates and [`SKILL.md`](./SKILL.md)
+for the full markdown DSL reference.
+
 ## Repo layout
 
 ```
@@ -87,7 +91,6 @@ scripts/md-to-docx.ts      CLI entry (bundled to dist/)
 examples/                  ready-to-edit markdown templates
 tests/                     end-to-end generation tests
 SKILL.md                   skill manifest — instructions Claude reads at load time
-package.json               main → dist/, module/types → src/, bin → md-to-docx
 ```
 
 ## Develop
@@ -101,8 +104,10 @@ bun run pack        # build + zip → plugin.zip
 ```
 
 Strict TypeScript, bundler-mode module resolution, `@/*` path aliases (`@/foo` →
-`src/foo`).
+`src/foo`). Tagging `vX.Y.Z` and pushing triggers the [release
+workflow](./.github/workflows/release.yml), which builds `plugin.zip` and
+attaches it to a GitHub release.
 
 ## License
 
-MIT.
+MIT — see [LICENSE](./LICENSE).
