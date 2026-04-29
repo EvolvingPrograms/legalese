@@ -1,8 +1,7 @@
 // YAML front-matter splitter. Returns { meta, body }; meta is `{}` when absent.
 
-import yaml from 'js-yaml';
-
 import type { FrontMatter } from './types';
+import yaml from 'js-yaml';
 
 /** Split a markdown source string into its front matter and body.
  *  Returns an empty `meta` object when no front matter is present. */

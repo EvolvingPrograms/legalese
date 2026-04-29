@@ -9,9 +9,9 @@ import { Table, TableRow, Paragraph, AlignmentType, WidthType, HeightRule } from
 import { TABLE_WIDTH, TABLE_BORDERS, SIG_TALL } from '@/lib/defaults';
 import { b, t } from '@/lib/runs';
 import { cell, val } from '@/lib/internal';
-import type { SigRow, SigSide } from './types';
 
-export type { SigRow, SigSide } from './types';
+import type { SigRow, SigSide } from './types';
+export * from './types';
 
 /** Normalise the sparse tuple form into a consistent object. */
 const normRow = (row: SigRow) => {

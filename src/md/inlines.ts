@@ -1,9 +1,8 @@
 // Pandoc inline AST -> docx TextRun[] conversion.
 // Recognises {{Term}} markers and emits defined-term runs: ' (the *"Term"*)'.
 
-import { TextRun } from 'docx';
-
 import type { PandocInline } from './types';
+import { TextRun } from 'docx';
 
 type Run = TextRun;
 

@@ -5,9 +5,9 @@ import { Paragraph, Table, TableRow, TextRun, WidthType } from 'docx';
 import { TABLE_BORDERS, TABLE_WIDTH } from '@/lib/defaults';
 import { cell, val } from '@/lib/internal';
 import { b, t } from '@/lib/runs';
-import type { FieldRow } from './types';
 
-export type { FieldRow, FieldRowObject } from './types';
+import type { FieldRow } from './types';
+export * from './types';
 
 /** Renders a two-column field table where each row shows a bold label and a
  *  looked-up value. Rows may be tuples or objects; see FieldRow. */

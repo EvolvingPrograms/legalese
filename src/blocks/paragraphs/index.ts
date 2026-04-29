@@ -30,17 +30,25 @@ export const h2 = (text: string, opts: { pageBreak?: boolean } = {}) => new Para
   children: [t(text)],
 });
 
+// Each list() call gets its own numbering instance so the (a)(b)(c)… counter
+// restarts per list — legal-doc convention. Without this, all paragraphs sharing
+// SUBLIST_REF render as one continuous list.
+let listInstanceCounter = 0;
+
 /** Lowercase-lettered sublist — (a) (b) (c) …
  *  Each item is a string or an array of children. Returns an array of Paragraphs;
  *  build() flattens automatically. */
-export const list = (...items: ParaChild[]) => items.map((item) => {
-  const children = (Array.isArray(item) ? item : [item]).flat().map(asRun);
-  return new Paragraph({
-    numbering: { reference: SUBLIST_REF, level: 0 },
-    spacing: LIST_SPACING,
-    children,
+export const list = (...items: ParaChild[]) => {
+  const instance = listInstanceCounter++;
+  return items.map((item) => {
+    const children = (Array.isArray(item) ? item : [item]).flat().map(asRun);
+    return new Paragraph({
+      numbering: { reference: SUBLIST_REF, level: 0, instance },
+      spacing: LIST_SPACING,
+      children,
+    });
   });
-});
+};
 
 /** Blank line for vertical breathing room. */
 export const spacer = () => new Paragraph({

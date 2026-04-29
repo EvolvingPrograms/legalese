@@ -3,10 +3,11 @@
 // Output path resolution lives in the CLI (scripts/md-to-docx.js); this layer
 // just accepts a final `output` override or reads the front-matter `output:`.
 
+import { build } from '@/lib/build';
+
 import { splitFrontMatter } from './front-matter';
 import { runPandoc } from './pandoc';
 import { blockToDocBuilder } from './blocks';
-import { build } from '@/lib/build';
 
 export function convertMarkdown(
   srcText: string,

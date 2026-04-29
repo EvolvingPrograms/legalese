@@ -3,16 +3,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
+
 import { Paragraph } from 'docx';
 import type { Table } from 'docx';
-import { fieldTable } from '@/blocks/field-table';
-import { signatureTable } from '@/blocks/signature-table';
-import { gridTable } from '@/blocks/grid-table';
-import { spacer } from '@/blocks';
+
+import type { FieldRow, GridColumn, GridRow, SigRow } from '@/blocks';
+import { fieldTable, signatureTable, gridTable, spacer } from '@/blocks';
 import { b } from '@/lib/runs';
-import type { FieldRow } from '@/blocks/field-table/types';
-import type { GridColumn, GridRow } from '@/blocks/grid-table/types';
-import type { SigRow } from '@/blocks/signature-table/types';
+
 import type { ParseCtx } from './types';
 
 // `Effective Date | effective_date | prefix=$ | sub=hint text`

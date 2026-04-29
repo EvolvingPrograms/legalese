@@ -5,9 +5,8 @@
 //   - smart            (curly quotes, en/em dashes, ellipses)
 //   - bracketed_spans  (room to grow for inline classes)
 
-import { execSync } from 'node:child_process';
-
 import type { PandocAst } from './types';
+import { execSync } from 'node:child_process';
 
 /** Parse a markdown string into a Pandoc JSON AST by shelling out to `pandoc`. */
 export function runPandoc(body: string): PandocAst {
