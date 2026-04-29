@@ -1,26 +1,28 @@
-// build({ title, output, body }) — compose the Document, write it, return the path.
+/**
+ * Compose and write a .docx file from a title and body entries.
+ * House styles (fonts, headings, numbering) are applied here so callers
+ * never need to think about them.
+ */
 
 import fs from 'node:fs';
 import {
-  Document, Packer, AlignmentType, HeadingLevel, LevelFormat,
+  Document, Packer, AlignmentType, LevelFormat,
 } from 'docx';
+import type { Paragraph, Table } from 'docx';
+
 import {
   FONT, BODY_SIZE, H1_SIZE, H2_SIZE,
   PAGE, MARGIN, SUBLIST_REF,
-} from './defaults.js';
-import { h1 } from './blocks.js';
+} from './defaults';
+import { h1 } from '@/blocks';
+import type { BodyEntry } from '@/types';
 
-/** @typedef {import('docx').Paragraph | import('docx').Table} BodyNode */
-/** @typedef {BodyNode | BodyNode[]} BodyEntry */
-
-/**
- * Write a .docx to `output`. Returns a Promise resolving to the path.
- * `body` is a flat or nested array of Paragraph/Table entries; `list()` returns
- * arrays, so anything reachable through `flat(Infinity)` is fine.
- * @param {{ title?: string, output: string, body: BodyEntry[] }} args
- * @returns {Promise<string>}
- */
-export const build = ({ title, output, body }) => {
+/** Write `body` (flat or nested) to `output` as a .docx; resolves to the output path. */
+export const build = ({ title, output, body }: {
+  title?: string;
+  output: string;
+  body: BodyEntry[];
+}): Promise<string> => {
   const doc = new Document({
     styles: {
       default: { document: { run: { font: FONT, size: BODY_SIZE } } },
@@ -63,7 +65,9 @@ export const build = ({ title, output, body }) => {
       properties: { page: { size: PAGE, margin: MARGIN } },
       children: [
         ...(title ? [h1(title)] : []),
-        .../** @type {BodyNode[]} */ (body.flat(Infinity)),
+        // Cast through unknown[] before re-casting: TS2589 bails on deeply
+        // recursive BodyEntry[] when flat(Infinity) is typed directly.
+        ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
       ],
     }],
   });

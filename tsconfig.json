@@ -15,6 +15,9 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
 
     // Best practices
     "strict": true,
@@ -28,5 +31,5 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["lib/**/*.js", "scripts/**/*.js", "tests/**/*.js"]
+  "include": ["src/**/*.ts", "scripts/**/*", "tests/**/*"]
 }

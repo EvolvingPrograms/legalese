@@ -16,8 +16,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { convertMarkdown } from '../lib/md/convert.js';
-import { splitFrontMatter } from '../lib/md/front-matter.js';
+import { convertMarkdown } from '@/md/convert';
+import { splitFrontMatter } from '@/md/front-matter';
 
 function printUsage() {
   console.error('Usage: md-to-docx <input.md> [--output <target.docx>]');
@@ -26,17 +26,13 @@ function printUsage() {
   console.error('  $OUTPUT_DIR    If set (and no --output), place output in this dir');
 }
 
-/**
- * @param {string[]} argv
- * @returns {{ inputFile: string | null, output: string | null }}
- */
-function parseArgs(argv) {
-  /** @type {string | null} */ let inputFile = null;
-  /** @type {string | null} */ let output = null;
+function parseArgs(argv: string[]): { inputFile: string | null; output: string | null } {
+  let inputFile: string | null = null;
+  let output: string | null = null;
   for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
+    const a = argv[i]!;
     if (a === '--help' || a === '-h') { printUsage(); process.exit(0); }
-    if (a === '--output' || a === '-o') { output = argv[++i]; continue; }
+    if (a === '--output' || a === '-o') { output = argv[++i] ?? null; continue; }
     if (a.startsWith('--output=')) { output = a.slice('--output='.length); continue; }
     if (a.startsWith('-')) {
       console.error(`Unknown flag: ${a}`);
@@ -50,11 +46,12 @@ function parseArgs(argv) {
   return { inputFile, output };
 }
 
-/**
- * Resolve the final output path according to the precedence rules above.
- * @param {{ inputAbs: string, frontMatter?: string, cliOutput?: string | null }} args
- */
-function resolveOutput({ inputAbs, frontMatter, cliOutput }) {
+/** Resolve the final output path according to the precedence rules above. */
+function resolveOutput({ inputAbs, frontMatter, cliOutput }: {
+  inputAbs: string;
+  frontMatter?: string;
+  cliOutput?: string | null;
+}): string {
   if (cliOutput) return path.resolve(cliOutput);
 
   const inputDir  = path.dirname(inputAbs);

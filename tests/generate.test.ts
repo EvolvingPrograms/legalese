@@ -6,7 +6,7 @@
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
-import { convertMarkdown } from '../lib/md/convert.js';
+import { convertMarkdown } from '@/md/convert';
 
 const ROOT = path.resolve(import.meta.dir, '..');
 const OUT  = path.resolve(ROOT, 'out/tests');
@@ -15,11 +15,8 @@ beforeAll(() => {
   fs.mkdirSync(OUT, { recursive: true });
 });
 
-/**
- * Render `examples/<name>.md` to `out/tests/<name>.docx` and return the path.
- * @param {string} relPath
- */
-async function generate(relPath) {
+/** Render `examples/<name>.md` to `out/tests/<name>.docx` and return the path. */
+async function generate(relPath: string): Promise<string> {
   const abs = path.resolve(ROOT, relPath);
   const src = fs.readFileSync(abs, 'utf8');
   const output = path.resolve(OUT, `${path.basename(relPath, '.md')}.docx`);
@@ -27,11 +24,8 @@ async function generate(relPath) {
   return output;
 }
 
-/**
- * A real .docx is a ZIP — its first two bytes are `PK`.
- * @param {string} p
- */
-function isDocx(p) {
+/** A real .docx is a ZIP — its first two bytes are `PK`. */
+function isDocx(p: string): boolean {
   return fs.readFileSync(p).slice(0, 2).toString() === 'PK';
 }
 
@@ -50,7 +44,7 @@ test('songwriter-agreement.md → valid .docx', async () => {
 });
 
 test('public API surface exports expected helpers', async () => {
-  const lib = /** @type {Record<string, unknown>} */ (await import('../lib/index.js'));
+  const lib = await import('@/index') as Record<string, unknown>;
   for (const name of [
     't', 'b', 'i', 'bi', 'dt',
     'p', 'h1', 'h2', 'list', 'spacer', 'raw',
