@@ -36,7 +36,16 @@ songwriter agreement between …").
 
 ### As a Node/Bun library
 
+**Prerequisite:** [`pandoc`](https://pandoc.org/installing.html) must be on your
+`PATH` — the markdown frontend shells out to it. (The Claude skill path doesn't
+need this; Claude's environment already has pandoc.)
+
 ```bash
+# macOS
+brew install pandoc
+# Debian/Ubuntu
+sudo apt-get install -y pandoc
+
 bun add legal-doc-builder      # or: npm i legal-doc-builder
 ```
 
