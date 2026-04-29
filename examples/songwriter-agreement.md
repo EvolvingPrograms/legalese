@@ -1,33 +1,48 @@
 ---
 title: EXCLUSIVE SONGWRITER AGREEMENT
-output: /home/claude/work/Songwriter_Agreement_md.docx
-values:
-  effective_date: ""
-  writer_name: ""
-  writer_address: ""
-  company_name: ""
-  company_state: ""
-  company_address: ""
-  governing_law: "State of Texas"
-  sig_writer_name: ""
-  sig_writer_email: ""
-  sig_company_entity: ""
-  sig_company_by: ""
-  sig_company_title: ""
+output: /home/claude/work/Songwriter_Agreement.docx
+
+schema:
+  # Defined terms used in the body.
+  agreement:        { long: "Exclusive Songwriter Agreement" }
+  writer:           { long: "Writer" }
+  company:          { long: "Company" }
+  party:            { term: "Party" }
+  parties:          { term: "Parties" }
+  term:             { term: "Term" }
+  composition:      { term: "Composition" }
+  compositions:     { term: "Compositions" }
+  publishers_share: { term: "Publisher's Share", long: "a 50% share", article: false }
+  writers_share:    { term: "Writer's Share",    long: "a 50% share", article: false }
+  co_writer:        { term: "Co-Writer" }
+
+  # Form fields filled at render time. Pass via --values-file, --set, or stdin.
+  effective_date:    { type: date,   required: true }
+  writer_name:       { type: string, required: true, description: "Writer legal name" }
+  writer_address:    { type: string, required: true }
+  company_name:      { type: string, required: true, description: "Company legal name" }
+  company_state:     { type: string, required: true, description: "Company state of incorporation" }
+  company_address:   { type: string, required: true }
+  governing_law:     { type: string, default: "State of Texas" }
+  sig_writer_name:    string
+  sig_writer_email:   string
+  sig_company_entity: string
+  sig_company_by:     string
+  sig_company_title:  string
 ---
 
-This Exclusive Songwriter Agreement {{Agreement}} is entered into as of the Effective Date stated below, by and between the Writer {{Writer}} and the Company {{Company}} identified in Section 1. Writer and Company are referred to individually as a ***"Party"*** and collectively as the ***"Parties"***.
+This {{$agreement}} is entered into as of the Effective Date stated below, by and between the {{$writer}} and the {{$company}} identified in Section 1. Writer and Company are referred to individually as a {{party}} and collectively as the {{parties}}.
 
 ## 1. Parties and Effective Date
 
 ```fields
-Effective Date | effective_date
-Writer (legal name) | writer_name
-Writer address | writer_address
-Company (legal name) | company_name
-Company state of incorporation | company_state
-Company address | company_address
-Governing law | governing_law
+effective_date
+writer_name
+writer_address
+company_name
+company_state
+company_address
+governing_law
 ```
 
 ## 2. Background
@@ -36,38 +51,38 @@ Writer is a songwriter and recording artist. Company is engaged in the business 
 
 ## 3. Term
 
-The term of this Agreement {{Term}} shall begin on the Effective Date and continue until terminated in accordance with Section 10. The rights granted by Writer to Company under this Agreement shall, however, continue with respect to each Composition for the full duration of copyright in such Composition, including any extensions or renewals.
+The {{Term}} shall begin on the Effective Date and continue until terminated in accordance with Section 10. The rights granted by Writer to Company under this Agreement shall, however, continue with respect to each Composition for the full duration of copyright in such Composition, including any extensions or renewals.
 
 ## 4. Compositions Covered
 
-***"Compositions"*** means all original musical compositions, in whole or in part, written, composed, created, or co-created by Writer (alone or with others) during the Term, including the music, lyrics, arrangements, beats, samples, and all related elements, in any genre, in any medium, and whether or not commercially released. Each Composition is subject to this Agreement automatically upon creation, without need for further documentation, although the Parties shall reasonably cooperate to identify and list Compositions as they are created.
+{{Compositions}} means all original musical compositions, in whole or in part, written, composed, created, or co-created by Writer (alone or with others) during the Term, including the music, lyrics, arrangements, beats, samples, and all related elements, in any genre, in any medium, and whether or not commercially released. Each Composition is subject to this Agreement automatically upon creation, without need for further documentation, although the Parties shall reasonably cooperate to identify and list Compositions as they are created.
 
 For the avoidance of doubt: pre-existing compositions written by Writer prior to the Effective Date are **not** covered by this Agreement and are addressed, if at all, by separate written assignment.
 
 ## 5. Grant of Rights
 
-Writer hereby irrevocably assigns and transfers to Company, throughout the world and for the full duration of copyright (including any extensions and renewals), the **Publisher's Share** (50%) of all right, title, and interest in and to each Composition, including without limitation:
+Writer hereby irrevocably assigns and transfers to Company, throughout the world and for the full duration of copyright (including any extensions and renewals), {{$publishers_share}} of all right, title, and interest in and to each Composition, including without limitation:
 
 a. the entire publisher's share of all copyrights and all renewals and extensions thereof in the Compositions;
 b. the right to register, license, exploit, and administer the Compositions worldwide, including mechanical, synchronization, public performance, print, digital, and any other rights;
 c. the right to register Company as the publisher with one or more performing rights organizations and mechanical rights collection societies; and
 d. the right to enforce copyright in the Compositions and to bring or defend actions concerning them.
 
-Writer retains the **Writer's Share** (50%) of all royalties and rights in each Composition, which shall be paid to Writer directly by the applicable performing rights organization, mechanical rights organization, or other collection society, in accordance with such organization's rules. The Writer's Share follows Writer personally and is not assigned to Company.
+Writer retains {{$writers_share}} of all royalties and rights in each Composition, which shall be paid to Writer directly by the applicable performing rights organization, mechanical rights organization, or other collection society, in accordance with such organization's rules. The {{writers_share}} follows Writer personally and is not assigned to Company.
 
 ## 6. Co-Writers and Pro-Rata Allocation
 
-Where a Composition is co-written by Writer and one or more third parties (each a ***"Co-Writer"***), the rights granted under Section 5 apply only to Writer's pro-rata share of the Composition. The shares of any Co-Writer shall be governed by separate agreement between Writer (or Company) and such Co-Writer, and Company's rights under this Agreement extend solely to Writer's portion.
+Where a Composition is co-written by Writer and one or more third parties (each a {{co_writer}}), the rights granted under Section 5 apply only to Writer's pro-rata share of the Composition. The shares of any Co-Writer shall be governed by separate agreement between Writer (or Company) and such Co-Writer, and Company's rights under this Agreement extend solely to Writer's portion.
 
 ## 7. Compensation
 
 In consideration of the rights granted under this Agreement, Company shall:
 
-a. pay Writer the Writer's Share as set out in Section 5, by causing such share to be paid directly to Writer by the applicable rights organizations;
+a. pay Writer the {{writers_share}} as set out in Section 5, by causing such share to be paid directly to Writer by the applicable rights organizations;
 b. bear the costs of registering Company as publisher with the relevant rights organizations and of administering the Compositions; and
-c. provide Writer with reasonable accountings of any Publisher's Share royalties received by Company, no less frequently than annually, upon Writer's reasonable request.
+c. provide Writer with reasonable accountings of any {{publishers_share}} royalties received by Company, no less frequently than annually, upon Writer's reasonable request.
 
-No additional advances, salary, or guaranteed payments are required under this Agreement, the Parties acknowledging that Writer is a principal of Company and benefits indirectly from Company's receipt of the Publisher's Share. The Parties may, by separate written agreement, document any salary, advance, or other compensation arrangement.
+No additional advances, salary, or guaranteed payments are required under this Agreement, the Parties acknowledging that Writer is a principal of Company and benefits indirectly from Company's receipt of the {{publishers_share}}. The Parties may, by separate written agreement, document any salary, advance, or other compensation arrangement.
 
 ## 8. Representations and Warranties
 
@@ -90,7 +105,7 @@ Upon termination, Sections 5, 6, 8, 9, 11, 12, and 13 shall survive.
 
 ## 11. Independent Status; Not Work-for-Hire
 
-The Parties acknowledge that the Compositions are not ***"works made for hire"*** within the meaning of the U.S. Copyright Act. Writer is the author of the Compositions, and the rights conveyed to Company are conveyed by assignment under Section 5, not by virtue of any employment relationship.
+The Parties acknowledge that the Compositions are not {{!Works Made for Hire}} within the meaning of the U.S. Copyright Act. Writer is the author of the Compositions, and the rights conveyed to Company are conveyed by assignment under Section 5, not by virtue of any employment relationship.
 
 ## 12. Governing Law and Venue
 

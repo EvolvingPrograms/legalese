@@ -1,0 +1,19 @@
+# Sample form values for examples/recording-assignment.md.
+# Run: node $SKILL_DIR examples/recording-assignment.md --values-file examples/recording-sample.yml
+
+effective_date: "April 29, 2026"
+
+assignor_name: "Sample Artist"
+assignor_address: "123 Demo Lane, Austin, TX 78701"
+
+assignee_name: "Sample Records LLC"
+assignee_state: "Delaware"
+assignee_address: "456 Label Street, Wilmington, DE 19801"
+
+governing_law: "State of Delaware"
+
+sig_assignor_name: "Sample Artist"
+sig_assignor_email: "artist@example.com"
+sig_assignee_entity: "Sample Records LLC"
+sig_assignee_by: "Sample Officer"
+sig_assignee_title: "Managing Member"

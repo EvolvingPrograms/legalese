@@ -20,16 +20,14 @@ export const i  = (text: string) => new TextRun({ text, italics: true });
 export const bi = (text: string) => new TextRun({ text, bold: true, italics: true });
 
 /**
- * Defined-term run.
- *   dt('Agreement')                 → ' (the *“Agreement”*)'  (common noun, default)
- *   dt('Claude', { proper: true })  → ' (*“Claude”*)'          (proper noun, no article)
- * Leading space is always included so the run reads naturally after a noun.
+ * Defined-term run: `(the *“Term”*)` by default, `(*“Term”*)` if `article: false`.
+ * The article lives inside the parens so authors can write the noun naturally:
+ *   "Exclusive Songwriter Agreement", dt('Agreement') → "… (the Agreement)".
  */
-export const dt = (term: string, opts: { proper?: boolean } = {}): TextRun[] => [
-  t(opts.proper ? ' (' : ' (the '),
-  bi(`“${term}”`),
-  t(')'),
-];
+export const dt = (term: string, opts: { article?: boolean } = {}): TextRun[] => {
+  const lead = opts.article === false ? '(' : '(the ';
+  return [t(lead), bi(`“${term}”`), t(')')];
+};
 
 /** Coerce a bare string to a TextRun, passing an existing TextRun through unchanged. */
 export const asRun = (child: RunChild): TextRun =>

@@ -19,3 +19,20 @@ export async function renderToXml(name: string, body: string): Promise<string> {
   await convertMarkdown(src, { output, baseDir: ROOT });
   return readDocumentXml(output);
 }
+
+/** Render a full markdown source (with front-matter) to a .docx and return its document.xml. */
+export async function renderSourceToXml(name: string, src: string): Promise<string> {
+  const output = path.resolve(OUT, `${name}.docx`);
+  await convertMarkdown(src, { output, baseDir: ROOT });
+  return readDocumentXml(output);
+}
+
+/** Strip XML tags AND decode common entities so assertions target rendered plain text. */
+export const plain = (xml: string): string =>
+  xml
+    .replace(/<[^>]+>/g, '')
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');

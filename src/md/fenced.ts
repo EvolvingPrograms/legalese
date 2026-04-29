@@ -11,20 +11,35 @@ import type { FieldRow, GridColumn, GridRow, SigRow } from '@/blocks';
 import { fieldTable, signatureTable, gridTable, spacer } from '@/blocks';
 import { b } from '@/lib/runs';
 
-import type { ParseCtx } from './types';
+import { fieldLabel } from './values';
+import type { ParseCtx, Schema } from './types';
 
-// `Effective Date | effective_date | prefix=$ | sub=hint text`
-export function parseFieldsBlock(content: string, values: Record<string, unknown>) {
-  const rows: FieldRow[] = content.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+// Field rows accept two shapes:
+//   key                                       — bare key; label resolved from
+//                                               schema.description / schema.term / derived
+//   Label | key | prefix=$ | sub=hint text    — explicit label + optional opts
+export function parseFieldsBlock(
+  content: string,
+  values: Record<string, unknown>,
+  schema?: Schema,
+) {
+  const rows: FieldRow[] = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map((line) => {
     const parts = line.split('|').map(s => s.trim());
+
+    // Bare key: single token, no pipes, looks like a snake_case identifier.
+    if (parts.length === 1 && /^[a-z][a-z0-9_]*$/.test(parts[0]!)) {
+      const key = parts[0]!;
+      return [fieldLabel(key, schema), key, {}] as FieldRow;
+    }
+
     const label = parts[0]!;
     const key = parts[1] || null;
     const opts: { prefix?: string; subLabel?: string } = {};
     for (const extra of parts.slice(2)) {
       const m = extra.match(/^(\w+)=(.*)$/);
       if (!m) continue;
-      if (m[1] === 'prefix') opts.prefix = m[2];
-      else if (m[1] === 'sub') opts.subLabel = m[2];
+      if      (m[1] === 'prefix') opts.prefix   = m[2];
+      else if (m[1] === 'sub')    opts.subLabel = m[2];
     }
     return [label, key, opts] as FieldRow;
   });
@@ -135,7 +150,7 @@ export function parseGridsBlock(content: string, ctx: ParseCtx): (Paragraph | Ta
     let data: unknown;
     if (typeof source === 'string') {
       const abs = path.isAbsolute(source) ? source : path.resolve(ctx.baseDir, source);
-      data = JSON.parse(fs.readFileSync(abs, 'utf8'));
+      data = yaml.load(fs.readFileSync(abs, 'utf8'));
     } else {
       data = source;
     }

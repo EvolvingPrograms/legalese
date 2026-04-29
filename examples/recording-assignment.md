@@ -1,38 +1,50 @@
 ---
 title: COPYRIGHT ASSIGNMENT OF EXISTING RECORDINGS
 output: /home/claude/work/Recording_Assignment.docx
-values:
-  effective_date: ""
-  assignor_name: ""
-  assignor_address: ""
-  assignee_name: ""
-  assignee_state: ""
-  assignee_address: ""
-  governing_law: ""
-  sig_assignor_name: ""
-  sig_assignor_email: ""
-  sig_assignee_entity: ""
-  sig_assignee_by: ""
-  sig_assignee_title: ""
+
+schema:
+  # Defined terms used in the body.
+  assignment:       { long: "Copyright Assignment" }
+  assignor:         { long: "Assignor" }
+  assignee:         { long: "Assignee" }
+  parties:          { term: "Parties" }
+  recording:        { term: "Recording" }
+  recordings:       { term: "Recordings" }
+  publishers_share: { term: "Publisher's Share", long: "a 50% share", article: false }
+  writers_share:    { term: "Writer's Share",    long: "a 50% share", article: false }
+
+  # Form fields filled at render time. Pass via --values-file, --set, or stdin.
+  effective_date:     { type: date,   required: true }
+  assignor_name:      { type: string, required: true, description: "Assignor legal name" }
+  assignor_address:   { type: string, required: true }
+  assignee_name:      { type: string, required: true, description: "Assignee legal name" }
+  assignee_state:     { type: string, required: true, description: "Assignee state of incorporation" }
+  assignee_address:   { type: string, required: true }
+  governing_law:      { type: string, default: "State of Delaware" }
+  sig_assignor_name:   string
+  sig_assignor_email:  string
+  sig_assignee_entity: string
+  sig_assignee_by:     string
+  sig_assignee_title:  string
 ---
 
-This Copyright Assignment {{Assignment}} is made as of the Effective Date stated below, by the Assignor {{Assignor}} in favor of the Assignee {{Assignee}} identified in Section 1.
+This {{$assignment}} is made as of the Effective Date stated below, by the {{$assignor}} in favor of the {{$assignee}} identified in Section 1.
 
 ## 1. Parties and Effective Date
 
 ```fields
-Effective Date | effective_date
-Assignor (legal name) | assignor_name
-Assignor address | assignor_address
-Assignee (legal name) | assignee_name
-Assignee state of incorporation | assignee_state
-Assignee address | assignee_address
-Governing law | governing_law
+effective_date
+assignor_name
+assignor_address
+assignee_name
+assignee_state
+assignee_address
+governing_law
 ```
 
 ## 2. Background
 
-Assignor is the author and owner of the sound recordings and underlying musical compositions listed in Schedule A (each, a ***"Recording"***, and collectively the ***"Recordings"***), released prior to the Effective Date of this Assignment.
+Assignor is the author and owner of the sound recordings and underlying musical compositions listed in Schedule A (each, a {{recording}}, and collectively the {{recordings}}), released prior to the Effective Date of this Assignment.
 
 The Parties have entered, or are concurrently entering, into a separate Exclusive Songwriter Agreement under which Assignee acts as the publisher of compositions written by Assignor on a forward-looking basis. The Parties wish to bring the previously released Recordings listed in Schedule A under Assignee's ownership and administration, by way of this Assignment.
 
@@ -41,14 +53,14 @@ The Parties have entered, or are concurrently entering, into a separate Exclusiv
 Assignor hereby irrevocably assigns and transfers to Assignee, throughout the world and for the full duration of copyright (including any extensions and renewals), all right, title, and interest in and to each of the Recordings, including without limitation:
 
 a. all copyrights and all renewals and extensions thereof in the master sound recordings of the Recordings;
-b. the **Publisher's Share** (50%) of the underlying musical compositions embodied in the Recordings;
+b. {{$publishers_share}} of the underlying musical compositions embodied in the Recordings;
 c. the right to register, license, exploit, and administer the Recordings worldwide, including mechanical, synchronization, public performance, print, digital, distribution, and any other rights;
 d. the right to register Assignee with applicable performing rights organizations, mechanical rights organizations, and digital service providers as the owner of the Recordings; and
 e. the right to enforce copyright in the Recordings and to bring or defend actions concerning them.
 
 ## 4. Reservation of Writer's Share
 
-Assignor retains the **Writer's Share** (50%) of the underlying musical compositions embodied in the Recordings, which shall be paid to Assignor directly by the applicable performing rights organization, mechanical rights organization, or other collection society. The Writer's Share follows Assignor personally and is not assigned to Assignee under this Assignment.
+Assignor retains {{$writers_share}} of the underlying musical compositions embodied in the Recordings, which shall be paid to Assignor directly by the applicable performing rights organization, mechanical rights organization, or other collection society. The {{writers_share}} follows Assignor personally and is not assigned to Assignee under this Assignment.
 
 ## 5. Co-Writers and Co-Performers
 
@@ -93,13 +105,13 @@ Date                            || Date
 The following Recordings are assigned to Assignee under this Assignment. Each release is identified by its UPC and release date; each Recording within a release is identified by its ISRC.
 
 ```grids
-# `from:` accepts either JSON file paths (loaded from disk, relative to this
-# .md file) or inline objects. Both shapes are processed identically — the
+# `from:` accepts YAML file paths (loaded from disk, relative to this .md
+# file) or inline objects. Both shapes are processed identically — the
 # `heading:` template and `rows:` dot-path apply to whatever object the entry
 # resolves to. Mix and match freely.
 from:
-  - ./sample.json                       # path: loaded from disk
-  - album:                              # inline object: same shape as the JSON
+  - ./recording-data.yml          # path: loaded from disk
+  - album:                         # inline object: same shape as the file
       title: "Sample EP"
       release_type: "EP"
       upc: "0000000000002"

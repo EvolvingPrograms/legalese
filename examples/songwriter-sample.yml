@@ -1,0 +1,19 @@
+# Sample form values for examples/songwriter-agreement.md.
+# Run: node $SKILL_DIR examples/songwriter-agreement.md --values-file examples/songwriter-sample.yml
+
+effective_date: "April 29, 2026"
+
+writer_name: "Sample Writer"
+writer_address: "123 Demo Lane, Austin, TX 78701"
+
+company_name: "Sample Records LLC"
+company_state: "Delaware"
+company_address: "456 Label Street, Wilmington, DE 19801"
+
+governing_law: "State of Texas"
+
+sig_writer_name: "Sample Writer"
+sig_writer_email: "writer@example.com"
+sig_company_entity: "Sample Records LLC"
+sig_company_by: "Sample Officer"
+sig_company_title: "Managing Member"

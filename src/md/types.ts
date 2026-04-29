@@ -27,12 +27,33 @@ export interface ParseCtx {
 /** Context passed to the top-level block converter. */
 export interface ConvertCtx {
   baseDir: string;
+  schema?: Schema;
 }
+
+/** Schema entry for a single value — either a bare type alias or a full descriptor. */
+export type SchemaEntry =
+  | string
+  | {
+      type?: string;
+      required?: boolean;
+      default?: unknown;
+      /** Short-form label used by the defined-term marker. Defaults to snake_case → Title Case. */
+      term?: string;
+      /** Long-form expansion used by `{{$key}}` introductions when no value is set. */
+      long?: string;
+      /** When false, defining markers omit the "the" article (proper-noun behavior). Default true. */
+      article?: boolean;
+      description?: string;
+    };
+
+/** Map of value keys to schema entries declared in front-matter `schema:`. */
+export type Schema = Record<string, SchemaEntry>;
 
 /** Parsed YAML front matter. Open-ended so callers can add document-specific keys. */
 export interface FrontMatter {
   title?: string;
   output?: string;
   values?: Record<string, unknown>;
+  schema?: Schema;
   [k: string]: unknown;
 }

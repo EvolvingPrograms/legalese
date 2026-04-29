@@ -20,7 +20,7 @@ export function blockToDocBuilder(
       const [level, attrs, inlines] = blk.c as [number, [string, string[], unknown[]], PandocInline[]];
       const [, classes] = attrs;
       const pageBreak = classes.includes('pageBreak') || classes.includes('pagebreak');
-      const runs = inlinesToRuns(inlines);
+      const runs = inlinesToRuns(inlines, { values, schema: ctx.schema });
       const headingLevel = level === 1 ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2;
       return [new Paragraph({
         heading: headingLevel,
@@ -31,7 +31,7 @@ export function blockToDocBuilder(
 
     case 'Para':
     case 'Plain':
-      return [p(...inlinesToRuns(blk.c as PandocInline[]))];
+      return [p(...inlinesToRuns(blk.c as PandocInline[], { values, schema: ctx.schema }))];
 
     case 'OrderedList':
     case 'BulletList': {
@@ -43,7 +43,7 @@ export function blockToDocBuilder(
         for (const ib of itemBlocks) {
           if (ib.t === 'Plain' || ib.t === 'Para') allInlines.push(...(ib.c as PandocInline[]));
         }
-        return inlinesToRuns(allInlines);
+        return inlinesToRuns(allInlines, { values, schema: ctx.schema });
       });
       return list(...itemsAsRuns);
     }
@@ -52,7 +52,7 @@ export function blockToDocBuilder(
       const [attrs, content] = blk.c as [[string, string[], unknown[]], string];
       const [, classes] = attrs;
       const lang = classes[0];
-      if (lang === 'fields') return [parseFieldsBlock(content, values)];
+      if (lang === 'fields') return [parseFieldsBlock(content, values, ctx.schema)];
       if (lang === 'sig')    return [parseSigBlock(content, values)];
       if (lang === 'grid')   return [parseGridBlock(content)];
       if (lang === 'grids')  return parseGridsBlock(content, ctx);

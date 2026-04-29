@@ -24,6 +24,37 @@ The bundle inlines `docx` and `js-yaml`, so it runs from any cwd against any inp
 
 Output path precedence (highest first): `--output <path>` flag → `$OUTPUT_DIR` env → front-matter `output:` → `<input-basename>.docx` next to the input.
 
+### Templating: values + schema
+
+Markdown documents are templates. Values come from up to four sources, in precedence order (highest first):
+
+1. `--set key=value` CLI flags (repeatable)
+2. `--values-file <path.yaml>` — flat YAML map
+3. `--values -` — same shape, read from stdin (handy for one-shot inline values: `node $SKILL_DIR doc.md --values - <<EOF` … `EOF`)
+4. front-matter `values:` block (defaults baked into the template)
+5. `schema[key].default` (per-key fallback)
+
+Inspect what a template expects without rendering:
+
+```bash
+node $SKILL_DIR my-agreement.md --schema
+```
+
+Prints `values:`, `schema:`, plus `required:` and `missing:` lists as YAML. Pass `--strict` to fail the render when required keys are missing.
+
+The optional front-matter `schema:` block declares value shape and lets you override the auto-derived defined-term label:
+
+```yaml
+schema:
+  effective_date: date
+  writer_name: { type: string, required: true }
+  liquidation_event: { type: string, term: "Liquidation Event (Severance)" }
+  agreement:    { long: "Exclusive Songwriter Agreement" }   # used by {{$agreement}}
+  claude:       { type: string, article: false }             # proper noun, no "the"
+```
+
+Each entry is either a bare type alias (`string`, `date`, `number`, …) or an object with optional `type`, `required`, `default`, `term`, `long`, `article`, `description`.
+
 ## Document shape
 
 ```markdown
@@ -73,19 +104,25 @@ Date                          || Date
 | `## Section` | Section heading (Heading 2) |
 | `## Section {.pageBreak}` | Section heading starting a new page |
 | `**bold**` / `*italic*` / `***both***` | Inline formatting |
-| `{{Term}}` | Defined term — renders as `(the *“Term”*)` |
-| `{{!Name}}` | Defined proper noun — renders as `(*“Name”*)` (no `the`). Use for AI agents, products, or anything that reads awkwardly with an article. |
+| `{{Term}}` | Define a term inline — renders as `(the *“Term”*)`. Article inside the parens; author writes the noun naturally before. |
+| `{{!Term}}` | Same, no article — `(*“Term”*)`. Use for proper nouns ("our collaborator `{{!Claude}}`"). |
+| `{{snake_key}}` | Reference an already-defined term — renders as `*“Snake Key”*` (no parens, no article — author writes "the" themselves). Label auto-derived `snake_case → Title Case`; override via `schema[key].term`. |
+| `{{$snake_key}}` | Introduce: expand to value (or `schema[key].long`) and define the term — renders as `<expansion> (the *“Snake Key”*)`. Use `{{!$snake_key}}` (or `schema[key].article: false`) to drop the article. |
 | `1. 2. 3.` or `a. b. c.` | Lettered sublist `(a) (b) (c)` |
 | `"text"`, `Writer's`, `--`, `---` | Smart quotes, en/em dashes — auto |
 | `---` (hr) | Vertical spacer |
 
 ## Fenced blocks
 
-**`fields` — field/values table.** One row per line, pipe-separated. Optional third column for `prefix=...` or `sub=...`:
+**`fields` — field/values table.** Two row shapes:
+
+- **Bare key** (most compact): a single snake_case identifier. Label resolves from `schema[key].description` → `schema[key].term` → `snake_case → Title Case`.
+- **Explicit label**: `Label | key | prefix=$ | sub=hint text` for one-off labels or `prefix`/`sub` opts not worth schema-ing.
 
 ```
 ​```fields
-Effective Date | effective_date
+effective_date
+writer_name
 Licensing Fee | fee | prefix=$
 Spotify URL | spotify | sub=if credit required
 ​```
