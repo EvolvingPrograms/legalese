@@ -16,6 +16,11 @@ Markdown template + values YAML → signable `.docx` in house style.
 
 2. **Render**: `node $SKILL_DIR <template.md> --values-file <values.yml> --output <out.docx>`.
    `pandoc` must be on PATH (already is in this environment).
+   `$SKILL_DIR` is the absolute path to this directory — substitute it literally
+   (e.g. `node /mnt/skills/user/legal-doc-builder doc.md`). Don't use bash's
+   inline `VAR=val command` syntax: `$SKILL_DIR` expands to the parent shell's
+   (empty) value before the assignment takes effect, so Node ends up running
+   the `.md` as a script.
 
 3. **Inspect what a template needs**: `node $SKILL_DIR <template.md> --schema` prints `values:` + `schema:` + `required:` + `missing:` as YAML.
 
@@ -42,6 +47,8 @@ For any new document request, work in this order:
 
 Article auto-capitalizes at sentence start (paragraph start, or after `.!?`). Apostrophes in `term:`/`long:` strings are upgraded to curly. Plurals auto-derive (`recording` → `recordings`); irregulars use `plural: "People"` in schema.
 
+There is no plain `${value}` substitution syntax — every marker emits a defined-term form. To inline raw values into prose without parenthetical-define behavior, hardcode them, put them in a `fields` block, or accept the `{{$key}}` form.
+
 ## Schema entry fields
 
 ```yaml
@@ -58,7 +65,7 @@ schema:
 
 ## Fenced blocks (full reference: read an example)
 
-- ` ```fields ` — bare snake_case keys (label resolves from schema), or `Label | key | prefix=$ | sub=hint`.
+- ` ```fields ` — one row per line. **Two shapes, no mixing**: either a **bare key** (`operator_name` — label auto-derives from `schema.description` / `schema.term` / snake→Title) **or** explicit pipe form (`Operator | operator_name | prefix=$ | sub=hint`). A bare key with `| sub=…` appended doesn't work — the first pipe forces label-then-key parsing.
 - ` ```sig ` — `LEFT_HEADER || RIGHT_HEADER` then `Label | key [tall]? || Label | key [tall]?` per row. Omit `||` for single-party.
 - ` ```grid ` / ` ```grids ` — YAML body; `grids: from: $albums` resolves the catalog from a values key (paths in values are CWD-relative).
 
