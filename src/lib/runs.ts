@@ -20,10 +20,10 @@ export const i  = (text: string) => new TextRun({ text, italics: true });
 export const bi = (text: string) => new TextRun({ text, bold: true, italics: true });
 
 /**
- * Defined-term run: renders ' (the *"Term"*)' as an array of runs.
+ * Defined-term run: renders ' (the *“Term”*)' as an array of runs.
  * Leading space included so it reads naturally after a noun.
  */
-export const dt = (term: string): TextRun[] => [t(' (the '), bi(`"${term}"`), t(')')];
+export const dt = (term: string): TextRun[] => [t(' (the '), bi(`“${term}”`), t(')')];
 
 /** Coerce a bare string to a TextRun, passing an existing TextRun through unchanged. */
 export const asRun = (child: RunChild): TextRun =>

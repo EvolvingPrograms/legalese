@@ -27,7 +27,7 @@ function emitText(text: string, bold: boolean, italic: boolean, out: Run[]): voi
       out.push(makeRun(text.slice(last, m.index), bold, italic));
     }
     out.push(makeRun('(the ', bold, italic));
-    out.push(makeRun(`"${m[1]!.trim()}"`, true, true));
+    out.push(makeRun(`“${m[1]!.trim()}”`, true, true));
     out.push(makeRun(')', bold, italic));
     last = m.index + m[0].length;
   }
