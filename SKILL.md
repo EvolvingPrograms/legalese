@@ -69,6 +69,27 @@ Worked examples (with `schema.agreement = { long: "Copyright Assignment" }`, no 
 
 Common mistake: assuming the parenthetical repeats the long form. It doesn't — the long form is the **prose expansion**; the parens always show the **short term**. If you want the same string in both, set `term:` and `long:` to the same value (rarely useful).
 
+**Putting real party names in values gives clean recitals.** When the schema has `operator: { long: "Operator" }`, `{{$operator}}` alone renders the redundant `Operator (the “Operator”)`. Set `values.operator` to the actual entity to override the long-form expansion:
+
+```yaml
+# values.yml
+operator: "Lumiere Cinema LLC"
+vendor:   "Popcorn Republic Inc."
+```
+
+Now `{{$operator}}` renders `Lumiere Cinema LLC (the “Operator”)` — the recital reads naturally and references via `{{operator}}` still produce `the Operator`.
+
+**Plural introduce form works via the singular schema entry.** With `schema.location = { term: "Location" }`, `{{$locations}}` resolves to the plural side automatically:
+
+| Marker | Renders |
+|---|---|
+| `{{$location}}` | `the *“Location”*` (singular intro) |
+| `{{$locations}}` | `the *“Locations”*` (plural intro, auto-derived) |
+| `{{location}}` | `the Location` (singular ref) |
+| `{{locations}}` | `the Locations` (plural ref) |
+
+**Don't collide values keys with defined-term keys when the value is an array of grid data.** If `schema.location` exists and `values.locations` is also an array of `{ album, tracks }` objects (used by `grids: from: $locations`), then a stray `{{$locations}}` in prose will try to stringify the array → `[object Object], [object Object]`. Name catalog/grid-source values with a clearly different key (`menu_catalog`, `albums`, `recordings_data`) so the marker layer and the grids layer don't reach for the same key.
+
 ## Schema entry fields
 
 ```yaml
