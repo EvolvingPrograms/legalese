@@ -84,6 +84,6 @@ const output = resolveOutput({
 
 fs.mkdirSync(path.dirname(output), { recursive: true });
 
-convertMarkdown(src, { output })
+convertMarkdown(src, { output, baseDir: path.dirname(inputAbs) })
   .then((p) => { console.log('Wrote', p); })
   .catch((err) => { console.error(err); process.exit(1); });

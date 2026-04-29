@@ -162,6 +162,28 @@ empty_rows: 10
 ​```
 ```
 
+**`grids` — multiple grid tables in sequence, sharing one column spec.** Use when you need N tables of the same shape, each with its own per-table heading.
+
+`from:` is a list whose entries are either JSON file paths (resolved relative to the source `.md`) or inline objects with the same shape as a loaded file. For each entry, `rows:` is a dot-path (`tracks`, `data.items`) into the loaded object pointing at the row array — omit it to use the whole loaded value. Each table gets a heading rendered from `heading:` interpolated against the loaded object (e.g. `"{album.title} — UPC {album.upc}"`); set `heading: false` to omit.
+
+```
+​```grids
+from:
+  - data/trained_for_this.json
+  - data/la_roue.json
+  - album: { title: 'Off-the-cuff EP', upc: '1234567890123', release_date: '2026-05-01' }
+    tracks:
+      - { n: 1, title: 'Demo One', duration: '02:30', isrc: 'XXXXX2700001' }
+heading: "{album.title} — UPC {album.upc} • released {album.release_date}"
+rows: tracks
+columns:
+  - {label: '#',        key: 'n',        width: 600}
+  - {label: 'Title',    key: 'title',    width: 5000}
+  - {label: 'Duration', key: 'duration', width: 1300}
+  - {label: 'ISRC',     key: 'isrc',     width: 2460}
+​```
+```
+
 A worked example lives in `examples/songwriter-agreement.md` — open it for reference patterns.
 
 ---

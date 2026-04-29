@@ -28,5 +28,5 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["lib/**/*.js", "scripts/**/*.js"]
+  "include": ["lib/**/*.js", "scripts/**/*.js", "tests/**/*.js"]
 }

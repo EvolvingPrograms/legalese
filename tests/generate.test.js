@@ -1,0 +1,62 @@
+// End-to-end generation tests: each shipped example renders to a valid .docx.
+// Each example exercises a different combination of fenced blocks:
+//   - recording-assignment.md   fields, sig, grids (file path + inline object)
+//   - songwriter-agreement.md   fields, sig
+
+import { test, expect, beforeAll } from 'bun:test';
+import fs from 'node:fs';
+import path from 'node:path';
+import { convertMarkdown } from '../lib/md/convert.js';
+
+const ROOT = path.resolve(import.meta.dir, '..');
+const OUT  = path.resolve(ROOT, 'out/tests');
+
+beforeAll(() => {
+  fs.mkdirSync(OUT, { recursive: true });
+});
+
+/**
+ * Render `examples/<name>.md` to `out/tests/<name>.docx` and return the path.
+ * @param {string} relPath
+ */
+async function generate(relPath) {
+  const abs = path.resolve(ROOT, relPath);
+  const src = fs.readFileSync(abs, 'utf8');
+  const output = path.resolve(OUT, `${path.basename(relPath, '.md')}.docx`);
+  await convertMarkdown(src, { output, baseDir: path.dirname(abs) });
+  return output;
+}
+
+/**
+ * A real .docx is a ZIP — its first two bytes are `PK`.
+ * @param {string} p
+ */
+function isDocx(p) {
+  return fs.readFileSync(p).slice(0, 2).toString() === 'PK';
+}
+
+test('recording-assignment.md → valid .docx (grids: file + inline)', async () => {
+  const out = await generate('examples/recording-assignment.md');
+  expect(fs.existsSync(out)).toBe(true);
+  expect(isDocx(out)).toBe(true);
+  expect(fs.statSync(out).size).toBeGreaterThan(5000);
+});
+
+test('songwriter-agreement.md → valid .docx', async () => {
+  const out = await generate('examples/songwriter-agreement.md');
+  expect(fs.existsSync(out)).toBe(true);
+  expect(isDocx(out)).toBe(true);
+  expect(fs.statSync(out).size).toBeGreaterThan(5000);
+});
+
+test('public API surface exports expected helpers', async () => {
+  const lib = /** @type {Record<string, unknown>} */ (await import('../lib/index.js'));
+  for (const name of [
+    't', 'b', 'i', 'bi', 'dt',
+    'p', 'h1', 'h2', 'list', 'spacer', 'raw',
+    'fieldTable', 'signatureTable', 'gridTable',
+    'build', 'defaults',
+  ]) {
+    expect(lib[name]).toBeDefined();
+  }
+});

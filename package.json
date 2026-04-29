@@ -3,7 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/bun": "latest",
