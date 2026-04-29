@@ -1,7 +1,7 @@
 // End-to-end generation tests: each shipped example renders to a valid .docx.
 // Each example exercises a different combination of fenced blocks:
 //   - recording-assignment.md   fields, sig, grids (file path + inline object)
-//   - songwriter-agreement.md   fields, sig
+//   - recording-publishing-agreement.md   fields, sig
 
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
@@ -36,8 +36,8 @@ test('recording-assignment.md → valid .docx (grids: file + inline)', async () 
   expect(fs.statSync(out).size).toBeGreaterThan(5000);
 });
 
-test('songwriter-agreement.md → valid .docx', async () => {
-  const out = await generate('examples/songwriter-agreement.md');
+test('recording-publishing-agreement.md → valid .docx', async () => {
+  const out = await generate('examples/recording-publishing-agreement.md');
   expect(fs.existsSync(out)).toBe(true);
   expect(isDocx(out)).toBe(true);
   expect(fs.statSync(out).size).toBeGreaterThan(5000);

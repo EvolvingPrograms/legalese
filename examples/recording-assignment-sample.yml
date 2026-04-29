@@ -1,5 +1,5 @@
 # Sample form values for examples/recording-assignment.md.
-# Run: node $SKILL_DIR examples/recording-assignment.md --values-file examples/recording-sample.yml
+# Run: node $SKILL_DIR examples/recording-assignment.md --values-file examples/recording-assignment-sample.yml
 
 effective_date: "April 29, 2026"
 

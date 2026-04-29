@@ -17,10 +17,10 @@ beforeAll(() => {
   fs.mkdirSync(OUT, { recursive: true });
 });
 
-/** Render a shipped example with its companion sample.yml; return plain-text body. */
+/** Render a shipped example with its companion <name>-sample.yml; return plain-text body. */
 async function renderExample(name: string): Promise<string> {
   const tplPath    = path.resolve(ROOT, 'examples', `${name}.md`);
-  const valuesPath = path.resolve(ROOT, 'examples', `${name.split('-')[0]}-sample.yml`);
+  const valuesPath = path.resolve(ROOT, 'examples', `${name}-sample.yml`);
   const output     = path.resolve(OUT, `${name}.docx`);
 
   const src = fs.readFileSync(tplPath, 'utf8');
@@ -33,48 +33,65 @@ async function renderExample(name: string): Promise<string> {
   return plain(readDocumentXml(output));
 }
 
-// — songwriter-agreement.md —
+// — recording-publishing-agreement.md —
 
-test('songwriter-agreement: {{$agreement}} expands long form and defines the term', async () => {
-  const body = await renderExample('songwriter-agreement');
-  expect(body).toContain('This Exclusive Songwriter Agreement (the “Agreement”) is entered into');
+test('recording-publishing-agreement: {{$agreement}} expands long form and defines the term', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  expect(body).toContain('This Exclusive Recording and Publishing Agreement (the “Agreement”) is entered into');
 });
 
-test('songwriter-agreement: {{$writer}} / {{$company}} introduce the parties', async () => {
-  const body = await renderExample('songwriter-agreement');
-  expect(body).toContain('between the Writer (the “Writer”)');
-  expect(body).toContain('and the Company (the “Company”)');
+test('recording-publishing-agreement: {{$writer}} / {{$company}} introduce the parties', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  expect(body).toContain('between Writer (also serving as the recording artist) (the “Writer”)');
+  expect(body).toContain('and Company (the “Company”)');
 });
 
-test('songwriter-agreement: {{party}} / {{parties}} render as inline references', async () => {
-  const body = await renderExample('songwriter-agreement');
+test('recording-publishing-agreement: §3 introduces Initial / Renewal / Term', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  // {{$initial_term}} expands long + parenthetical define
+  expect(body).toContain('The initial term of this Agreement (the “Initial Term”) shall begin');
+  // {{$renewal_term}} (no expansion) → inline-styled with article "a"
+  // {{$term}} (no expansion) → inline-styled with default article "the"
+  // {{initial_term}}, {{renewal_terms}} → plain capitalized references with their articles
+  expect(body).toContain('each, a “Renewal Term”; the Initial Term together with any Renewal Terms, the “Term”');
+});
+
+test('recording-publishing-agreement: §5 Recordings provisions exist', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  expect(body).toContain('5. Recordings Covered');
+  expect(body).toContain('all master sound recordings produced, recorded, or co-recorded');
+});
+
+test('recording-publishing-agreement: §0 defines Party / Parties inline-styled', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  // §0 uses {{$party}} / {{$parties}} → inline-styled with schema's articles
+  // ("a" singular, "the" plural).
   expect(body).toContain('individually as a “Party” and collectively as the “Parties”');
 });
 
-test('songwriter-agreement: {{$publishers_share}} expands long, omits article (article: false)', async () => {
-  const body = await renderExample('songwriter-agreement');
-  // ASCII apostrophe in the schema is upgraded to curly at render time.
-  expect(body).toContain('a 50% share (“Publisher’s Share”)');
-  expect(body).not.toContain('(the “Publisher’s Share”)');
+test('recording-publishing-agreement: {{$publishers_share}} expands long-form and defines the term', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  // ASCII apostrophe upgraded to curly at render time.
+  expect(body).toContain('a 50% share (the “Publisher’s Share”)');
 });
 
-test('songwriter-agreement: subsequent {{publishers_share}} renders as inline reference', async () => {
-  const body = await renderExample('songwriter-agreement');
-  // Section 7 references the term twice without the long-form expansion.
-  expect(body).toContain('“Publisher’s Share” royalties received by Company');
+test('recording-publishing-agreement: subsequent {{publishers_share}} renders as plain reference', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  // Reference form is plain capitalized, with auto-article "the".
+  expect(body).toContain('the Publisher’s Share royalties or master-recording royalties');
 });
 
-test('songwriter-agreement: {{!Works Made for Hire}} — proper-noun literal, no article', async () => {
-  const body = await renderExample('songwriter-agreement');
-  expect(body).toContain('the Compositions are not (“Works Made for Hire”)');
-  expect(body).not.toContain('(the “Works Made for Hire”)');
+test('recording-publishing-agreement: {{!Works Made for Hire}} — inline-styled, no parens', async () => {
+  const body = await renderExample('recording-publishing-agreement');
+  expect(body).toContain('are not “Works Made for Hire” within the meaning');
+  expect(body).not.toContain('(“Works Made for Hire”)');
 });
 
-test('songwriter-agreement: form values land in field/sig tables', async () => {
-  const body = await renderExample('songwriter-agreement');
+test('recording-publishing-agreement: form values land in field/sig tables', async () => {
+  const body = await renderExample('recording-publishing-agreement');
   expect(body).toContain('Sample Writer');
   expect(body).toContain('Sample Records LLC');
-  expect(body).toContain('State of Texas');
+  expect(body).toContain('State of Delaware');
 });
 
 // — recording-assignment.md —

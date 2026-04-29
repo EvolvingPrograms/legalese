@@ -20,12 +20,18 @@ export const i  = (text: string) => new TextRun({ text, italics: true });
 export const bi = (text: string) => new TextRun({ text, bold: true, italics: true });
 
 /**
- * Defined-term run: `(the *“Term”*)` by default, `(*“Term”*)` if `article: false`.
- * The article lives inside the parens so authors can write the noun naturally:
- *   "Exclusive Songwriter Agreement", dt('Agreement') → "… (the Agreement)".
+ * Defined-term run: `(<article> *“Term”*)` by default with article `"the"`.
+ * Pass `article: false` to drop it (proper nouns), or any string ("a", "an",
+ * "such") to override.
+ *   dt('Agreement')                       → "(the *“Agreement”*)"
+ *   dt('Claude',         { article: false }) → "(*“Claude”*)"
+ *   dt("Writer's Share", { article: 'a' })   → "(a *“Writer’s Share”*)"
  */
-export const dt = (term: string, opts: { article?: boolean } = {}): TextRun[] => {
-  const lead = opts.article === false ? '(' : '(the ';
+export const dt = (term: string, opts: { article?: boolean | string } = {}): TextRun[] => {
+  let lead: string;
+  if (opts.article === false)             lead = '(';
+  else if (typeof opts.article === 'string') lead = `(${opts.article} `;
+  else                                       lead = '(the ';
   return [t(lead), bi(`“${term}”`), t(')')];
 };
 

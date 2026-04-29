@@ -15,7 +15,7 @@ The skill ships a single self-contained bundle. `node $SKILL_DIR <input.md>` res
 
 ```bash
 mkdir -p /home/claude/work && cd /home/claude/work
-cp $SKILL_DIR/examples/songwriter-agreement.md ./my-agreement.md
+cp $SKILL_DIR/examples/recording-publishing-agreement.md ./my-agreement.md
 # edit my-agreement.md (front-matter values + body), then:
 node $SKILL_DIR my-agreement.md
 ```
@@ -107,7 +107,9 @@ Date                          || Date
 | `{{Term}}` | Define a term inline — renders as `(the *“Term”*)`. Article inside the parens; author writes the noun naturally before. |
 | `{{!Term}}` | Same, no article — `(*“Term”*)`. Use for proper nouns ("our collaborator `{{!Claude}}`"). |
 | `{{snake_key}}` | Reference an already-defined term — renders as `*“Snake Key”*` (no parens, no article — author writes "the" themselves). Label auto-derived `snake_case → Title Case`; override via `schema[key].term`. |
-| `{{$snake_key}}` | Introduce: expand to value (or `schema[key].long`) and define the term — renders as `<expansion> (the *“Snake Key”*)`. Use `{{!$snake_key}}` (or `schema[key].article: false`) to drop the article. |
+| `{{$snake_key}}` | Introduce: expand to value (or `schema[key].long`) and define the term — renders as `<expansion> (the *“Snake Key”*)`. Array values render as Oxford-comma lists (`A, B, and C`). Use `{{!$snake_key}}` (or `schema[key].article: false`) to drop the article. |
+
+Plurals: declare `recording` (or `recordings` — whichever reads more naturally) and the other side auto-derives. Marker layer applies common English rules (`+s`, `y → ies`); irregulars use an explicit `plural:` field on the schema entry (e.g. `person: { term: "Person", plural: "People" }`).
 | `1. 2. 3.` or `a. b. c.` | Lettered sublist `(a) (b) (c)` |
 | `"text"`, `Writer's`, `--`, `---` | Smart quotes, en/em dashes — auto |
 | `---` (hr) | Vertical spacer |
@@ -207,11 +209,11 @@ import { build, h2, p, fieldTable, signatureTable, gridTable }
   from '$SKILL_DIR/lib/index.js';
 ```
 
-The exports in `lib/index.js` mirror the markdown blocks one-to-one. Read an example (`examples/songwriter-agreement.md`) and `lib/index.js` to translate.
+The exports in `lib/index.js` mirror the markdown blocks one-to-one. Read an example (`examples/recording-publishing-agreement.md`) and `lib/index.js` to translate.
 
 ## Worked examples
 
-- `examples/songwriter-agreement.md` — full agreement.
+- `examples/recording-publishing-agreement.md` — full agreement.
 - `examples/recording-assignment.md` — exercises every helper including `grid` for Schedule A.
 
 ## What this skill is NOT for

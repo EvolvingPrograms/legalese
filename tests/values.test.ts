@@ -130,15 +130,21 @@ test('termLabel: missing schema falls back to derived label', () => {
 
 // — termArticle —
 
-test('termArticle: defaults to true (the article is emitted)', () => {
-  expect(termArticle('agreement', undefined)).toBe(true);
-  expect(termArticle('agreement', {})).toBe(true);
-  expect(termArticle('agreement', { agreement: 'string' })).toBe(true);
-  expect(termArticle('agreement', { agreement: { type: 'string' } })).toBe(true);
+test('termArticle: defaults to "the"', () => {
+  expect(termArticle('agreement', undefined)).toBe('the');
+  expect(termArticle('agreement', {})).toBe('the');
+  expect(termArticle('agreement', { agreement: 'string' })).toBe('the');
+  expect(termArticle('agreement', { agreement: { type: 'string' } })).toBe('the');
 });
 
-test('termArticle: schema.article: false suppresses the article', () => {
-  expect(termArticle('claude', { claude: { type: 'string', article: false } })).toBe(false);
+test('termArticle: schema.article: false → null (no article)', () => {
+  expect(termArticle('claude', { claude: { type: 'string', article: false } })).toBeNull();
+});
+
+test('termArticle: schema.article string overrides ("a", "an", "such")', () => {
+  expect(termArticle('writers_share', {
+    writers_share: { term: "Writer's Share", article: 'a' },
+  })).toBe('a');
 });
 
 // — termLong —

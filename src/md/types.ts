@@ -41,8 +41,17 @@ export type SchemaEntry =
       term?: string;
       /** Long-form expansion used by `{{$key}}` introductions when no value is set. */
       long?: string;
-      /** When false, defining markers omit the "the" article (proper-noun behavior). Default true. */
-      article?: boolean;
+      /** Article used for singular references and `{{$key}}` introductions.
+       *    true   → "the" (default)
+       *    false  → none (proper-noun: `(*“Term”*)`)
+       *    string → use this article verbatim (e.g. `"a"` → `(a *“Term”*)`,
+       *             `"an"` for vowel-sound singulars) */
+      article?: boolean | string;
+      /** Article used for plural references when the singular article doesn't fit
+       *  ("a Recording" but "the Recordings"). Falls back to `article` if unset. */
+      plural_article?: boolean | string;
+      /** Explicit plural label for irregulars ("Person" → "People"). Defaults to common English rules. */
+      plural?: string;
       description?: string;
     };
 

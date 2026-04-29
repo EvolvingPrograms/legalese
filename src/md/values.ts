@@ -82,10 +82,62 @@ export function smartLabel(s: string): string {
   return s.replace(/'/g, '’');
 }
 
-/** Resolve the display label for a defined-term reference: schema override, else derived. */
+// Apply common English pluralization to an already-displayable label.
+function pluralizeLabel(label: string): string {
+  if (/[^aeiouy]y$/i.test(label)) return label.slice(0, -1) + 'ies';
+  if (/(s|x|z|ch|sh)$/i.test(label)) return label + 'es';
+  return label + 's';
+}
+
+// Try to resolve a schema entry by treating `key` as a plural and looking up
+// its singular form, or as a singular and looking up its plural. Returns
+// { entry, asPlural } where `asPlural` is true if `key` is the plural side
+// of the resolved relationship (so the caller knows to render the plural label).
+function resolveBidirectional(key: string, schema: Schema): { entry: SchemaEntry; asPlural: boolean } | undefined {
+  // Treat key as plural → try common stems.
+  const stems: string[] = [];
+  if (key.endsWith('ies')) stems.push(key.slice(0, -3) + 'y');
+  if (key.endsWith('es'))  stems.push(key.slice(0, -2));
+  if (key.endsWith('s'))   stems.push(key.slice(0, -1));
+  for (const s of stems) {
+    const e = schema[s];
+    if (e !== undefined) return { entry: e, asPlural: true };
+  }
+  // Treat key as singular → try +s (caller wants plural rendering of e.term).
+  const e = schema[key + 's'];
+  if (e !== undefined) return { entry: e, asPlural: false };
+  return undefined;
+}
+
+/** Resolve the display label for a defined-term reference. Tries:
+ *  1. Direct schema hit (uses entry.term, smart-quoted).
+ *  2. Bidirectional lookup — sibling singular/plural in schema:
+ *     `parties` finds `party` (renders the plural of party.term);
+ *     `recording` finds `recordings` (renders the singular of recordings.term).
+ *  3. Falls back to snake_case → Title Case derivation. */
 export function termLabel(key: string, schema: Schema | undefined): string {
-  const entry: SchemaEntry | undefined = schema?.[key];
-  if (typeof entry === 'object' && entry !== null && entry.term) return smartLabel(entry.term);
+  if (schema) {
+    const direct = schema[key];
+    if (typeof direct === 'object' && direct !== null && direct.term) return smartLabel(direct.term);
+    if (typeof direct === 'string') return deriveLabel(key);
+
+    const bi = resolveBidirectional(key, schema);
+    if (bi) {
+      const { entry, asPlural } = bi;
+      if (typeof entry === 'object' && entry !== null) {
+        const baseTerm = entry.term ? smartLabel(entry.term) : null;
+        if (asPlural) {
+          // `key` is the plural side; entry stores the singular.
+          if (entry.plural) return smartLabel(entry.plural);
+          return pluralizeLabel(baseTerm ?? deriveLabel(key.replace(/(ies|es|s)$/, '')));
+        } else {
+          // `key` is the singular side; entry stores the plural.
+          // Strip the trailing 's' off entry.term to get the singular display.
+          if (baseTerm) return baseTerm.replace(/ies$/, 'y').replace(/es$/, '').replace(/s$/, '');
+        }
+      }
+    }
+  }
   return deriveLabel(key);
 }
 
@@ -100,11 +152,42 @@ export function fieldLabel(key: string, schema: Schema | undefined): string {
   return deriveLabel(key);
 }
 
-/** Whether a defining marker should emit "the" before the term. Default true. */
-export function termArticle(key: string, schema: Schema | undefined): boolean {
-  const entry: SchemaEntry | undefined = schema?.[key];
-  if (typeof entry === 'object' && entry !== null && entry.article === false) return false;
-  return true;
+function readArticle(field: boolean | string | undefined): string | null | undefined {
+  if (field === false) return null;
+  if (typeof field === 'string') return field;
+  return undefined;
+}
+
+/** Article a defining marker should emit before the term. Bidirectional and
+ *  plural-aware:
+ *    {{recording}}  → entry.article         (singular default)
+ *    {{recordings}} → entry.plural_article ?? entry.article  (plural)
+ *    {{$recording}} → entry.article         (introducing singular)
+ *  Returns:
+ *    null    → no article (proper noun)
+ *    string  → that article ("the" default; "a"/"an"/"such" via schema) */
+export function termArticle(key: string, schema: Schema | undefined): string | null {
+  if (!schema) return 'the';
+
+  const direct = schema[key];
+  if (typeof direct === 'object' && direct !== null) {
+    const a = readArticle(direct.article);
+    return a === undefined ? 'the' : a;
+  }
+
+  const bi = resolveBidirectional(key, schema);
+  if (bi) {
+    const { entry, asPlural } = bi;
+    if (typeof entry === 'object' && entry !== null) {
+      if (asPlural) {
+        const pa = readArticle(entry.plural_article);
+        if (pa !== undefined) return pa;
+      }
+      const a = readArticle(entry.article);
+      if (a !== undefined) return a;
+    }
+  }
+  return 'the';
 }
 
 /** Long-form expansion for `{{$key}}` introductions when there's no runtime value. */

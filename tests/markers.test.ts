@@ -2,16 +2,14 @@
 //
 //   {{Term}}        → (the *“Term”*)             — define inline (literal label)
 //   {{!Term}}       → (*“Term”*)                  — define, proper-noun (no article)
-//   {{snake_key}}   → *“Some Key”*                — reference (no parens)
-//   {{$snake_key}}  → <expansion> (the *“Some Key”*) — introduce
-//   {{!$snake_key}} → <expansion> (*“Some Key”*)     — introduce, no article
+//   {{snake_key}}   → <article> Some Key          — reference (auto-article from schema)
+//   {{!snake_key}}  → Some Key                    — reference, no article (sentence-start, ad-hoc)
+//   {{$snake_key}}  → <expansion> (<article> *“Some Key”*) — introduce (article from schema)
 //
-// Articles are emitted INSIDE the parens so authors don't write "the (Term)".
-// `schema[key].article: false` opts a key out globally; the `!` sigil is a
-// per-marker override.
-//
-// Curly quotes are pinned by every assertion below — a regression to straight
-// quotes would fail every test.
+// Article is the schema's article (default "the"); set `schema[key].article: false`
+// to drop it (proper nouns) or `article: "a"` / `"an"` / `"such"` to override.
+// The `!` sigil is the only article control on literal labels and reference form;
+// for `$` introductions, schema is the single source of truth.
 
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
@@ -39,18 +37,19 @@ test('{{Term}} works for multi-word labels (Str+Space token flattening)', async 
   expect(plain(xml)).toContain('The Human Writer (the “Human Writer”) signs below.');
 });
 
-test('{{!Term}} drops the article (proper-noun opt-out)', async () => {
+test('{{!Term}} renders inline-styled with no parens (sentence-start define)', async () => {
   const xml = await renderToXml(
-    '_marker_define_proper',
-    'Our AI collaborator {{!Claude}} signs below.',
+    '_marker_define_inline',
+    '{{!Compositions}} means all original musical compositions written by Writer.',
   );
-  expect(plain(xml)).toContain('Our AI collaborator (“Claude”) signs below.');
-  expect(plain(xml)).not.toContain('(the “Claude”)');
+  // Inline styled: bold-italic curly-quoted label, no parens, no article.
+  expect(plain(xml)).toContain('“Compositions” means all original musical compositions');
+  expect(plain(xml)).not.toContain('(“Compositions”)');
 });
 
 // — Reference form —
 
-test('{{snake_key}} references a term inline (no parens, no article)', async () => {
+test('{{snake_key}} references a term as plain capitalized text (no parens, no styling)', async () => {
   const xml = await renderSourceToXml('_marker_ref', [
     '---',
     'title: TEST',
@@ -62,9 +61,9 @@ test('{{snake_key}} references a term inline (no parens, no article)', async () 
     'On {{effective_date}}, the parties agreed to terms.',
   ].join('\n'));
 
-  expect(plain(xml)).toContain('On “Effective Date”, the parties agreed');
-  expect(plain(xml)).not.toContain('(“Effective Date”)');
-  expect(plain(xml)).not.toContain('(the “Effective Date”)');
+  // Reference auto-emits the schema article (default "the").
+  expect(plain(xml)).toContain('On the Effective Date, the parties agreed');
+  expect(plain(xml)).not.toContain('“Effective Date”');
 });
 
 // — Substitute / introduce forms —
@@ -84,16 +83,21 @@ test('{{$key}} expands the value and defines the term with article', async () =>
   expect(plain(xml)).toContain('dated as of December 1, 2026 (the “Effective Date”) for clarity');
 });
 
-test('{{!$key}} expands the value and defines without article', async () => {
+test('schema.article: false drops the article on {{$key}} introduce form', async () => {
+  // The `!` sigil on $-form is gone; schema is the single source of truth.
   const xml = await renderSourceToXml('_marker_sub_proper', [
     '---',
     'title: TEST',
     'output: _marker_sub_proper.docx',
     'values:',
     '  collaborator: "Claude (claude-opus-4-7)"',
+    'schema:',
+    '  collaborator:',
+    '    type: string',
+    '    article: false',
     '---',
     '',
-    'Signed by {{!$collaborator}} on the date above.',
+    'Signed by {{$collaborator}} on the date above.',
   ].join('\n'));
 
   expect(plain(xml)).toContain('Signed by Claude (claude-opus-4-7) (“Collaborator”) on the date above.');
@@ -112,10 +116,11 @@ test('schema.term overrides the auto-derived label', async () => {
     '    term: "Liquidation Event (Severance)"',
     '---',
     '',
-    'A {{liquidation_event}} triggers the cascade.',
+    'When a {{!liquidation_event}} occurs, the cascade triggers.',
   ].join('\n'));
 
-  expect(plain(xml)).toContain('A “Liquidation Event (Severance)” triggers the cascade.');
+  // `!` suppresses the auto-article so author can write "a" themselves.
+  expect(plain(xml)).toContain('When a Liquidation Event (Severance) occurs');
 });
 
 test('schema.article: false suppresses the article on define+introduce forms', async () => {
@@ -183,23 +188,25 @@ test('all three marker forms can coexist in one paragraph', async () => {
     '  effective_date: "April 29, 2026"',
     '---',
     '',
-    'This Agreement {{Agreement}}, dated {{$effective_date}}, references the {{effective_date}} below.',
+    'This Agreement {{Agreement}}, dated {{$effective_date}}, references {{effective_date}} below.',
   ].join('\n'));
 
   expect(plain(xml)).toContain('This Agreement (the “Agreement”),');
   expect(plain(xml)).toContain('dated April 29, 2026 (the “Effective Date”),');
-  expect(plain(xml)).toContain('references the “Effective Date” below.');
+  // Reference auto-emits "the" — author no longer writes it in prose.
+  expect(plain(xml)).toContain('references the Effective Date below.');
 });
 
-test('{{$key}} with no value and no schema.long collapses to a plain define', async () => {
-  const xml = await renderSourceToXml('_marker_sub_collapse', [
+test('{{$key}} with no expansion renders inline-styled (no parens)', async () => {
+  const xml = await renderSourceToXml('_marker_sub_inline', [
     '---',
     'title: TEST',
-    'output: _marker_sub_collapse.docx',
+    'output: _marker_sub_inline.docx',
     '---',
     '',
-    'See {{$writer_name}} for details.',
+    'each, {{$writer_name}}; thereafter…',
   ].join('\n'));
-
-  expect(plain(xml)).toContain('See (the “Writer Name”) for details.');
+  // No value, no long → inline introduction; article defaults to "the".
+  expect(plain(xml)).toContain('each, the “Writer Name”; thereafter');
+  expect(plain(xml)).not.toContain('(the “Writer Name”)');
 });
