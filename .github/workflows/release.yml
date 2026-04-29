@@ -30,3 +30,24 @@ jobs:
         with:
           files: plugin.zip
           generate_release_notes: true
+          append_body: true
+          body: |
+            ## Install as a Claude skill
+
+            1. Download `plugin.zip` from the assets below.
+            2. Open <https://claude.ai/customize/skills>.
+            3. Click **+** (Create skill) → **Upload skill** → upload `plugin.zip`.
+
+            Once installed, Claude reads [`SKILL.md`](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/SKILL.md) and uses the bundled CLI to produce documents from a conversational request.
+
+            ## Install as a library / CLI
+
+            ```bash
+            bun add legal-doc-builder           # library
+            bun add -g legal-doc-builder        # global CLI: `md-to-docx`
+            ```
+
+            See the [README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md) for full usage.
+
+            ---
+
