@@ -1,10 +1,13 @@
 {
-  "name": "legal-doc-builder",
+  "name": "legal-docs-plugin",
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
+  "author": "Spellcraft Inc.",
   "private": true,
   "main": "dist/md-to-docx.js",
-  "module": "dist/md-to-docx.js",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
   "bin": {
     "md-to-docx": "dist/md-to-docx.js"
   },
