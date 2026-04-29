@@ -1,0 +1,19 @@
+{
+  "name": "legal-doc-builder",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "docx": "^9.6.1",
+    "js-yaml": "^4.1.1"
+  }
+}

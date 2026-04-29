@@ -9,8 +9,8 @@ A compact API for producing signable .docx contracts in a consistent house style
 
 Two authoring paths share the same helpers and produce identical output. Pick whichever is more natural for the document at hand:
 
-- **Markdown** (`assets/md-to-docx.js`, pandoc-backed) — prose-heavy documents (most agreements). The body reads as plain text; only field tables, signature blocks, and grids use custom fenced blocks. Front-matter holds the title, output path, and `values` map. Pandoc handles smart quotes, em dashes, and lettered lists (`a. b. c.`) natively.
-- **JavaScript** (`assets/doc-builder.js` directly) — when you need precise control, conditional sections, or programmatic generation (e.g. populating a long Schedule A from data).
+- **Markdown** (`scripts/md-to-docx.js`, pandoc-backed) — prose-heavy documents (most agreements). The body reads as plain text; only field tables, signature blocks, and grids use custom fenced blocks. Front-matter holds the title, output path, and `values` map. Pandoc handles smart quotes, em dashes, and lettered lists (`a. b. c.`) natively.
+- **JavaScript** (`lib/index.js`, which re-exports from `lib/runs.js`, `lib/blocks.js`, `lib/{field,signature,grid}-table.js`, `lib/build.js`) — when you need precise control, conditional sections, or programmatic generation (e.g. populating a long Schedule A from data).
 
 ## When to reach for this
 
@@ -18,15 +18,14 @@ Use it for any signable Word document: agreements, assignments, licenses, NDAs, 
 
 ## Setup
 
-Every build needs `docx` available, plus the helper module(s) copied next to the source file:
+The skill is self-contained — `lib/` and `scripts/` are invoked in place. Only the source `.md` (or hand-written `.js`) lives in the work dir:
 
 ```bash
 mkdir -p /home/claude/work && cd /home/claude/work
-cp $SKILL_DIR/assets/doc-builder.js .
-cp $SKILL_DIR/assets/md-to-docx.js .   # only if using markdown path
+cp $SKILL_DIR/examples/songwriter-agreement.md ./my-agreement.md   # template to edit
 ```
 
-`$SKILL_DIR` is wherever this skill is mounted (typically `/mnt/skills/...`). Substitute the real path; don't keep the literal `$SKILL_DIR`.
+`$SKILL_DIR` is wherever this skill is mounted (typically `/mnt/skills/...`). Substitute the real path; don't keep the literal `$SKILL_DIR`. The library is ESM (`"type": "module"` in the skill's `package.json`), so all imports use explicit `.js` extensions.
 
 The `docx` and `js-yaml` packages are installed globally in this environment as `/home/claude/.npm-global/lib/node_modules`. The markdown path also requires `pandoc` (already at `/usr/bin/pandoc`). Set `NODE_PATH` at run time:
 
@@ -105,7 +104,7 @@ Date                          || Date
 
 ```bash
 NODE_PATH=/home/claude/.npm-global/lib/node_modules \
-  node md-to-docx.js songwriter-agreement.md
+  node $SKILL_DIR/scripts/md-to-docx.js songwriter-agreement.md
 ```
 
 The output path comes from the front-matter `output:` field.
@@ -174,10 +173,10 @@ When you need conditional logic, programmatic table population, or any feature t
 ### Document shape
 
 ```js
-const {
+import {
   build, h2, p, b, i, bi, dt, list, spacer,
   fieldTable, signatureTable, gridTable,
-} = require('./doc-builder');
+} from '$SKILL_DIR/lib/index.js';
 
 const values = {
   effective_date: '',
@@ -206,7 +205,7 @@ build({
 });
 ```
 
-A worked example is in `examples/songwriter-agreement.js`.
+The markdown examples in `examples/` are the closest reference — translate them to JS calls when you need the JS path.
 
 ### API reference
 
@@ -250,15 +249,15 @@ A worked example is in `examples/songwriter-agreement.js`.
 - Schedule headers shaded #EEEEEE.
 - Signature rows can be tagged tall to leave room for handwritten signatures.
 
-If a project genuinely needs a different look, override via `defaults` exposed on the `doc-builder` module — but the goal is for 95% of documents to use the unmodified defaults so the style is consistent across a portfolio.
+If a project genuinely needs a different look, edit `lib/defaults.js` (or import `defaults` from `lib/index.js` for read-only inspection) — but the goal is for 95% of documents to use the unmodified defaults so the style is consistent across a portfolio.
 
 ## Workflow for a new document
 
 1. Read the user's request: document type, parties, prefilled values they've given.
 2. **Decide markdown or JS** — markdown for prose-heavy documents, JS when you need conditional logic or generated content.
-3. `mkdir -p /home/claude/work && cd /home/claude/work && cp <skill-dir>/assets/doc-builder.js .` (and `md-to-docx.js` if markdown path).
+3. `mkdir -p /home/claude/work && cd /home/claude/work` and create the source file there.
 4. Write the source file (`.md` or `.js`). Keep `values` and the body the only project-specific blocks.
-5. Run it: `NODE_PATH=/home/claude/.npm-global/lib/node_modules node md-to-docx.js <input.md>` or `... node <build.js>`.
+5. Run it: `NODE_PATH=/home/claude/.npm-global/lib/node_modules node $SKILL_DIR/scripts/md-to-docx.js <input.md>` (markdown path) or `... node <your-build.js>` (JS path — import from `$SKILL_DIR/lib/index.js`).
 6. Validate: `python3 /mnt/skills/public/docx/scripts/office/validate.py <output.docx>`.
 7. Render to PDF and a page image to visually check (use `soffice.py` and `pdftoppm` from the `docx` skill).
 8. Copy the final `.docx` to `/mnt/user-data/outputs/` and `present_files` to the user, along with the source file (`.md` or `.js`) so they can edit `values` and re-run.
@@ -266,8 +265,7 @@ If a project genuinely needs a different look, override via `defaults` exposed o
 ## Worked examples
 
 - `examples/songwriter-agreement.md` — full agreement in markdown.
-- `examples/songwriter-agreement.js` — same document in JS.
-- `examples/copyright-assignment.js` — exercises every helper including `gridTable` for Schedule A.
+- `examples/copyright-assignment.md` — exercises every helper including `grid` for Schedule A.
 
 ## What this skill is NOT for
 
