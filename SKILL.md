@@ -19,6 +19,17 @@ Markdown template + values YAML → signable `.docx` in house style.
 
 3. **Inspect what a template needs**: `node $SKILL_DIR <template.md> --schema` prints `values:` + `schema:` + `required:` + `missing:` as YAML.
 
+## Workflow
+
+For any new document request, work in this order:
+
+1. **Identify the parties, deal type, and operative terms** from the user's request. Pick the closest example template as a seed; copy it to the work dir.
+2. **Write the schema first** — declare every defined term used in the body (`agreement`, `parties`, domain-specific nouns) with `term`/`long`/`article` fields, plus form fields with `type` and `required` flags. Then write the body using markers throughout — single source of truth.
+3. **Fill the values YAML with everything you already know** from the user's request: party names, addresses, dates, dollar amounts, governing law, signature names, etc. Use sensible defaults where the user didn't specify (state of incorporation = company HQ state, governing law = company state, effective date = today).
+4. **List the gaps** — any required field still empty, or schedule rows the user didn't fully provide. Ask the user a single batched question for the remaining info, not a back-and-forth. Run `--schema` if you're unsure what's missing; the `missing:` list is authoritative.
+5. **Update the values YAML** as the user supplies answers and re-render. The template is unchanged; only the values file moves. This is the whole point of the templating system — iteration is cheap.
+6. **Validate** the .docx (`python3 /mnt/skills/public/docx/scripts/office/validate.py <out>`), render to PDF + a page image to spot-check layout, then `present_files` the .docx and the values YAML so the user can re-run with edits.
+
 ## Marker syntax (the only thing pandoc doesn't already handle)
 
 | Marker | Renders | Use |
