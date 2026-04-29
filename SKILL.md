@@ -91,7 +91,15 @@ schema:
 
 ## Pitfalls
 
-- **Lists need each item on its own line.** Wrapping `a. … b. …` onto one line breaks the list — only `a.` is recognized. Items can be separated by a blank line or just consecutive lines at column 1.
+- **Lists are double-spaced** — separate each item with a blank line so multi-line items wrap cleanly:
+
+  ```
+  a. First item, possibly long enough to wrap onto another line.
+
+  b. Second item.
+
+  c. Third item.
+  ```
 - **Don't put markers at sentence start with prose-supplied determiner**: `the {{agreement}}` would render `the the Agreement`. Use `the {{!agreement}}` or schema-drive (`{{agreement}}` → `the Agreement` from schema).
 - **Output path** comes from `--output`, then `$OUTPUT_DIR`, then front-matter `output:`, then `<input>.docx`.
 
