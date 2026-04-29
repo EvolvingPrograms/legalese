@@ -49,6 +49,26 @@ Article auto-capitalizes at sentence start (paragraph start, or after `.!?`). Ap
 
 There is no plain `${value}` substitution syntax — every marker emits a defined-term form. To inline raw values into prose without parenthetical-define behavior, hardcode them, put them in a `fields` block, or accept the `{{$key}}` form.
 
+### How `{{$key}}` expansion works
+
+`{{$key}}` renders as **`<expansion> (<article> *“term”*)`** — two distinct pieces, both pulled from different schema fields:
+
+```
+expansion  ←  values[key]   ??  schema[key].long   ??  (omit; collapse to inline-styled)
+term       ←  schema[key].term  ??  snake_case → Title Case
+article    ←  schema[key].article  ??  "the"
+```
+
+Worked examples (with `schema.agreement = { long: "Copyright Assignment" }`, no `term` field):
+
+| Marker | Renders | Why |
+|---|---|---|
+| `{{$agreement}}` | `Copyright Assignment (the *“Agreement”*)` | `long` is the expansion; `term` derives from the key (`agreement` → `Agreement`) |
+| `{{agreement}}` | `the Agreement` | reference form, plain capitalized, schema's article |
+| `{{!agreement}}` | `Agreement` | reference, no article |
+
+Common mistake: assuming the parenthetical repeats the long form. It doesn't — the long form is the **prose expansion**; the parens always show the **short term**. If you want the same string in both, set `term:` and `long:` to the same value (rarely useful).
+
 ## Schema entry fields
 
 ```yaml
