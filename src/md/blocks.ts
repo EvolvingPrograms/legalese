@@ -55,7 +55,7 @@ export function blockToDocBuilder(
       if (lang === 'fields') return [parseFieldsBlock(content, values, ctx.schema)];
       if (lang === 'sig')    return [parseSigBlock(content, values)];
       if (lang === 'grid')   return [parseGridBlock(content)];
-      if (lang === 'grids')  return parseGridsBlock(content, ctx);
+      if (lang === 'grids')  return parseGridsBlock(content, ctx, values);
       console.warn('Unknown fenced block:', lang);
       return [];
     }

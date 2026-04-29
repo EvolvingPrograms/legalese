@@ -17,3 +17,18 @@ sig_assignor_email: "artist@example.com"
 sig_assignee_entity: "Sample Records LLC"
 sig_assignee_by: "Sample Officer"
 sig_assignee_title: "Managing Member"
+
+# Schedule A catalog: array of YAML paths (relative to the CWD where the CLI
+# is invoked) and/or inline objects. Consumed by `grids: from: $albums` in the
+# template. This sample assumes you run from the project root.
+albums:
+  - examples/recording-data.yml
+  - album:
+      title: "Sample EP"
+      release_type: "EP"
+      upc: "0000000000002"
+      release_date: "2026-02-20"
+      copyright: "© 2026 Sample Records"
+    tracks:
+      - { n: 1, title: "Inline Track A", duration: "03:30", isrc: "XXXXX2600101" }
+      - { n: 2, title: "Inline Track B", duration: "02:55", isrc: "XXXXX2600102" }

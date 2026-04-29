@@ -81,10 +81,11 @@ test('recording-publishing-agreement: subsequent {{publishers_share}} renders as
   expect(body).toContain('the Publisher’s Share royalties or master-recording royalties');
 });
 
-test('recording-publishing-agreement: {{!Works Made for Hire}} — inline-styled, no parens', async () => {
+test('recording-publishing-agreement: "works made for hire" renders as plain quoted prose', async () => {
   const body = await renderExample('recording-publishing-agreement');
-  expect(body).toContain('are not “Works Made for Hire” within the meaning');
-  expect(body).not.toContain('(“Works Made for Hire”)');
+  // Just smart-quoted plain text, no styling — it's quoted statutory language,
+  // not a defined term we're introducing.
+  expect(body).toContain('are not “works made for hire” within the meaning');
 });
 
 test('recording-publishing-agreement: form values land in field/sig tables', async () => {

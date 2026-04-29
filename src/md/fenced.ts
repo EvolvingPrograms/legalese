@@ -124,18 +124,27 @@ function interpolate(tpl: string, ctx: unknown): string {
 //
 // Supported keys:
 //   columns:  GridColumn[] (required)
-//   from:     (string | object)[]  each entry is either a JSON file path
+//   from:     (string | object)[]  each entry is either a YAML file path
 //                                   (relative to the source markdown file) or
-//                                   an inline object with the same shape
+//                                   an inline object with the same shape.
+//             OR `$key`             — string starting with `$` resolves to
+//                                   `values[key]`, expected to be an array of
+//                                   the same shape. Lets templates accept
+//                                   data sources via values rather than baking
+//                                   paths into the .md file.
 //   rows:     string                dot-path inside each loaded object to the
 //                                   row array (e.g. `tracks` or `data.items`).
 //                                   Omit to treat the loaded value as the rows.
 //   heading:  string | false        template interpolated against each loaded
 //                                   object (`{album.title}`); `false` to omit
-export function parseGridsBlock(content: string, ctx: ParseCtx): (Paragraph | Table)[] {
+export function parseGridsBlock(
+  content: string,
+  ctx: ParseCtx,
+  values?: Record<string, unknown>,
+): (Paragraph | Table)[] {
   const cfg = (yaml.load(content) || {}) as {
     columns?: GridColumn[];
-    from?: (string | Record<string, unknown>)[];
+    from?: string | (string | Record<string, unknown>)[];
     rows?: string;
     heading?: string | false;
   };
@@ -144,12 +153,36 @@ export function parseGridsBlock(content: string, ctx: ParseCtx): (Paragraph | Ta
   const rowsPath = cfg.rows;
   const headingTpl = cfg.heading;
 
+  // Resolve `from` — either a literal array or `$key` lookup in values.
+  // Path-resolution rule:
+  //   - Literal `from: [./x.yml]` in the template → resolves against the .md
+  //     file's directory (template owns that bundled data).
+  //   - `from: $key` from values → resolves against process.cwd() so callers
+  //     can reference paths from wherever they invoke the CLI (matches typical
+  //     CLI ergonomics: `cd /work && md-to-docx tpl.md --values-file my.yml`).
+  let fromList: (string | Record<string, unknown>)[];
+  let pathBase: string;
+  if (typeof cfg.from === 'string' && cfg.from.trim().startsWith('$')) {
+    const key = cfg.from.trim().slice(1);
+    const v = values?.[key];
+    if (!Array.isArray(v)) {
+      console.warn(`grids: from $${key} expected array in values, got:`, v);
+      fromList = [];
+    } else {
+      fromList = v as (string | Record<string, unknown>)[];
+    }
+    pathBase = process.cwd();
+  } else {
+    fromList = (cfg.from ?? []) as (string | Record<string, unknown>)[];
+    pathBase = ctx.baseDir;
+  }
+
   const items: { heading: string | null; rows: GridRow[] }[] = [];
 
-  for (const source of cfg.from ?? []) {
+  for (const source of fromList) {
     let data: unknown;
     if (typeof source === 'string') {
-      const abs = path.isAbsolute(source) ? source : path.resolve(ctx.baseDir, source);
+      const abs = path.isAbsolute(source) ? source : path.resolve(pathBase, source);
       data = yaml.load(fs.readFileSync(abs, 'utf8'));
     } else {
       data = source;

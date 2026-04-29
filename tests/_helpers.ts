@@ -27,7 +27,9 @@ export async function renderSourceToXml(name: string, src: string): Promise<stri
   return readDocumentXml(output);
 }
 
-/** Strip XML tags AND decode common entities so assertions target rendered plain text. */
+/** Strip XML tags AND decode common entities so assertions target rendered plain text.
+ *  Also normalizes pandoc's no-break spaces (inserted by `+smart` after abbreviations
+ *  like "c. ") to regular spaces so assertions can use plain ASCII spaces. */
 export const plain = (xml: string): string =>
   xml
     .replace(/<[^>]+>/g, '')
@@ -35,4 +37,5 @@ export const plain = (xml: string): string =>
     .replace(/&quot;/g, '"')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+    .replace(/&amp;/g, '&')
+    .replace(/ /g, ' ');
