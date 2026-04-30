@@ -1,0 +1,12 @@
+# One Schedule-A entry, loaded by `grids: from: $locations` in
+# examples/landscaping-agreement.md when the sample lists this file path.
+# Top-level keys: `location` (used by the heading template) and `services`
+# (the row array).
+location:
+  name: "Lincoln Park"
+  address: "1234 N Lincoln Ave, Chicago, IL 60614"
+services:
+  - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$140 per visit" }
+  - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$650 per rotation" }
+  - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$220 per event" }
+  - { service: "Trash Policing",            frequency: "Three times weekly",                 minimum: "$55 per visit" }

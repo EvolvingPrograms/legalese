@@ -316,21 +316,36 @@ columns:
 ```
 ````
 
-With `values.locations` as an array like:
+Each entry in `from:` is either a **YAML file path** (CWD-relative) or
+an **inline object** — and you can mix both in the same array. Pull
+recurring/standard entries from checked-in YAMLs and add one-offs
+inline:
 
 ```yaml
+# values.yml
 locations:
+  # External file — same shape as an inline entry.
+  - examples/landscaping-lincoln-park.yml
+
+  # Inline entry.
   - location:
-      name: "Lincoln Ave"
-      address: "1234 N Lincoln Ave, Chicago"
+      name: "Roosevelt Rd"
+      address: "5678 W Roosevelt Rd, Cicero"
     services:
       - { service: "Mowing", frequency: "Weekly" }
       - { service: "Snow Removal", frequency: "As-needed" }
-  - location: { name: "Roosevelt Rd", address: "5678 W Roosevelt Rd, Cicero" }
-    services: [ ... ]
 ```
 
-…you get one heading + grid per entry. Use this for Schedule A patterns
+```yaml
+# examples/landscaping-lincoln-park.yml — same top-level keys as inline.
+location:
+  name: "Lincoln Ave"
+  address: "1234 N Lincoln Ave, Chicago"
+services:
+  - { service: "Mowing", frequency: "Weekly" }
+```
+
+You get one heading + grid per entry. Use this for Schedule A patterns
 where the same column shape repeats per location/album/album-side.
 
 **Don't grep the bundled `dist/md-to-docx.js`** to understand block
@@ -340,8 +355,9 @@ shipped example exercises all of them.
 
 ## Reference
 
-The shipped example `examples/recording-publishing-agreement.md` (with sibling
-`-sample.yml`) is the deepest reference — read it when in doubt about layout,
+The shipped example `examples/landscaping-agreement.md` (with sibling
+`-sample.yml` and `landscaping-lincoln-park.yml` for the mixed-grid pattern)
+is the deepest reference — read it when in doubt about layout,
 defined-term placement, or grid blocks. Lists are double-spaced (blank line
 between items).
 

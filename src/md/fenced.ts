@@ -165,11 +165,16 @@ export function parseGridsBlock(
   if (typeof cfg.from === 'string' && cfg.from.trim().startsWith('$')) {
     const key = cfg.from.trim().slice(1);
     const v = values?.[key];
-    if (!Array.isArray(v)) {
-      console.warn(`grids: from $${key} expected array in values, got:`, v);
-      fromList = [];
-    } else {
+    if (Array.isArray(v)) {
       fromList = v as (string | Record<string, unknown>)[];
+    } else {
+      // Undefined → catalog not provided yet (legitimate during --schema dry
+      // runs or unfilled drafts); silently render no grids. Anything else
+      // (string/number/object) is a misconfiguration worth flagging.
+      if (v !== undefined) {
+        console.warn(`grids: from $${key} expected array in values, got:`, v);
+      }
+      fromList = [];
     }
     pathBase = process.cwd();
   } else {

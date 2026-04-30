@@ -1,0 +1,59 @@
+# Sample form values for examples/landscaping-agreement.md.
+# Render (from project root):
+#   node $SKILL_DIR examples/landscaping-agreement.md \
+#     --values-file examples/landscaping-agreement-sample.yml \
+#     --output Landscaping_Services_Agreement.docx
+
+effective_date: "June 1, 2026"
+
+# Dynamic introduce expansions — value beats schema `long:`.
+agreement:  "Landscaping Services Agreement"
+customer:   "McDonald's USA, LLC, a Delaware limited liability company, with offices at 110 N Carpenter St, Chicago, IL 60607"
+contractor: "Greenline Landscaping, Inc., an Illinois corporation, with offices at 4421 W Industrial Park Rd, Naperville, IL 60563"
+
+customer_name:    "McDonald's USA, LLC"
+customer_entity:  "Delaware limited liability company"
+customer_address: "110 N Carpenter St, Chicago, IL 60607"
+
+contractor_name:    "Greenline Landscaping, Inc."
+contractor_entity:  "Illinois corporation"
+contractor_address: "4421 W Industrial Park Rd, Naperville, IL 60563"
+
+governing_law: "State of Illinois"
+venue:         "Cook County, Illinois"
+
+sig_customer_entity:   "McDonald's USA, LLC"
+sig_customer_by:       "Michael Torres"
+sig_customer_title:    "Director of Facilities"
+
+sig_contractor_entity: "Greenline Landscaping, Inc."
+sig_contractor_by:     "Sarah Chen"
+sig_contractor_title:  "Chief Executive Officer"
+
+# Schedule A catalog: array of YAML paths (CWD-relative) and/or inline objects.
+# Consumed by `grids: from: $locations` in the template. Mixing both forms is
+# supported — pull recurring/standard locations from a checked-in YAML, then
+# add one-off entries inline per deal.
+locations:
+  # External file — same shape as an inline entry (location: + services:).
+  - examples/landscaping-lincoln-park.yml
+
+  # Inline entry.
+  - location:
+      name: "Cicero — Roosevelt Rd"
+      address: "5678 W Roosevelt Rd, Cicero, IL 60804"
+    services:
+      - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$130 per visit" }
+      - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$575 per rotation" }
+      - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$210 per event" }
+      - { service: "Trash Policing",            frequency: "Daily",                              minimum: "$45 per visit" }
+
+  # Inline entry.
+  - location:
+      name: "Oak Lawn — Cicero Ave"
+      address: "9012 S Cicero Ave, Oak Lawn, IL 60453"
+    services:
+      - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$135 per visit" }
+      - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$600 per rotation" }
+      - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$215 per event" }
+      - { service: "Trash Policing",            frequency: "Three times weekly",                 minimum: "$50 per visit" }

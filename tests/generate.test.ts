@@ -1,5 +1,5 @@
 // End-to-end generation test: the shipped example renders to a valid .docx.
-//   - recording-publishing-agreement.md   fields, sig, defined-term markers
+//   - landscaping-agreement.md   fields, sig, grids, defined-term markers
 
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
@@ -27,8 +27,8 @@ function isDocx(p: string): boolean {
   return fs.readFileSync(p).slice(0, 2).toString() === 'PK';
 }
 
-test('recording-publishing-agreement.md → valid .docx', async () => {
-  const out = await generate('examples/recording-publishing-agreement.md');
+test('landscaping-agreement.md → valid .docx', async () => {
+  const out = await generate('examples/landscaping-agreement.md');
   expect(fs.existsSync(out)).toBe(true);
   expect(isDocx(out)).toBe(true);
   expect(fs.statSync(out).size).toBeGreaterThan(5000);

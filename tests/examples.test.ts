@@ -1,10 +1,10 @@
 // End-to-end tests for the shipped templates rendered with their sample values.
 // These exercise:
-//   - schema-driven defined terms (long, term, article)
-//   - {{$key}} introduction (value substitution)
-//   - {{key}} reference form
+//   - schema-driven defined terms (long, term, plural)
+//   - {{$key}} introduction (value substitution + long fallback)
+//   - {{key}} reference forms (plain, the_, the_X plurals)
 //   - --values-file value loading via convertMarkdown's `values` option
-//   - the YAML grids: from data file (replaces the old sample.json)
+//   - the `grids: from: $key` mixed pattern (file path + inline objects)
 
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
@@ -33,65 +33,62 @@ async function renderExample(name: string): Promise<string> {
   return plain(readDocumentXml(output));
 }
 
-// — recording-publishing-agreement.md —
+// — landscaping-agreement.md —
 
-test('recording-publishing-agreement: {{$agreement}} expands long form and defines the term', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  expect(body).toContain('This Exclusive Recording and Publishing Agreement (the “Agreement”) is entered into');
+test('landscaping: {{$the_Agreement}} expands the value override and defines the term', async () => {
+  const body = await renderExample('landscaping-agreement');
+  expect(body).toContain('This Landscaping Services Agreement (the “Agreement”) is entered into');
 });
 
-test('recording-publishing-agreement: {{$writer}} / {{$company}} introduce the parties', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  expect(body).toContain('between Writer (also serving as the recording artist) (the “Writer”)');
-  expect(body).toContain('and Company (the “Company”)');
+test('landscaping: {{$the_Customer}} / {{$the_Contractor}} introduce the parties from values', async () => {
+  const body = await renderExample('landscaping-agreement');
+  expect(body).toContain("McDonald's USA, LLC, a Delaware limited liability company, with offices at 110 N Carpenter St, Chicago, IL 60607 (the “Customer”)");
+  expect(body).toContain('Greenline Landscaping, Inc., an Illinois corporation, with offices at 4421 W Industrial Park Rd, Naperville, IL 60563 (the “Contractor”)');
 });
 
-test('recording-publishing-agreement: §3 introduces Initial / Renewal / Term', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  // {{$initial_term}} expands long + parenthetical define
-  expect(body).toContain('The initial term of this Agreement (the “Initial Term”) shall begin');
-  // {{$renewal_term}} (no expansion) → inline-styled with article "a"
-  // {{$term}} (no expansion) → inline-styled with default article "the"
-  // {{initial_term}}, {{renewal_terms}} → plain capitalized references with their articles
-  expect(body).toContain('each, a “Renewal Term”; the Initial Term together with any Renewal Terms, the “Term”');
-});
-
-test('recording-publishing-agreement: §5 Recordings provisions exist', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  expect(body).toContain('5. Recordings Covered');
-  expect(body).toContain('all master sound recordings produced, recorded, or co-recorded');
-});
-
-test('recording-publishing-agreement: §0 defines Party / Parties inline-styled', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  // §0 uses {{$party}} / {{$parties}} → inline-styled with schema's articles
-  // ("a" singular, "the" plural).
+test('landscaping: §0 introduces Party / Parties inline-styled', async () => {
+  const body = await renderExample('landscaping-agreement');
   expect(body).toContain('individually as a “Party” and collectively as the “Parties”');
 });
 
-test('recording-publishing-agreement: {{$publishers_share}} expands long-form and defines the term', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  // ASCII apostrophe upgraded to curly at render time.
-  expect(body).toContain('a 50% share (the “Publisher’s Share”)');
+test('landscaping: §3 introduces Initial Term / Renewal Term / Term from schema.long', async () => {
+  const body = await renderExample('landscaping-agreement');
+  // {{$the_Initial_term}} — `long: "an initial term of two (2) years"` baked
+  // into schema, bare {{$key}}-style is in §3 but uses {{$the_Initial_term}}
+  // here so the parens article is "the".
+  expect(body).toContain('an initial term of two (2) years (the “Initial Term”)');
+  // {{$renewal_term}} → bare introduce, no parens article; long bakes "successive…"
+  expect(body).toContain('successive renewal terms of one (1) year each (“Renewal Term”)');
 });
 
-test('recording-publishing-agreement: subsequent {{publishers_share}} renders as plain reference', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  // Reference form is plain capitalized, with auto-article "the".
-  expect(body).toContain('the Publisher’s Share royalties or master-recording royalties');
+test('landscaping: {{$the_Locations}} (plural) does not splat the catalog array', async () => {
+  // Regression: values.locations is the catalog for `grids from: $locations`.
+  // The marker should NOT pull the array as a comma-separated expansion.
+  const body = await renderExample('landscaping-agreement');
+  expect(body).not.toContain('[object Object]');
+  expect(body).toContain('collectively, the “Locations”');
 });
 
-test('recording-publishing-agreement: "works made for hire" renders as plain quoted prose', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  // Just smart-quoted plain text, no styling — it's quoted statutory language,
-  // not a defined term we're introducing.
-  expect(body).toContain('are not “works made for hire” within the meaning');
+test('landscaping: {{$the_Monthly_fee}} expands schema.long (no value override)', async () => {
+  const body = await renderExample('landscaping-agreement');
+  expect(body).toContain('$1,850.00 per Location per month (the “Monthly Fee”)');
 });
 
-test('recording-publishing-agreement: form values land in field/sig tables', async () => {
-  const body = await renderExample('recording-publishing-agreement');
-  expect(body).toContain('Sample Writer');
-  expect(body).toContain('Sample Records LLC');
-  expect(body).toContain('State of Delaware');
+test('landscaping: form values land in the §1 fields and §14 sig blocks', async () => {
+  const body = await renderExample('landscaping-agreement');
+  expect(body).toContain('Michael Torres');
+  expect(body).toContain('Sarah Chen');
+  expect(body).toContain('State of Illinois');
 });
 
+test('landscaping: grids renders one heading per location, mixing external file + inline entries', async () => {
+  const body = await renderExample('landscaping-agreement');
+  // Lincoln Park comes from examples/landscaping-lincoln-park.yml.
+  expect(body).toContain('Lincoln Park — 1234 N Lincoln Ave, Chicago, IL 60614');
+  // Cicero and Oak Lawn are inline entries.
+  expect(body).toContain('Cicero — Roosevelt Rd — 5678 W Roosevelt Rd, Cicero, IL 60804');
+  expect(body).toContain('Oak Lawn — Cicero Ave — 9012 S Cicero Ave, Oak Lawn, IL 60453');
+  // Service rows.
+  expect(body).toContain('Mowing & Trimming');
+  expect(body).toContain('Snow & Ice Removal');
+});
