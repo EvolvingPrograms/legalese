@@ -4,32 +4,39 @@
 #     --values-file examples/landscaping-agreement-sample.yml \
 #     --output Landscaping_Services_Agreement.docx
 
-effective_date: "June 1, 2026"
+effective_date: June 1, 2026
 
 # Dynamic introduce expansions — value beats schema `long:`. Don't list a
 # value here that's identical to `long:` (e.g. agreement) — `long:` alone
 # already produces the right rendering, and a duplicate just adds noise.
-customer:   "McDonald's USA, LLC, a Delaware limited liability company, with offices at 110 N Carpenter St, Chicago, IL 60607"
-contractor: "Greenline Landscaping, Inc., an Illinois corporation, with offices at 4421 W Industrial Park Rd, Naperville, IL 60563"
+# Use `|-` block scalars for long entries so you can wrap lines without
+# quote-escape gymnastics.
+customer: |-
+  McDonald's USA, LLC, a Delaware limited liability company, with offices at 110
+  N Carpenter St, Chicago, IL 60607
 
-customer_name:    "McDonald's USA, LLC"
-customer_entity:  "Delaware limited liability company"
-customer_address: "110 N Carpenter St, Chicago, IL 60607"
+contractor: |-
+  Greenline Landscaping, Inc., an Illinois corporation, with offices at 4421 W
+  Industrial Park Rd, Naperville, IL 60563
 
-contractor_name:    "Greenline Landscaping, Inc."
-contractor_entity:  "Illinois corporation"
-contractor_address: "4421 W Industrial Park Rd, Naperville, IL 60563"
+customer_name:    McDonald's USA, LLC
+customer_entity:  Delaware limited liability company
+customer_address: 110 N Carpenter St, Chicago, IL 60607
 
-governing_law: "State of Illinois"
-venue:         "Cook County, Illinois"
+contractor_name:    Greenline Landscaping, Inc.
+contractor_entity:  Illinois corporation
+contractor_address: 4421 W Industrial Park Rd, Naperville, IL 60563
 
-sig_customer_entity:   "McDonald's USA, LLC"
-sig_customer_by:       "Michael Torres"
-sig_customer_title:    "Director of Facilities"
+governing_law: State of Illinois
+venue:         Cook County, Illinois
 
-sig_contractor_entity: "Greenline Landscaping, Inc."
-sig_contractor_by:     "Sarah Chen"
-sig_contractor_title:  "Chief Executive Officer"
+sig_customer_entity:   McDonald's USA, LLC
+sig_customer_by:       Michael Torres
+sig_customer_title:    Director of Facilities
+
+sig_contractor_entity: Greenline Landscaping, Inc.
+sig_contractor_by:     Sarah Chen
+sig_contractor_title:  Chief Executive Officer
 
 # Schedule A catalog: array of YAML paths (CWD-relative) and/or inline objects.
 # Consumed by `grid: from: $locations` in the template. Mixing both forms is
@@ -39,18 +46,34 @@ locations:
   # External file — same shape as an inline entry.
   - examples/landscaping-lincoln-park.yml
 
-  # Inline entry.
-  - heading: "Cicero — Roosevelt Rd — 5678 W Roosevelt Rd, Cicero, IL 60804"
+  # Inline entry — block-form rows. No quotes needed; each value sits on its
+  # own line out of flow context, so commas, parens, and `"` are all literal.
+  - heading: Cicero — Roosevelt Rd — 5678 W Roosevelt Rd, Cicero, IL 60804
     rows:
-      - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$130 per visit" }
-      - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$575 per rotation" }
-      - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$210 per event" }
-      - { service: "Trash Policing",            frequency: "Daily",                              minimum: "$45 per visit" }
+      - service:   Mowing & Trimming
+        frequency: Weekly (Apr–Oct)
+        minimum:   $130 per visit
+      - service:   Seasonal Planting & Mulch
+        frequency: Quarterly
+        minimum:   $575 per rotation
+      - service:   Snow & Ice Removal
+        frequency: As-needed (≥1" snow or ice event)
+        minimum:   $210 per event
+      - service:   Trash Policing
+        frequency: Daily
+        minimum:   $45 per visit
 
-  # Inline entry.
-  - heading: "Oak Lawn — Cicero Ave — 9012 S Cicero Ave, Oak Lawn, IL 60453"
+  - heading: Oak Lawn — Cicero Ave — 9012 S Cicero Ave, Oak Lawn, IL 60453
     rows:
-      - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$135 per visit" }
-      - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$600 per rotation" }
-      - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$215 per event" }
-      - { service: "Trash Policing",            frequency: "Three times weekly",                 minimum: "$50 per visit" }
+      - service:   Mowing & Trimming
+        frequency: Weekly (Apr–Oct)
+        minimum:   $135 per visit
+      - service:   Seasonal Planting & Mulch
+        frequency: Quarterly
+        minimum:   $600 per rotation
+      - service:   Snow & Ice Removal
+        frequency: As-needed (≥1" snow or ice event)
+        minimum:   $215 per event
+      - service:   Trash Policing
+        frequency: Three times weekly
+        minimum:   $50 per visit

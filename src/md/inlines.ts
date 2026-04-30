@@ -52,20 +52,29 @@ function makeRun(text: string, bold: boolean, italic: boolean, smallCaps = false
  *  Primitive arrays become Oxford-comma lists ("A, B, and C"); strings/numbers
  *  stringify as-is; null/undefined/empty-string and arrays of objects become
  *  null so the caller falls back to schema.long. (Object arrays are catalog
- *  data for `grids from: $key`, not term expansions.) */
+ *  data for `grids from: $key`, not term expansions.)
+ *
+ *  Internal newlines fold into spaces — YAML `|-` block scalars used to wrap
+ *  long single-sentence values shouldn't introduce hard line breaks into
+ *  prose. Use markdown paragraph breaks if you actually want a break. */
 function formatExpansion(value: unknown): string | null {
   if (value == null) return null;
   if (Array.isArray(value)) {
     if (value.some((v) => v != null && typeof v === 'object')) return null;
-    const parts = value.map((v) => String(v)).filter((s) => s !== '');
+    const parts = value.map((v) => foldLines(String(v))).filter((s) => s !== '');
     if (parts.length === 0) return null;
     if (parts.length === 1) return parts[0]!;
     if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
     return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
   }
   if (typeof value === 'object') return null;
-  const s = String(value);
+  const s = foldLines(String(value));
   return s === '' ? null : s;
+}
+
+/** Collapse runs of whitespace (including newlines) into single spaces. */
+function foldLines(s: string): string {
+  return s.replace(/\s+/g, ' ').trim();
 }
 
 /** Capitalize the first character of a string. */

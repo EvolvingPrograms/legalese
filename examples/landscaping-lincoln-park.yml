@@ -1,9 +1,17 @@
 # One Schedule-A entry, loaded by `grid: from: $locations` in
 # examples/landscaping-agreement.md when the sample lists this file path.
 # Shape matches an inline entry exactly: `{heading?, rows}`.
-heading: "Lincoln Park — 1234 N Lincoln Ave, Chicago, IL 60614"
+heading: Lincoln Park — 1234 N Lincoln Ave, Chicago, IL 60614
 rows:
-  - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$140 per visit" }
-  - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$650 per rotation" }
-  - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$220 per event" }
-  - { service: "Trash Policing",            frequency: "Three times weekly",                 minimum: "$55 per visit" }
+  - service:   Mowing & Trimming
+    frequency: Weekly (Apr–Oct)
+    minimum:   $140 per visit
+  - service:   Seasonal Planting & Mulch
+    frequency: Quarterly
+    minimum:   $650 per rotation
+  - service:   Snow & Ice Removal
+    frequency: As-needed (≥1" snow or ice event)
+    minimum:   $220 per event
+  - service:   Trash Policing
+    frequency: Three times weekly
+    minimum:   $55 per visit
