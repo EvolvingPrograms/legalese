@@ -101,16 +101,16 @@ customer:   "McDonald's USA, LLC"
 contractor: "Greenline Landscaping, Inc."
 ```
 
-`{{$the_agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
-(value beats `long:`); `{{$the_monthly_fee}}` → `$1,850.00 per Location (the ***"Monthly Fee"***)`
+`{{$the_Agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
+(value beats `long:`); `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the ***"Monthly Fee"***)`
 (no value, falls back to `long:`).
 
-Now references like `{{$the_publishers_share}}` always render
+Now references like `{{$the_Publishers_share}}` always render
 `a 50% share (the ***"Publisher's Share"***)` regardless of values, and
-`{{$the_monthly_fee}}` always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
+`{{$the_Monthly_fee}}` always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
 
 After first introduction, use the plain reference form everywhere:
-`{{the_publishers_share}}` → "the Publisher's Share"; `{{the_monthly_fee}}`
+`{{the_Publishers_share}}` → "the Publisher's Share"; `{{the_Monthly_fee}}`
 → "the Monthly Fee". Body reads natural English; one `long:` edit at the
 top changes the dollar amount everywhere it's introduced.
 
@@ -128,8 +128,8 @@ schema:
 ```
 
 ```markdown
-This Agreement shall continue for {{$initial_term}} unless renewed for
-{{$renewal_term}}, after which the Initial Term and any Renewal Terms
+This Agreement shall continue for {{$Initial_term}} unless renewed for
+{{$Renewal_term}}, after which the Initial Term and any Renewal Terms
 together constitute the Term.
 ```
 
@@ -140,18 +140,32 @@ Renders:
 > one (1) year (***"Renewal Term"***), after which the Initial Term and
 > any Renewal Terms together constitute the Term.
 
-Don't double up — `{{$an_initial_term}}` with `long: "an initial term…"`
+Don't double up — `{{$an_Initial_term}}` with `long: "an initial term…"`
 would render `"an initial term of two (2) years (an Initial Term)"` —
 redundant article.
 
 ### Worked pangram
 
+Markers mirror the case of the rendered word so the markdown reads like
+the legal document — `{{Writer}}` looks like "Writer" in the output, the
+article prefix carries its own case (`the_` / `The_`):
+
+> …governed by {{the_Agreement}}. {{The_Agreement}} shall remain in effect…
+
+renders:
+
+> …governed by the Agreement. The Agreement shall remain in effect…
+
+Mid-sentence uses `{{the_Agreement}}` (lowercase article); sentence-start
+uses `{{The_Agreement}}` (capital `T` in the marker → capital `T` in the
+output).
+
 ```markdown
-This {{$the_agreement}}, dated {{$the_effective_date}}, is between
-{{$the_customer}} and {{$the_contractor}}, individually {{$a_party}} and
-collectively {{$the_parties}}. {{The_contractor}} shall provide
-{{!Services}} at each {{location}} listed in {{!Schedule A}} for
-{{$the_monthly_fee}} per {{location}}, subject to the {{insurance}}
+This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between
+{{$the_Customer}} and {{$the_Contractor}}, individually {{$a_Party}} and
+collectively {{$the_Parties}}. {{The_Contractor}} shall provide
+{{!Services}} at each {{Location}} listed in {{!Schedule A}} for
+{{$the_Monthly_fee}} per {{Location}}, subject to the {{Insurance}}
 requirements set out below.
 ```
 
