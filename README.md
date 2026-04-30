@@ -183,11 +183,12 @@ Spotify URL | spotify | sub=if credit required
 
 Renders as a two-column field table:
 
-| Effective Date  |                            |
-| --------------- | -------------------------- |
-| Writer Name     |                            |
-| Licensing Fee   | $                          |
-| Spotify URL     | *if credit required*       |
+<table width="500">
+<tr><td width="180"><b>Effective Date</b></td><td>&nbsp;</td></tr>
+<tr><td><b>Writer Name</b></td><td>&nbsp;</td></tr>
+<tr><td><b>Licensing Fee</b></td><td>$</td></tr>
+<tr><td><b>Spotify URL</b></td><td><i>if credit required</i></td></tr>
+</table>
 
 **`sig`** — signature block. First line is `LEFT_HEADER || RIGHT_HEADER`; omit
 `||` for single-party. `[tall]` = a roomy line for handwritten signature.
@@ -206,19 +207,19 @@ with a centered header spanning both columns, bold labels on the left,
 and a roomy signature row sized for ink:
 
 <table align="left" width="310">
-<tr><th colspan="2" bgcolor="#eeeeee"><div align="center"><b>WRITER</b></div></th></tr>
-<tr><td width="90" bgcolor="#eeeeee"><b>Name</b></td><td width="220">&nbsp;</td></tr>
-<tr><td bgcolor="#eeeeee"><b>Title</b></td><td>&nbsp;</td></tr>
-<tr><td bgcolor="#eeeeee"><b>Signature</b></td><td height="80">&nbsp;</td></tr>
-<tr><td bgcolor="#eeeeee"><b>Date</b></td><td>&nbsp;</td></tr>
+<tr><th colspan="2"><div align="center"><b>WRITER</b></div></th></tr>
+<tr><td width="90"><b>Name</b></td><td width="220">&nbsp;</td></tr>
+<tr><td><b>Title</b></td><td>&nbsp;</td></tr>
+<tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
+<tr><td><b>Date</b></td><td>&nbsp;</td></tr>
 </table>
 
 <table align="left" width="310">
-<tr><th colspan="2" bgcolor="#eeeeee"><div align="center"><b>COMPANY</b></div></th></tr>
-<tr><td width="90" bgcolor="#eeeeee"><b>Entity</b></td><td width="220">&nbsp;</td></tr>
-<tr><td bgcolor="#eeeeee"><b>By&nbsp;(name)</b></td><td>&nbsp;</td></tr>
-<tr><td bgcolor="#eeeeee"><b>Signature</b></td><td height="80">&nbsp;</td></tr>
-<tr><td bgcolor="#eeeeee"><b>Date</b></td><td>&nbsp;</td></tr>
+<tr><th colspan="2"><div align="center"><b>COMPANY</b></div></th></tr>
+<tr><td width="90"><b>Entity</b></td><td width="220">&nbsp;</td></tr>
+<tr><td><b>By&nbsp;(name)</b></td><td>&nbsp;</td></tr>
+<tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
+<tr><td><b>Date</b></td><td>&nbsp;</td></tr>
 </table>
 
 <br clear="all"/>
@@ -241,10 +242,11 @@ rows:
 
 Renders as a numbered, full-grid table:
 
-| **#** | **Service**  | **Frequency** |
-| ----- | ------------ | ------------- |
-| 1     | Mowing       | Weekly        |
-| 2     | Snow Removal | As-needed     |
+<table width="500">
+<tr><th width="40"><b>#</b></th><th><b>Service</b></th><th><b>Frequency</b></th></tr>
+<tr><td>1</td><td>Mowing</td><td>Weekly</td></tr>
+<tr><td>2</td><td>Snow Removal</td><td>As-needed</td></tr>
+</table>
 
 > **Don't use raw markdown tables.** The renderer ignores them — `grid` is the
 > only supported tabular form.
