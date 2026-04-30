@@ -17,7 +17,11 @@ import type { Schema } from './types';
 
 /** Resolve `{{key}}` plain-reference markers in a title string. Strips
  *  $/!/article-prefix decorators (titles take the bare label, not the
- *  introduce/literal/article forms). Multi-line via "\n" passes through. */
+ *  introduce/literal/article forms). Multi-line via "\n" passes through.
+ *
+ *  All-caps marker (`{{COMPANY}}`) uppercases the substituted text — useful
+ *  for title-style headings that want the company name in caps regardless
+ *  of how it's stored in values/schema. */
 function substituteTitleMarkers(
   title: string,
   schema: Schema | undefined,
@@ -31,14 +35,14 @@ function substituteTitleMarkers(
     const articleMatch = inner.match(/^(the|a|an)_/i);
     if (articleMatch) inner = inner.slice(articleMatch[0].length);
     const lookupKey = inner.toLowerCase();
+    const allCaps = /^[A-Z][A-Z0-9_]*$/.test(inner);
     // Prefer runtime value (deal-specific), then schema.long (template-baked
-    // expansion), then the bare label. Same precedence as introduce-form
-    // expansion so titles read consistently with body text.
+    // expansion), then the bare label.
     const v = values[lookupKey];
-    if (typeof v === 'string' && v.trim() !== '') return v;
-    const long = termLong(lookupKey, schema);
-    if (long) return long;
-    return termLabel(lookupKey, schema);
+    let resolved: string;
+    if (typeof v === 'string' && v.trim() !== '') resolved = v;
+    else resolved = termLong(lookupKey, schema) ?? termLabel(lookupKey, schema);
+    return allCaps ? resolved.toUpperCase() : resolved;
   });
 }
 

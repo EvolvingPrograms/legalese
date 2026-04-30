@@ -154,6 +154,11 @@ function emitMarker(
   const wantsCap = articleRaw ? /^[A-Z]/.test(articleRaw) : false;
   const lookupKey = inner.toLowerCase();
 
+  // All-caps marker ({{COMPANY}}, {{the_COMPANY}}) → uppercase the rendered
+  // label/expansion. Useful for title-style references where the company name
+  // wants caps even though it's stored in mixed case.
+  const allCaps = /^[A-Z][A-Z0-9_]*$/.test(inner);
+
   // Resolve the article for the marker. Prefix takes precedence; otherwise no
   // article is emitted.
   function resolveArticle(label: string): string | null {
@@ -168,7 +173,8 @@ function emitMarker(
   if (isIntroduce) {
     const value = ctx.values[lookupKey];
     const expansion = formatExpansion(value) ?? termLong(lookupKey, ctx.schema) ?? '';
-    const label = termLabel(lookupKey, ctx.schema);
+    const rawLabel = termLabel(lookupKey, ctx.schema);
+    const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
     // Article inside the parenthetical define stays lowercase even when the
     // marker is capitalized for sentence start — the cap signal applies to
     // the expansion only. Standard legal style: "An initial term… (an *Term*)".
@@ -177,7 +183,8 @@ function emitMarker(
       ? (articleRawLower === 'the' ? 'the' : pickAOrAn(label))
       : null;
     if (expansion) {
-      const exp = wantsCap ? cap(expansion) : expansion;
+      let exp = wantsCap ? cap(expansion) : expansion;
+      if (allCaps) exp = exp.toUpperCase();
       out.push(makeRun(`${exp} `, bold, italic));
       emitDefine(label, parenArticle, bold, italic, out);
     } else {
@@ -198,7 +205,8 @@ function emitMarker(
     const directSchemaHit = ctx.schema?.[lookupKey] !== undefined;
     const hasUnderscore = inner.includes('_');
     if (isLowercase || directSchemaHit || articleRaw || hasUnderscore) {
-      const label = termLabel(lookupKey, ctx.schema);
+      const rawLabel = termLabel(lookupKey, ctx.schema);
+      const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
       const article = resolveArticle(label);
       emitReference(label, article, false, bold, italic, out);
       return;

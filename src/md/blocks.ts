@@ -3,6 +3,7 @@
 import { Paragraph, HeadingLevel, AlignmentType } from 'docx';
 import type { Table } from 'docx';
 import { p, list, spacer } from '@/blocks';
+import { PARA_SPACING } from '@/lib/defaults';
 
 import { inlinesToRuns } from './inlines';
 import { parseFieldsBlock, parseSigBlock, parseGridBlock } from './fenced';
@@ -57,8 +58,12 @@ export function blockToDocBuilder(
         // Para/Plain children are reconstructed in-place so we can apply Div
         // attributes (center, indent, pageBreak) directly to the Paragraph.
         if (isPara && (center || indent || !pageBreakApplied)) {
+          // Match the default body-paragraph styling (justified, 1.5 line,
+          // before/after spacing) so Div paragraphs flow with the same
+          // breathing room as plain prose. Center overrides justification.
           out.push(new Paragraph({
-            ...(center ? { alignment: AlignmentType.CENTER } : {}),
+            spacing: PARA_SPACING,
+            alignment: center ? AlignmentType.CENTER : AlignmentType.JUSTIFIED,
             ...(indent ? { indent: { firstLine: 720 } } : {}),
             ...(!pageBreakApplied ? { pageBreakBefore: true } : {}),
             children: inlinesToRuns(child.c as PandocInline[], { values, schema: ctx.schema }),
