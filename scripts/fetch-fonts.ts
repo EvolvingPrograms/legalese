@@ -14,6 +14,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 interface FontSpec {
   family: string;          // user-facing name (matches style.font in front-matter)
@@ -56,7 +59,7 @@ const FAMILIES: FontSpec[] = [
   },
 ];
 
-const OUT_DIR = path.resolve(import.meta.dir, '..', 'fonts');
+const OUT_DIR = path.resolve(__dirname, '..', 'fonts');
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
 async function fetchOne(spec: FontSpec): Promise<number> {

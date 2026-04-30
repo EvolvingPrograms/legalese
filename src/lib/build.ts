@@ -6,11 +6,17 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   Document, Packer, AlignmentType, LevelFormat,
   Footer, Paragraph as DocxParagraph, TextRun, PageNumber,
 } from 'docx';
 import type { Paragraph, Table } from 'docx';
+
+// `import.meta.dir` is bun-only — undefined in Node and after `bun build
+// --target=node`. Use the universal ESM idiom so the bundled dist/ runs
+// under Node too.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import {
   FONT, BODY_SIZE, H1_SIZE, H2_SIZE,
@@ -46,10 +52,11 @@ export interface DocStyleOpts {
 function loadFontManifest(): { family: string; name: string; data: Buffer }[] {
   // Walk up from this file to find a fonts/ directory.
   const candidates = [
-    path.resolve(import.meta.dir, '..', 'fonts'),         // src/lib → fonts/
-    path.resolve(import.meta.dir, '..', '..', 'fonts'),   // dist/ → fonts/
-    path.resolve(process.cwd(), 'fonts'),                 // CWD-relative
+    path.resolve(__dirname, '..', 'fonts'),         // src/lib → fonts/
+    path.resolve(__dirname, '..', '..', 'fonts'),   // dist/ → fonts/
+    path.resolve(process.cwd(), 'fonts'),           // CWD-relative
   ];
+
   for (const dir of candidates) {
     const manifestPath = path.join(dir, 'manifest.json');
     if (!fs.existsSync(manifestPath)) continue;
