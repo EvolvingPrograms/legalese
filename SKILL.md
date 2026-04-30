@@ -59,37 +59,96 @@ Lookup is case-insensitive (`{{Operator}}` resolves to `schema.operator`).
 without touching the body. Plurals auto-derive (`recording` → `recordings`);
 irregulars use `plural: "People"` in schema.
 
-For values that fill the prose expansion (party names, dates), set them in
-the values YAML at the *schema key*, not a side field. With
-`schema.assignor: { long: "Assignor" }`, then `values.assignor: "Acme
-Records LLC"` — `{{$the_assignor}}` renders
-`Acme Records LLC (the "Assignor")`.
+### `term` vs `long` vs `values[key]`
 
-### One-paragraph pangram
+Every `{{$the_X}}` introduce form renders **`<expansion> (the *"Term"*)`** —
+two pieces drawn from different schema/values fields:
+
+- **`term`** = the short label inside the parens (e.g. `"Agreement"`,
+  `"Monthly Fee"`). Defaults to snake_case → Title Case.
+- **`long`** = the prose expansion that appears *before* the parens. Use
+  for **static** content baked into the template — full deal name, fixed
+  percentages, dollar amounts, durations, anything that won't change
+  between renders.
+- **`values[key]`** = a runtime override of the expansion. Use for
+  **dynamic** per-deal data — party names, addresses, effective dates,
+  amounts that vary per contract. Wins over `long:`.
+
+Example template `schema:`:
+
+```yaml
+schema:
+  # Dynamic — values supply the expansion at render time
+  agreement:      { long: "Agreement" }
+  customer:       { long: "Customer" }
+  contractor:     { long: "Contractor" }
+  effective_date: { type: date, required: true }
+
+  # Static — `long:` bakes the expansion into the template
+  publishers_share: { term: "Publisher's Share", long: "a 50% share" }
+  monthly_fee:      { term: "Monthly Fee",       long: "$1,850.00 per Location" }
+  cure_period:      { term: "Cure Period",       long: "thirty (30) days" }
+  insurance_floor:  { term: "Insurance Floor",   long: "$2,000,000 per occurrence" }
+```
+
+Companion values YAML (passed as `--values-file landscaping.yml`):
+
+```yaml
+# values.yml — only the dynamic fields need entries here.
+effective_date: "June 1, 2026"
+agreement:  "Landscaping Services Agreement"
+customer:   "McDonald's USA, LLC"
+contractor: "Greenline Landscaping, Inc."
+```
+
+`{{$the_agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
+(value beats `long:`); `{{$the_monthly_fee}}` → `$1,850.00 per Location (the ***"Monthly Fee"***)`
+(no value, falls back to `long:`).
+
+Now references like `{{$the_publishers_share}}` always render
+`a 50% share (the ***"Publisher's Share"***)` regardless of values, and
+`{{$the_monthly_fee}}` always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
+
+After first introduction, use the plain reference form everywhere:
+`{{the_publishers_share}}` → "the Publisher's Share"; `{{the_monthly_fee}}`
+→ "the Monthly Fee". Body reads natural English; one `long:` edit at the
+top changes the dollar amount everywhere it's introduced.
+
+### Worked pangram
 
 ```markdown
 This {{$the_agreement}}, dated {{$the_effective_date}}, is between
-{{$the_assignor}} and {{$the_assignee}}, individually {{$a_party}} and
-collectively {{$the_parties}}. Each {{recording}} listed in {{!Schedule A}}
-is assigned to {{the_assignee}}, subject to {{the_writers_share}} retained
-by {{the_assignor}}.
+{{$the_customer}} and {{$the_contractor}}, individually {{$a_party}} and
+collectively {{$the_parties}}. {{The_contractor}} shall provide
+{{!Services}} at each {{location}} listed in {{!Schedule A}} for
+{{$the_monthly_fee}} per {{location}}, subject to the {{insurance}}
+requirements set out below.
 ```
 
-Renders as (with schema declaring `agreement.long`, `assignor.long`,
-`assignee.long`, `party`, `recording`, `writers_share`, plus values for
-`effective_date`, `assignor`, `assignee`):
+With schema (`agreement.long`, `customer.long`, `contractor.long`,
+`monthly_fee.term`, `services`/`location`/`insurance`/`party` terms, plus
+values for `effective_date`, `customer`, `contractor`, `monthly_fee`):
 
-> This Copyright Assignment (the ***"Agreement"***), dated April 29, 2026
-> (the ***"Effective Date"***), is between Acme Records LLC (the ***"Assignor"***)
-> and Buyer Holdings Inc. (the ***"Assignee"***), individually a ***"Party"*** and
-> collectively the ***"Parties"***. Each Recording listed in ***"Schedule A"*** is
-> assigned to the Assignee, subject to the Writer's Share retained by the
-> Assignor.
+> This Landscaping Services Agreement (the ***"Agreement"***), dated
+> June 1, 2026 (the ***"Effective Date"***), is between McDonald's USA, LLC
+> (the ***"Customer"***) and Greenline Landscaping, Inc. (the ***"Contractor"***),
+> individually a ***"Party"*** and collectively the ***"Parties"***. The
+> Contractor shall provide ***"Services"*** at each Location listed in
+> ***"Schedule A"*** for $1,850.00 (the ***"Monthly Fee"***) per Location,
+> subject to the Insurance requirements set out below.
 
-Forms hit: introduce-with-expansion (`$the_…`), introduce-no-expansion
-(`$a_party`, `$the_parties` — inline styled), plain reference
-(`{{recording}}`, no article; `{{the_assignee}}` / `{{the_writers_share}}`,
-plain capitalized with article), literal inline-styled (`{{!Schedule A}}`).
+Forms hit:
+- **Introduce + value substitution** (`{{$the_X}}` where `values.X` is set):
+  `$the_agreement` → "Landscaping Services Agreement (the *Agreement*)";
+  `$the_customer` → "McDonald's USA, LLC (the *Customer*)";
+  `$the_monthly_fee` → "$1,850.00 (the *Monthly Fee*)".
+- **Introduce + no expansion** (`{{$X}}` with no value/long → inline-styled):
+  `$a_party` → "a *Party*"; `$the_parties` → "the *Parties*".
+- **Plain references** (`{{X}}` / `{{the_X}}` — emit the styled term, no
+  value lookup): `{{location}}` → "Location"; `{{the_contractor}}` →
+  "the Contractor"; `{{The_contractor}}` (sentence start) → "The Contractor".
+- **Literal inline-styled** (`{{!Term}}`): `{{!Services}}` → "*Services*";
+  `{{!Schedule A}}` → "*Schedule A*".
 
 ## Schema entry fields
 
@@ -104,6 +163,12 @@ schema:
 ```
 
 ## Fenced blocks
+
+This skill uses a **custom renderer** — not pandoc's default markdown→docx.
+For tables, **always use the `grid` / `grids` fenced block, not raw markdown
+tables**. Markdown tables won't render in the output; the grid block is the
+only supported tabular form (it produces the styled, full-grid-bordered
+look that matches the rest of the document).
 
 **`fields`** — bare snake_case keys (label resolves from schema
 description/term, else snake→Title), or explicit `Label | key | prefix=$ | sub=hint`.
