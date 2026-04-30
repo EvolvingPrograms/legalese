@@ -2,42 +2,92 @@
 title: LANDSCAPING SERVICES AGREEMENT
 
 schema:
-  # Defined terms.
-  agreement:        { long: "Landscaping Services Agreement" }
-  customer:         { long: "Customer" }
-  contractor:       { long: "Contractor" }
-  party:            { term: "Party" }
-  location:         { term: "Location" }
-  services:         { term: "Services" }
-  schedule_a:       { term: "Schedule A" }
+  # Defined terms. Block form (one key per line) avoids flow-context quote
+  # rules — values with commas / parens / apostrophes can be unquoted.
+  agreement:
+    long: Landscaping Services Agreement
+  customer:
+    long: Customer
+  contractor:
+    long: Contractor
+  party:
+    term: Party
+  location:
+    term: Location
+  services:
+    term: Services
+  schedule_a:
+    term: Schedule A
 
   # Static terms with baked expansions.
-  initial_term:     { term: "Initial Term", long: "an initial term of two (2) years" }
-  renewal_term:     { term: "Renewal Term", long: "successive renewal terms of one (1) year each" }
-  term:             { term: "Term" }
-  monthly_fee:      { term: "Monthly Fee",      long: "$1,850.00 per Location per month" }
-  cure_period:      { term: "Cure Period",      long: "thirty (30) days" }
-  non_renewal_notice: { term: "Non-Renewal Notice Period", long: "sixty (60) days" }
-  insurance_floor:  { term: "Insurance Floor",  long: "$2,000,000 per occurrence" }
-  insurance_notice: { term: "Insurance Notice Period", long: "thirty (30) days" }
-  payment_date:     { term: "Payment Date",     long: "the fifteenth (15th) day of each calendar month" }
-  late_fee_rate:    { term: "Late Fee Rate",    long: "one and one-half percent (1.5%) per month" }
+  initial_term:
+    term: Initial Term
+    long: an initial term of two (2) years
+  renewal_term:
+    term: Renewal Term
+    long: successive renewal terms of one (1) year each
+  term:
+    term: Term
+  monthly_fee:
+    term: Monthly Fee
+    long: $1,850.00 per Location per month
+  cure_period:
+    term: Cure Period
+    long: thirty (30) days
+  non_renewal_notice:
+    term: Non-Renewal Notice Period
+    long: sixty (60) days
+  insurance_floor:
+    term: Insurance Floor
+    long: $2,000,000 per occurrence
+  insurance_notice:
+    term: Insurance Notice Period
+    long: thirty (30) days
+  payment_date:
+    term: Payment Date
+    long: the fifteenth (15th) day of each calendar month
+  late_fee_rate:
+    term: Late Fee Rate
+    long: one and one-half percent (1.5%) per month
 
   # Form fields.
-  effective_date:     { type: date,   required: true }
+  effective_date:
+    type: date
+    required: true
 
-  customer_name:      { type: string, required: true }
-  customer_entity:    { type: string, required: true, description: "Customer entity form (e.g., Delaware limited liability company)" }
-  customer_address:   { type: string, required: true }
+  customer_name:
+    type: string
+    required: true
+  customer_entity:
+    type: string
+    required: true
+    description: Customer entity form (e.g., Delaware limited liability company)
+  customer_address:
+    type: string
+    required: true
 
-  contractor_name:    { type: string, required: true }
-  contractor_entity:  { type: string, required: true, description: "Contractor entity form (e.g., Illinois corporation)" }
-  contractor_address: { type: string, required: true }
+  contractor_name:
+    type: string
+    required: true
+  contractor_entity:
+    type: string
+    required: true
+    description: Contractor entity form (e.g., Illinois corporation)
+  contractor_address:
+    type: string
+    required: true
 
-  governing_law:      { type: string, default: "State of Illinois" }
-  venue:              { type: string, default: "Cook County, Illinois" }
+  governing_law:
+    type: string
+    default: State of Illinois
+  venue:
+    type: string
+    default: Cook County, Illinois
 
-  locations:          { type: list, required: true, description: "Per-Location service spec (Schedule A)" }
+  locations:
+    type: list
+    required: true
+    description: Per-Location service spec (Schedule A)
 
   sig_customer_entity:    string
   sig_customer_by:        string
