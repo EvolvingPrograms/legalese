@@ -12,8 +12,35 @@ import { build } from '@/lib/build';
 import { splitFrontMatter } from './front-matter';
 import { runPandoc } from './pandoc';
 import { blockToDocBuilder } from './blocks';
-import { mergeValues, schemaDefaults, missingRequired } from './values';
+import { mergeValues, schemaDefaults, missingRequired, termLabel, termLong } from './values';
 import type { Schema } from './types';
+
+/** Resolve `{{key}}` plain-reference markers in a title string. Strips
+ *  $/!/article-prefix decorators (titles take the bare label, not the
+ *  introduce/literal/article forms). Multi-line via "\n" passes through. */
+function substituteTitleMarkers(
+  title: string,
+  schema: Schema | undefined,
+  values: Record<string, unknown>,
+): string {
+  return title.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => {
+    let inner = raw.trim();
+    if (inner.startsWith('$') || inner.startsWith('!') || inner.startsWith('^')) {
+      inner = inner.slice(1).trim();
+    }
+    const articleMatch = inner.match(/^(the|a|an)_/i);
+    if (articleMatch) inner = inner.slice(articleMatch[0].length);
+    const lookupKey = inner.toLowerCase();
+    // Prefer runtime value (deal-specific), then schema.long (template-baked
+    // expansion), then the bare label. Same precedence as introduce-form
+    // expansion so titles read consistently with body text.
+    const v = values[lookupKey];
+    if (typeof v === 'string' && v.trim() !== '') return v;
+    const long = termLong(lookupKey, schema);
+    if (long) return long;
+    return termLabel(lookupKey, schema);
+  });
+}
 
 export interface ConvertOptions {
   output?: string;
@@ -51,8 +78,11 @@ export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Pro
     throw new Error('No output path: pass opts.output or set front-matter `output:`');
   }
 
+  const rawTitle = opts.title ?? meta.title;
+  const title = rawTitle ? substituteTitleMarkers(rawTitle, schema, values) : undefined;
+
   return build({
-    title: opts.title ?? meta.title,
+    title,
     output,
     body: docBody,
   });

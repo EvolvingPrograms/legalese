@@ -1,6 +1,6 @@
 // Block-level helpers — return Paragraph or Paragraph[] for use in build().
 
-import { AlignmentType, HeadingLevel, Paragraph } from 'docx';
+import { AlignmentType, HeadingLevel, Paragraph, TextRun } from 'docx';
 
 import { PARA_SPACING, LIST_SPACING, SUBLIST_REF } from '@/lib/defaults';
 import { asRun, t } from '@/lib/runs';
@@ -16,12 +16,22 @@ export const p = (...children: ParaChild[]) => new Paragraph({
   children: children.flat().map(asRun),
 });
 
-/** Centered uppercase title. */
-export const h1 = (text: string, opts: { pageBreak?: boolean } = {}) => new Paragraph({
-  heading: HeadingLevel.HEADING_1,
-  pageBreakBefore: !!opts.pageBreak,
-  children: [t(text)],
-});
+/** Centered title. Multi-line via "\n" — each line emits as a soft break
+ *  inside one Heading 1 paragraph so vertical spacing stays tight (rather
+ *  than emitting one heading per line, which would over-pad). */
+export const h1 = (text: string, opts: { pageBreak?: boolean } = {}) => {
+  const lines = text.split('\n');
+  const children: (TextRun)[] = [];
+  lines.forEach((line, i) => {
+    if (i > 0) children.push(new TextRun({ break: 1 }));
+    children.push(t(line) as TextRun);
+  });
+  return new Paragraph({
+    heading: HeadingLevel.HEADING_1,
+    pageBreakBefore: !!opts.pageBreak,
+    children,
+  });
+};
 
 /** Section heading, kept with the following paragraph. */
 export const h2 = (text: string, opts: { pageBreak?: boolean } = {}) => new Paragraph({

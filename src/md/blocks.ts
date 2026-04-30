@@ -36,20 +36,42 @@ export function blockToDocBuilder(
       return [p(...inlinesToRuns(blk.c as PandocInline[], { values, schema: ctx.schema }))];
 
     case 'Div': {
-      // ::: {.center}
-      // Centered paragraph(s)
-      // :::
+      // ::: {.center}     — center-aligned paragraphs
+      // ::: {.indent}     — first-line-indented paragraphs (legal block style:
+      //                     "WHEREAS, …" recitals indent at the start of each
+      //                     paragraph instead of being separated by subheadings)
+      // ::: {.pageBreak}  — start a new page before this Div's content. Use
+      //                     for signature pages: drop the "## Signatures"
+      //                     heading and just wrap the closing prose so the
+      //                     undersigned paragraph + sig tables land on a
+      //                     fresh page.
       const [attrs, children] = blk.c as [[string, string[], unknown[]], PandocBlock[]];
       const [, classes] = attrs;
       const center = classes.includes('center');
+      const indent = classes.includes('indent');
+      const pageBreak = classes.includes('pageBreak') || classes.includes('pagebreak');
       const out: DocNode[] = [];
+      let pageBreakApplied = !pageBreak;
       for (const child of children) {
-        if (center && (child.t === 'Para' || child.t === 'Plain')) {
+        const isPara = child.t === 'Para' || child.t === 'Plain';
+        // Para/Plain children are reconstructed in-place so we can apply Div
+        // attributes (center, indent, pageBreak) directly to the Paragraph.
+        if (isPara && (center || indent || !pageBreakApplied)) {
           out.push(new Paragraph({
-            alignment: AlignmentType.CENTER,
+            ...(center ? { alignment: AlignmentType.CENTER } : {}),
+            ...(indent ? { indent: { firstLine: 720 } } : {}),
+            ...(!pageBreakApplied ? { pageBreakBefore: true } : {}),
             children: inlinesToRuns(child.c as PandocInline[], { values, schema: ctx.schema }),
           }));
+          pageBreakApplied = true;
         } else {
+          // Non-paragraph child (or Div with no qualifying attribute). For
+          // pageBreak-only Divs whose first child is, e.g., a code block,
+          // emit an empty page-break paragraph so the break still fires.
+          if (!pageBreakApplied) {
+            out.push(new Paragraph({ pageBreakBefore: true, children: [] }));
+            pageBreakApplied = true;
+          }
           out.push(...blockToDocBuilder(child, values, ctx));
         }
       }

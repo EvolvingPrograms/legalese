@@ -43,6 +43,119 @@ test('{{^Multi Word}} preserves spacing inside small-caps run', async () => {
   expect(xml.slice(runStart, runEnd + 6)).toContain('<w:smallCaps/>');
 });
 
+// — Title: multi-line, marker substitution —
+
+test('title with \\n produces line breaks inside one centered Heading 1 paragraph', async () => {
+  const { convertMarkdown } = await import('@/md/convert');
+  const path = await import('node:path');
+  const { ROOT, readDocumentXml } = await import('./_helpers');
+  const out = path.resolve(OUT, '_title_multiline.docx');
+  await convertMarkdown([
+    '---',
+    'title: |-',
+    '  WRITTEN CONSENT OF THE BOARD OF DIRECTORS',
+    '  OF',
+    '  Sample Records, Inc.',
+    '---',
+    '',
+    'Body text.',
+  ].join('\n'), {
+    output: out,
+    baseDir: ROOT,
+    values: {},
+  });
+  const xml = readDocumentXml(out);
+  // Multi-line title sits in ONE Heading 1 paragraph with <w:br/> between lines.
+  const h1Match = xml.match(/<w:p>[^]*?Heading1[^]*?WRITTEN CONSENT[^]*?<\/w:p>/);
+  expect(h1Match).not.toBeNull();
+  expect(h1Match![0]).toContain('<w:br/>');
+  expect(h1Match![0]).toContain('OF');
+  expect(h1Match![0]).toContain('Sample Records, Inc.');
+});
+
+test('title markers resolve via values then schema.long', async () => {
+  const { convertMarkdown } = await import('@/md/convert');
+  const path = await import('node:path');
+  const { ROOT, readDocumentXml, plain } = await import('./_helpers');
+  const out = path.resolve(OUT, '_title_markers.docx');
+  await convertMarkdown([
+    '---',
+    'title: "RESOLUTIONS OF {{COMPANY}}"',
+    'schema:',
+    '  company: { long: "Sample Records, Inc." }',
+    '---',
+    '',
+    'Body.',
+  ].join('\n'), {
+    output: out,
+    baseDir: ROOT,
+    values: {},  // no value → falls back to schema.long
+  });
+  const body = plain(readDocumentXml(out));
+  expect(body).toContain('RESOLUTIONS OF Sample Records, Inc.');
+});
+
+test('title marker prefers value over schema.long', async () => {
+  const { convertMarkdown } = await import('@/md/convert');
+  const path = await import('node:path');
+  const { ROOT, readDocumentXml, plain } = await import('./_helpers');
+  const out = path.resolve(OUT, '_title_value_wins.docx');
+  await convertMarkdown([
+    '---',
+    'title: "RESOLUTIONS OF {{COMPANY}}"',
+    'schema:',
+    '  company: { long: "Default Co." }',
+    '---',
+    '',
+    'Body.',
+  ].join('\n'), {
+    output: out,
+    baseDir: ROOT,
+    values: { company: "Override Co." },
+  });
+  const body = plain(readDocumentXml(out));
+  expect(body).toContain('RESOLUTIONS OF Override Co.');
+  expect(body).not.toContain('Default Co.');
+});
+
+// — Indented paragraph via Div —
+
+test('::: {.indent} ... ::: applies first-line indent to each child paragraph', async () => {
+  const xml = await renderSourceToXml('_indent_div', [
+    '---', 'title: TEST', 'output: _indent_div.docx', '---',
+    '',
+    '::: {.indent}',
+    'First WHEREAS clause.',
+    '',
+    'Second WHEREAS clause.',
+    ':::',
+  ].join('\n'));
+  const idx = xml.indexOf('First WHEREAS');
+  const pStart = xml.lastIndexOf('<w:p', idx);
+  const pEnd = xml.indexOf('</w:p>', idx);
+  const para = xml.slice(pStart, pEnd + 6);
+  expect(para).toMatch(/<w:ind\s+w:firstLine="720"/);
+});
+
+// — pageBreak Div —
+
+test('::: {.pageBreak} ... ::: forces page break before its content', async () => {
+  const xml = await renderSourceToXml('_pagebreak_div', [
+    '---', 'title: TEST', 'output: _pagebreak_div.docx', '---',
+    '',
+    'First page content.',
+    '',
+    '::: {.pageBreak}',
+    'Second page content.',
+    ':::',
+  ].join('\n'));
+  const idx = xml.indexOf('Second page content');
+  const pStart = xml.lastIndexOf('<w:p', idx);
+  const pEnd = xml.indexOf('</w:p>', idx);
+  const para = xml.slice(pStart, pEnd + 6);
+  expect(para).toContain('<w:pageBreakBefore/>');
+});
+
 // — Centered paragraph via Div —
 
 test('::: {.center} ... ::: renders a centered paragraph', async () => {
