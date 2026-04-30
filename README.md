@@ -195,8 +195,8 @@ Renders as a two-column field table:
 
 ````
 ```sig
-WRITER || COMPANY
-Name      | sig_writer_name   || Entity    | sig_company_entity
+WRITER   || COMPANY
+Name      | sig_writer_name    || Entity    | sig_company_entity
 Signature [tall]               || Signature [tall]
 Date                           || Date
 ```
@@ -213,6 +213,8 @@ and a roomy signature row sized for ink:
 <tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
 <tr><td><b>Date</b></td><td>&nbsp;</td></tr>
 </table>
+
+<img align="left" width="24" height="1" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"/>
 
 <table align="left" width="310">
 <tr><th colspan="2"><div align="center"><b>COMPANY</b></div></th></tr>
