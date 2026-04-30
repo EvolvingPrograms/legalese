@@ -185,6 +185,47 @@ test('{{$An_key}} capitalizes the prose expansion but keeps the parens article l
   expect(plain(body)).not.toContain('(An “Initial Term”)');
 });
 
+// — Key-case is cosmetic in {{$X}} (no article prefix) —
+
+test('{{$Claude}} (capital key, no article prefix) does NOT capitalize the expansion', async () => {
+  // The cap signal lives on the article prefix only (`The_`/`A_`/`An_`).
+  // Mixed-case keys are allowed for prose-mirroring readability and do not
+  // affect rendering — the label always comes from schema.term.
+  const body = await renderSourceToXml('_xp_key_case_no_article', [
+    '---',
+    'title: TEST',
+    'output: _xp_key_case_no_article.docx',
+    'schema:',
+    '  claude: { long: "an artificial intelligence model created by Anthropic" }',
+    '---',
+    '',
+    'You are working with {{$Claude}}.',
+  ].join('\n'));
+  const out = plain(body);
+  // Expansion stays lowercase ("an artificial…"), no parens article.
+  expect(out).toContain('an artificial intelligence model created by Anthropic (“Claude”)');
+  expect(out).not.toContain('An artificial intelligence');
+  expect(out).not.toContain('(the “Claude”)');
+});
+
+test('{{$The_Claude}} (capital article prefix) DOES capitalize the prose article', async () => {
+  // Capital `T` on the article prefix → cap'd article in prose AND cap'd
+  // expansion. The parens article stays lowercase per legal-drafting style.
+  const body = await renderSourceToXml('_xp_article_case', [
+    '---',
+    'title: TEST',
+    'output: _xp_article_case.docx',
+    'schema:',
+    '  claude: { long: "an artificial intelligence model created by Anthropic" }',
+    '---',
+    '',
+    '{{$The_Claude}} is helpful.',
+  ].join('\n'));
+  const out = plain(body);
+  // Expansion cap'd at sentence start; parens article "the" stays lowercase.
+  expect(out).toContain('An artificial intelligence model created by Anthropic (the “Claude”) is helpful.');
+});
+
 // — Catalog-array values don't collide with term lookup —
 
 test('{{$the_key}} ignores object-array values (used by grids from: $key)', async () => {

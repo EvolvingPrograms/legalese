@@ -136,9 +136,12 @@ function emitMarker(
   const { articleRaw, key: afterPrefix } = stripArticlePrefix(inner);
   inner = afterPrefix;
 
-  // Capitalization signal — uppercase first letter of the marker (or its
-  // article prefix if present) forces capitalization of the emitted article.
-  const wantsCap = /^[A-Z]/.test(articleRaw ?? inner);
+  // Capitalization signal — only the article prefix's case carries meaning
+  // ({{The_X}} → "The X", {{the_X}} → "the X"). Key-case is purely cosmetic:
+  // {{$Claude}} and {{$claude}} produce identical output, because the label
+  // comes from schema.term, not the marker. Mixing key-case is allowed so
+  // markers can mirror the rendered prose for readability.
+  const wantsCap = articleRaw ? /^[A-Z]/.test(articleRaw) : false;
   const lookupKey = inner.toLowerCase();
 
   // Resolve the article for the marker. Prefix takes precedence; otherwise no
