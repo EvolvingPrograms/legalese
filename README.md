@@ -98,15 +98,25 @@ title: LANDSCAPING SERVICES AGREEMENT
 output: ./Landscaping_Agreement.docx     # optional; CLI flag wins
 
 schema:
-  agreement:        { long: "Landscaping Services Agreement" }
-  customer:         { long: "Customer" }
-  contractor:       { long: "Contractor" }
-  effective_date:   { type: date,   required: true }
-  services:         { term: "Services",
-                      long: "certain landscaping and grounds-maintenance
-                             services described in this Agreement" }
-  monthly_fee:      { term: "Monthly Fee", long: "$1,850.00 per Location" }
-  governing_law:    { type: string, default: "State of Delaware" }
+  agreement:
+    long: "Landscaping Services Agreement"
+  customer:
+    long: "Customer"
+  contractor:
+    long: "Contractor"
+  effective_date:
+    type: date
+    required: true
+  services:
+    term: "Services"
+    long: "certain landscaping and grounds-maintenance
+           services described in this Agreement"
+  monthly_fee:
+    term: "Monthly Fee"
+    long: "$1,850.00 per Location"
+  governing_law:
+    type: string
+    default: "State of Delaware"
 
 values:                       # or pass --values-file foo.yml
   effective_date: "June 1, 2026"
@@ -195,7 +205,7 @@ Renders as a two-column field table:
 
 ````
 ```sig
-WRITER   || COMPANY
+WRITER                         || COMPANY
 Name      | sig_writer_name    || Entity    | sig_company_entity
 Signature [tall]               || Signature [tall]
 Date                           || Date
@@ -233,12 +243,20 @@ via `rows: $key`, or repeated per-entry via `from:`.
 ````
 ```grid
 columns:
-  - {label: '#',         key: '#',       width: 600}
-  - {label: 'Service',   key: service,   width: 3500}
-  - {label: 'Frequency', key: frequency, width: 1800}
+  - label: '#'
+    key: '#'
+    width: 600
+  - label: 'Service'
+    key: service
+    width: 3500
+  - label: 'Frequency'
+    key: frequency
+    width: 1800
 rows:
-  - { service: "Mowing",       frequency: "Weekly" }
-  - { service: "Snow Removal", frequency: "As-needed" }
+  - service: "Mowing"
+    frequency: "Weekly"
+  - service: "Snow Removal"
+    frequency: "As-needed"
 ```
 ````
 
@@ -274,8 +292,10 @@ import { convertMarkdown, convertMarkdownToBuffer } from 'legalese';
 const src = `---
 title: NDA
 schema:
-  disclosing_party: { long: "Disclosing Party" }
-  receiving_party:  { long: "Receiving Party" }
+  disclosing_party:
+    long: "Disclosing Party"
+  receiving_party:
+    long: "Receiving Party"
 values:
   disclosing_party: "Acme Inc."
   receiving_party:  "Beta LLC"

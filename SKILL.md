@@ -87,16 +87,29 @@ Example template `schema:`:
 ```yaml
 schema:
   # Dynamic — values supply the expansion at render time
-  agreement:      { long: "Agreement" }
-  customer:       { long: "Customer" }
-  contractor:     { long: "Contractor" }
-  effective_date: { type: date, required: true }
+  agreement:
+    long: "Agreement"
+  customer:
+    long: "Customer"
+  contractor:
+    long: "Contractor"
+  effective_date:
+    type: date
+    required: true
 
   # Static — `long:` bakes the expansion into the template
-  publishers_share: { term: "Publisher's Share", long: "a 50% share" }
-  monthly_fee:      { term: "Monthly Fee",       long: "$1,850.00 per Location" }
-  cure_period:      { term: "Cure Period",       long: "thirty (30) days" }
-  insurance_floor:  { term: "Insurance Floor",   long: "$2,000,000 per occurrence" }
+  publishers_share:
+    term: "Publisher's Share"
+    long: "a 50% share"
+  monthly_fee:
+    term: "Monthly Fee"
+    long: "$1,850.00 per Location"
+  cure_period:
+    term: "Cure Period"
+    long: "thirty (30) days"
+  insurance_floor:
+    term: "Insurance Floor"
+    long: "$2,000,000 per occurrence"
 ```
 
 Companion values YAML (passed as `--values-file landscaping.yml`):
@@ -131,8 +144,12 @@ either:
 
 ```yaml
 schema:
-  initial_term: { term: "Initial Term", long: "an initial term of two (2) years" }
-  renewal_term: { term: "Renewal Term", long: "a successive renewal term of one (1) year" }
+  initial_term:
+    term: "Initial Term"
+    long: "an initial term of two (2) years"
+  renewal_term:
+    term: "Renewal Term"
+    long: "a successive renewal term of one (1) year"
 ```
 
 ```markdown
@@ -158,7 +175,8 @@ prose:
 
 ```yaml
 schema:
-  claude: { long: "an artificial intelligence model created by Anthropic" }
+  claude:
+    long: "an artificial intelligence model created by Anthropic"
 ```
 
 ```markdown
@@ -283,12 +301,23 @@ Forms hit:
 
 ```yaml
 schema:
-  agreement:    { long: "Copyright Assignment" }
-  party:        { term: "Party" }                 # plural auto-derives: Parties
-  person:       { term: "Person", plural: "People" } # irregular plural
-  effective_date:    { type: date,   required: true }
-  writer_name:       { type: string, required: true, description: "Writer legal name" }
-  governing_law:     { type: string, default: "State of Delaware" }
+  agreement:
+    long: "Copyright Assignment"
+  party:
+    term: "Party"                 # plural auto-derives: Parties
+  person:
+    term: "Person"
+    plural: "People"              # irregular plural
+  effective_date:
+    type: date
+    required: true
+  writer_name:
+    type: string
+    required: true
+    description: "Writer legal name"
+  governing_law:
+    type: string
+    default: "State of Delaware"
 ```
 
 ## Fenced blocks
@@ -373,13 +402,25 @@ Single table — rows literal in the template:
 ````
 ```grid
 columns:
-  - {label: '#',          key: '#',       width: 600}
-  - {label: 'Service',    key: service,   width: 3500}
-  - {label: 'Frequency',  key: frequency, width: 1800}
-  - {label: 'Per-visit',  key: minimum,   width: 1500}
+  - label: '#'
+    key: '#'
+    width: 600
+  - label: 'Service'
+    key: service
+    width: 3500
+  - label: 'Frequency'
+    key: frequency
+    width: 1800
+  - label: 'Per-visit'
+    key: minimum
+    width: 1500
 rows:
-  - { service: "Mowing & Trimming", frequency: "Weekly",     minimum: "$120" }
-  - { service: "Snow Removal",      frequency: "As-needed",  minimum: "$200" }
+  - service: "Mowing & Trimming"
+    frequency: "Weekly"
+    minimum: "$120"
+  - service: "Snow Removal"
+    frequency: "As-needed"
+    minimum: "$200"
 ```
 ````
 
@@ -388,9 +429,15 @@ Single table — rows pulled from values:
 ````
 ```grid
 columns:
-  - {label: 'Make / Model', key: model,      width: 4000}
-  - {label: 'Serial',       key: serial,     width: 2500}
-  - {label: 'Daily Rate',   key: daily_rate, width: 1500}
+  - label: 'Make / Model'
+    key: model
+    width: 4000
+  - label: 'Serial'
+    key: serial
+    width: 2500
+  - label: 'Daily Rate'
+    key: daily_rate
+    width: 1500
 rows: $units
 ```
 ````
@@ -398,8 +445,12 @@ rows: $units
 ```yaml
 # values.yml
 units:
-  - { model: "Caterpillar 320", serial: "CAT320-001",  daily_rate: "$850/day" }
-  - { model: "Genie S-65",      serial: "GEN-S65-002", daily_rate: "$340/day" }
+  - model: "Caterpillar 320"
+    serial: "CAT320-001"
+    daily_rate: "$850/day"
+  - model: "Genie S-65"
+    serial: "GEN-S65-002"
+    daily_rate: "$340/day"
 ```
 
 Repeater (`from:`). Each entry is `{heading?, rows}`, supplied either inline
@@ -411,9 +462,15 @@ supply the catalog at render time:
 ```grid
 from: $locations
 columns:
-  - {label: '#',          key: '#',       width: 600}
-  - {label: 'Service',    key: service,   width: 3500}
-  - {label: 'Frequency',  key: frequency, width: 1800}
+  - label: '#'
+    key: '#'
+    width: 600
+  - label: 'Service'
+    key: service
+    width: 3500
+  - label: 'Frequency'
+    key: frequency
+    width: 1800
 ```
 ````
 
@@ -426,15 +483,18 @@ locations:
   # Inline entry.
   - heading: "Roosevelt Rd — 5678 W Roosevelt Rd, Cicero"
     rows:
-      - { service: "Mowing",       frequency: "Weekly" }
-      - { service: "Snow Removal", frequency: "As-needed" }
+      - service: "Mowing"
+        frequency: "Weekly"
+      - service: "Snow Removal"
+        frequency: "As-needed"
 ```
 
 ```yaml
 # examples/landscaping-lincoln-park.yml — same shape as an inline entry.
 heading: "Lincoln Ave — 1234 N Lincoln Ave, Chicago"
 rows:
-  - { service: "Mowing", frequency: "Weekly" }
+  - service: "Mowing"
+    frequency: "Weekly"
 ```
 
 **Don't grep the bundled `dist/legalese.js`** to understand block syntax —

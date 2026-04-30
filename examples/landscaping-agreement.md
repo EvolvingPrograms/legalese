@@ -274,8 +274,16 @@ categories, frequency, and per-visit minimums applicable under this
 # (CWD-relative when pulled via $key) or inline. `$locations` is a values key.
 from: $locations
 columns:
-  - {label: '#',           key: '#',         width: 600}
-  - {label: 'Service',     key: service,     width: 3500}
-  - {label: 'Frequency',   key: frequency,   width: 1800}
-  - {label: 'Per-visit minimum', key: minimum, width: 1800}
+  - label: '#'
+    key: '#'
+    width: 600
+  - label: 'Service'
+    key: service
+    width: 3500
+  - label: 'Frequency'
+    key: frequency
+    width: 1800
+  - label: 'Per-visit minimum'
+    key: minimum
+    width: 1800
 ```
