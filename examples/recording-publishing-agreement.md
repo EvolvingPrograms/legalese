@@ -31,10 +31,10 @@ schema:
   sig_company_title:  string
 ---
 
-This {{$the_Agreement}} is entered into as of the Effective Date stated below, by
-and between {{$the_Writer}} and {{$the_Company}} identified in Section 1. Writer and
-Company are referred to individually as {{$a_Party}} and collectively as
-{{$the_Parties}}.
+This {{$the_Agreement}} is entered into as of the Effective Date stated below,
+by and between {{$the_Writer}} and {{$the_Company}} identified in Section 1.
+Writer and Company are referred to individually as {{$a_Party}} and collectively
+as {{$the_Parties}}.
 
 ## 1. Parties and Effective Date
 
@@ -55,34 +55,34 @@ engaged in the business of music production, publishing, and the ownership and
 exploitation of musical compositions and master sound recordings. {{Writer}}
 wishes to engage {{Company}} as the exclusive publisher of compositions written
 by {{Writer}} and the exclusive owner of master recordings produced by
-{{Writer}} during {{the_Term}} of this {{Agreement}}, and {{Company}} wishes to act
-in such capacity, on the terms set out below.
+{{Writer}} during {{the_Term}} of this {{Agreement}}, and {{Company}} wishes to
+act in such capacity, on the terms set out below.
 
 ## 3. Term
 
-The {{$the_Initial_term}} shall begin on the Effective Date and continue for one (1)
-year. Thereafter, this {{Agreement}} shall automatically renew for successive
-one-year terms (each, {{$a_Renewal_term}}; {{the_Initial_term}} together with any
-{{Renewal_terms}}, {{$the_Term}}), unless either {{Party}} delivers written notice
-of non-renewal to the other {{Party}} no later than thirty (30) days before the
-end of the then-current term.
+The {{$the_Initial_term}} shall begin on the Effective Date and continue for one
+(1) year. Thereafter, this {{Agreement}} shall automatically renew for
+successive one-year terms (each, {{$a_Renewal_term}}; {{the_Initial_term}}
+together with any {{Renewal_terms}}, {{$the_Term}}), unless either {{Party}}
+delivers written notice of non-renewal to the other {{Party}} no later than
+thirty (30) days before the end of the then-current term.
 
 The rights granted by {{Writer}} to {{Company}} under this {{Agreement}} shall
 continue with respect to each {{Composition}} and each {{Recording}} for the
 full duration of copyright in such {{Composition}} or {{Recording}}, including
-any extensions or renewals, regardless of whether {{the_Term}} has expired or been
-terminated.
+any extensions or renewals, regardless of whether {{the_Term}} has expired or
+been terminated.
 
 ## 4. Compositions Covered
 
 {{!Compositions}} means all original musical compositions, in whole or in part,
 written, composed, created, or co-created by {{Writer}} (alone or with others)
-during {{the_Term}}, including the music, lyrics, arrangements, beats, samples, and
-all related elements, in any genre, in any medium, and whether or not
+during {{the_Term}}, including the music, lyrics, arrangements, beats, samples,
+and all related elements, in any genre, in any medium, and whether or not
 commercially released. Each {{Composition}} is subject to this {{Agreement}}
 automatically upon creation, without need for further documentation, although
-{{the_Parties}} shall reasonably cooperate to identify and list {{the_Compositions}} as
-they are created.
+{{the_Parties}} shall reasonably cooperate to identify and list
+{{the_Compositions}} as they are created.
 
 ## 5. Recordings Covered
 
@@ -91,11 +91,11 @@ co-recorded by {{Writer}} (alone or with others) during {{the_Term}}, whether
 embodying {{the_Compositions}} or otherwise, in any format and whether or not
 commercially released. Each {{Recording}} is subject to this {{Agreement}}
 automatically upon fixation, without need for further documentation, although
-{{the_Parties}} shall reasonably cooperate to identify and catalog {{the_Recordings}} as
-they are created.
+{{the_Parties}} shall reasonably cooperate to identify and catalog
+{{the_Recordings}} as they are created.
 
-For the avoidance of doubt: {{The_Compositions}} written, and {{the_Recordings}} fixed,
-by {{Writer}} prior to the Effective Date are **not** covered by this
+For the avoidance of doubt: {{The_Compositions}} written, and {{the_Recordings}}
+fixed, by {{Writer}} prior to the Effective Date are **not** covered by this
 {{Agreement}} and are addressed, if at all, by separate written assignment.
 
 ## 6. Grant of Rights — Compositions
@@ -159,24 +159,25 @@ agreement and are not affected by this {{Agreement}}.
 In consideration of the rights granted under this {{Agreement}}, {{Company}}
 shall:
 
-a. Pay {{Writer}} {{the_Writers_share}} of compositions as set out in Section 6, by
-causing such share to be paid directly to {{Writer}} by the applicable rights
+a. Pay {{Writer}} {{the_Writers_share}} of compositions as set out in Section 6,
+by causing such share to be paid directly to {{Writer}} by the applicable rights
 organizations;
 
 b. Bear the costs of registering {{Company}} as publisher and as master rights
 owner with the relevant rights organizations and digital service providers, and
 of administering {{the_Compositions}} and {{the_Recordings}}; and
 
-c. Provide {{Writer}} with reasonable accountings of any {{the_Publishers_share}}
-royalties or master-recording royalties received by {{Company}}, no less
-frequently than annually, upon {{Writer}}'s reasonable request.
+c. Provide {{Writer}} with reasonable accountings of any
+{{the_Publishers_share}} royalties or master-recording royalties received by
+{{Company}}, no less frequently than annually, upon {{Writer}}'s reasonable
+request.
 
 No additional advances, salary, or guaranteed payments are required under this
 {{Agreement}}, {{the_Parties}} acknowledging that {{Writer}} is a principal of
 {{Company}} and benefits indirectly from {{Company}}'s ownership and
-exploitation of {{the_Compositions}} and {{the_Recordings}}. {{The_Parties}} may, by
-separate written agreement, document any salary, advance, or other compensation
-arrangement.
+exploitation of {{the_Compositions}} and {{the_Recordings}}. {{The_Parties}}
+may, by separate written agreement, document any salary, advance, or other
+compensation arrangement.
 
 ## 10. Representations and Warranties
 
@@ -213,22 +214,23 @@ Either {{Party}} may also decline renewal of the then-current term by giving
 written notice as set out in Section 3.
 
 Termination or non-renewal does not affect the assignments already made with
-respect to {{the_Compositions}} and {{the_Recordings}} created during {{the_Term}}, which
-remain assigned to {{Company}} in accordance with Sections 6 and 7 for the full
-duration of copyright. Termination or non-renewal only prevents future
-{{the_Compositions}} and {{the_Recordings}} (those created after the effective date of
-termination or expiration of {{the_Term}}) from being covered by this {{Agreement}}.
+respect to {{the_Compositions}} and {{the_Recordings}} created during
+{{the_Term}}, which remain assigned to {{Company}} in accordance with Sections 6
+and 7 for the full duration of copyright. Termination or non-renewal only
+prevents future {{the_Compositions}} and {{the_Recordings}} (those created after
+the effective date of termination or expiration of {{the_Term}}) from being
+covered by this {{Agreement}}.
 
 Upon termination or non-renewal, Sections 6, 7, 8, 10, 11, 14, 15, and 16 shall
 survive.
 
 ## 13. Independent Status; Not Work-for-Hire
 
-{{the_Parties}} acknowledge that {{the_Compositions}} and {{the_Recordings}} are not "works
-made for hire" within the meaning of the U.S. Copyright Act. {{Writer}} is the
-author of {{the_Compositions}} and {{the_Recordings}}, and the rights conveyed to
-{{Company}} are conveyed by assignment under Sections 6 and 7, not by virtue of
-any employment relationship.
+{{The_Parties}} acknowledge that {{the_Compositions}} and {{the_Recordings}} are
+not "works made for hire" within the meaning of the U.S. Copyright Act.
+{{Writer}} is the author of {{the_Compositions}} and {{the_Recordings}}, and the
+rights conveyed to {{Company}} are conveyed by assignment under Sections 6 and
+7, not by virtue of any employment relationship.
 
 ## 14. Governing Law and Venue
 
@@ -242,14 +244,14 @@ New Castle County, Delaware.
 
 This {{Agreement}} constitutes the entire agreement between {{the_Parties}} with
 respect to its subject matter and supersedes any prior understandings between
-{{the_Parties}} relating to the publishing or master ownership of compositions or
-recordings created on or after the Effective Date, including any prior Exclusive
-Songwriter Agreement between {{the_Parties}} to the extent it would otherwise govern
-such compositions or recordings. No amendment is effective unless in writing and
-signed by both {{the_Parties}}. If any provision is found unenforceable, the
-remainder of this {{Agreement}} shall remain in effect. {{Agreement}} may be
-executed in counterparts, including by electronic signature, each of which is
-deemed an original.
+{{the_Parties}} relating to the publishing or master ownership of compositions
+or recordings created on or after the Effective Date, including any prior
+Exclusive Songwriter Agreement between {{the_Parties}} to the extent it would
+otherwise govern such compositions or recordings. No amendment is effective
+unless in writing and signed by both {{the_Parties}}. If any provision is found
+unenforceable, the remainder of this {{Agreement}} shall remain in effect.
+{{Agreement}} may be executed in counterparts, including by electronic
+signature, each of which is deemed an original.
 
 ## 16. Signatures {.pageBreak}
 

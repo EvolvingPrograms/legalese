@@ -37,11 +37,11 @@ const PANGRAM_TEMPLATE = [
   '  monthly_fee: "$1,850.00"',
   '---',
   '',
-  'This {{$the_agreement}}, dated {{$the_effective_date}}, is between',
-  '{{$the_customer}} and {{$the_contractor}}, individually {{$a_party}} and',
-  'collectively {{$the_parties}}. {{The_contractor}} shall provide',
-  '{{!Services}} at each {{location}} listed in {{!Schedule A}} for',
-  '{{$the_monthly_fee}} per {{location}}, subject to the {{insurance}}',
+  'This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between',
+  '{{$the_Customer}} and {{$the_Contractor}}, individually {{$a_Party}} and',
+  'collectively {{$the_Parties}}. {{The_Contractor}} shall provide',
+  '{{!Services}} at each {{Location}} listed in {{!Schedule A}} for',
+  '{{$the_Monthly_fee}} per {{Location}}, subject to the {{Insurance}}',
   'requirements set out below.',
 ].join('\n');
 
