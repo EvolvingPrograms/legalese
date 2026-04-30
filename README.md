@@ -206,21 +206,19 @@ with a centered header spanning both columns, bold labels on the left,
 and a roomy signature row sized for ink:
 
 <table align="left" width="310">
-<tr><th colspan="2"><div align="center"><b>WRITER</b></div></th></tr>
-<tr><td width="90"><b>Name</b></td><td width="220">&nbsp;</td></tr>
-<tr><td><b>Title</b></td><td>&nbsp;</td></tr>
-<tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
-<tr><td><b>Date</b></td><td>&nbsp;</td></tr>
+<tr><th colspan="2" bgcolor="#eeeeee"><div align="center"><b>WRITER</b></div></th></tr>
+<tr><td width="90" bgcolor="#eeeeee"><b>Name</b></td><td width="220">&nbsp;</td></tr>
+<tr><td bgcolor="#eeeeee"><b>Title</b></td><td>&nbsp;</td></tr>
+<tr><td bgcolor="#eeeeee"><b>Signature</b></td><td height="80">&nbsp;</td></tr>
+<tr><td bgcolor="#eeeeee"><b>Date</b></td><td>&nbsp;</td></tr>
 </table>
 
-<img align="left" width="24" height="1" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"/>
-
 <table align="left" width="310">
-<tr><th colspan="2"><div align="center"><b>COMPANY</b></div></th></tr>
-<tr><td width="90"><b>Entity</b></td><td width="220">&nbsp;</td></tr>
-<tr><td><b>By&nbsp;(name)</b></td><td>&nbsp;</td></tr>
-<tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
-<tr><td><b>Date</b></td><td>&nbsp;</td></tr>
+<tr><th colspan="2" bgcolor="#eeeeee"><div align="center"><b>COMPANY</b></div></th></tr>
+<tr><td width="90" bgcolor="#eeeeee"><b>Entity</b></td><td width="220">&nbsp;</td></tr>
+<tr><td bgcolor="#eeeeee"><b>By&nbsp;(name)</b></td><td>&nbsp;</td></tr>
+<tr><td bgcolor="#eeeeee"><b>Signature</b></td><td height="80">&nbsp;</td></tr>
+<tr><td bgcolor="#eeeeee"><b>Date</b></td><td>&nbsp;</td></tr>
 </table>
 
 <br clear="all"/>
