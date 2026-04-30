@@ -28,10 +28,17 @@
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
     "docx": "^9.6.1",
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^4.1.1",
+    "pandoc-wasm": "^1.0.1"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5",
+    "pandoc-wasm": "^1.0.1"
+  },
+  "peerDependenciesMeta": {
+    "pandoc-wasm": {
+      "optional": true
+    }
   },
   "patchedDependencies": {
     "docx@9.6.1": "patches/docx@9.6.1.patch"
