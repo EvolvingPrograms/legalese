@@ -5,41 +5,47 @@ title: |-
   {{COMPANY}}
 
 schema:
-  # Defined terms — `long:` baked into the template, value override per-deal.
-  # Block form (one key per line) avoids the flow-context quote rules — values
-  # with commas / parens / apostrophes can be unquoted. Use `>-` (folded
-  # scalar) to wrap long single-sentence values.
+  # Defined terms — `definition:` (alias `long:`) baked into the template,
+  # value override per-deal. Block form (one key per line) avoids the
+  # flow-context quote rules — values with commas / parens / apostrophes
+  # can be unquoted. Use `>-` (folded scalar) to wrap long values.
+
+  # Empty entries — register the slug; label auto-derives from snake→Title.
+  writer:
+  compositions:
+
+  # `term:` only when the rendered label differs from the auto-derived one.
+  recordings:
+    term: Master Recordings
+
+  # Single-line definitions.
   company:
     long: Sample Records, Inc.
   agreement:
-    long: Exclusive Recording and Publishing Agreement
-  writer:
-    term: Writer
-  compositions:
-    term: Compositions
-  recordings:
-    term: Master Recordings
-  term:
-    term: Term
-    long: >-
-      an initial three (3) year term, automatically renewable for successive
-      one-year periods
+    long: an Exclusive Recording and Publishing Agreement
+  advance:
+    long: a recoupable advance of $25,000.00
+
+  # `term:` needed for these — apostrophes break the auto-derive.
   publishers_share:
     term: Publisher's Share
     long: a fifty percent (50%) share of all publisher rights
   writers_share:
     term: Writer's Share
     long: the remaining fifty percent (50%) share
+
+  # Multi-line definitions — `>-` folds the wrapped lines into one sentence.
+  term:
+    long: >-
+      an initial three (3) year term, automatically renewable for successive
+      one-year periods
   net_proceeds:
-    term: Net Proceeds
     long: >-
       all gross revenues actually received by the Company, less direct
       distribution and collection costs
-  advance:
-    term: Advance
-    long: a recoupable advance of $25,000.00
 
-  # Form fields — supplied per-deal via --values-file.
+  # Form fields — supplied per-deal via --values-file. `type: string` is the
+  # implicit default; only declare `type:` when it differs (date, list, etc.).
   effective_date:
     type: date
     required: true
@@ -47,16 +53,15 @@ schema:
     type: date
     required: true
     description: Date the Board formally approved the deal
+
   writer_name:
-    type: string
     required: true
     description: Writer legal name
   writer_address:
-    type: string
     required: true
     description: Writer mailing address
+
   governing_law:
-    type: string
     default: State of Delaware
 
   sig_director_1_name:  string
@@ -71,7 +76,7 @@ schema:
 
 ::: {.gap} :::
 
-::: {.indent} 
+::: {.indent}
 
 The undersigned, being all of the directors of {{the_Company}}, a Delaware
 corporation, acting by written consent in lieu of a meeting pursuant to Section
@@ -108,23 +113,22 @@ intent of the foregoing resolution; and
 **{{^Be it finally resolved}}**, that all actions previously taken by any
 officer or director of {{the_Company}} in connection with the matters
 contemplated by {{the_Agreement}} are hereby ratified, confirmed, and approved.
+
 :::
 
-## Approval Details
 
-```fields
-approval_date
-effective_date
-writer_name
-writer_address
-governing_law
-```
+::: {.center .gap}
 
-::: {.center .gap} [SIGNATURE PAGE TO FOLLOW] :::
+[SIGNATURE PAGE TO FOLLOW]
 
-::: {.pageBreak} The undersigned directors execute this written consent
-effective as of {{$the_Effective_date}}, and direct that this consent be filed
-with the minutes of the Board. :::
+:::
+
+
+::: {.pageBreak} :::
+
+The undersigned directors execute this written consent effective as of
+{{$the_Effective_date}}, and direct that this consent be filed with the
+minutes of the Board.
 
 ```sig
 DIRECTOR || DIRECTOR

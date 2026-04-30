@@ -33,8 +33,19 @@ export function blockToDocBuilder(
     }
 
     case 'Para':
-    case 'Plain':
-      return [p(...inlinesToRuns(blk.c as PandocInline[], { values, schema: ctx.schema }))];
+    case 'Plain': {
+      const runs = inlinesToRuns(blk.c as PandocInline[], { values, schema: ctx.schema });
+      if (ctx.indent) {
+        // Document-level first-line indent — legal block style.
+        return [new Paragraph({
+          spacing: PARA_SPACING,
+          alignment: AlignmentType.JUSTIFIED,
+          indent: { firstLine: 720 },
+          children: runs,
+        })];
+      }
+      return [p(...runs)];
+    }
 
     case 'Div': {
       // ::: {.center}     — center-aligned paragraphs
@@ -61,6 +72,11 @@ export function blockToDocBuilder(
       // Empty {.gap} — emit a tall blank paragraph (~one line height).
       if (gap && children.length === 0) {
         return [new Paragraph({ spacing: { before: 240, after: 240 }, children: [] })];
+      }
+      // Empty {.pageBreak} — emit a standalone page-break paragraph. Useful
+      // as a "break here" mark via the inline form `::: {.pageBreak} :::`.
+      if (pageBreak && children.length === 0) {
+        return [new Paragraph({ pageBreakBefore: true, children: [] })];
       }
       const out: DocNode[] = [];
       let pageBreakApplied = !pageBreak;

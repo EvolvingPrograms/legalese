@@ -28,6 +28,9 @@ export interface ParseCtx {
 export interface ConvertCtx {
   baseDir: string;
   schema?: Schema;
+  /** When true, every body paragraph gets a first-line indent (legal block
+   *  style). Per-paragraph Div attributes (`::: {.indent}`) compose with this. */
+  indent?: boolean;
 }
 
 /** Schema entry for a single value — either a bare type alias or a full descriptor. */
@@ -64,5 +67,8 @@ export interface FrontMatter {
   output?: string;
   values?: Record<string, unknown>;
   schema?: Schema;
+  /** Document-level first-line indent on every body paragraph (legal block
+   *  style). Equivalent to wrapping the entire body in `::: {.indent}`. */
+  indent?: boolean;
   [k: string]: unknown;
 }

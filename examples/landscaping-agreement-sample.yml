@@ -11,11 +11,11 @@ effective_date: June 1, 2026
 # already produces the right rendering, and a duplicate just adds noise.
 # Use `|-` block scalars for long entries so you can wrap lines without
 # quote-escape gymnastics.
-customer: |-
-  McDonald's USA, LLC, a Delaware limited liability company, with offices at 110
-  N Carpenter St, Chicago, IL 60607
+customer: >-
+  McDonald's USA, LLC, a Delaware limited liability company, with offices at
+  110 N Carpenter St, Chicago, IL 60607
 
-contractor: |-
+contractor: >-
   Greenline Landscaping, Inc., an Illinois corporation, with offices at 4421 W
   Industrial Park Rd, Naperville, IL 60563
 

@@ -12,9 +12,9 @@ writer_address: 123 Demo Lane, Brooklyn, NY 11201
 
 # Long-form Writer description — `|-` block scalar so we can wrap lines
 # and use literal `"` characters without quote-escape gymnastics.
-writer: |-
-  Sample Writer, an individual residing in Brooklyn, NY and professionally known
-  as "Sample"
+writer: >-
+  Sample Writer, an individual residing in Brooklyn, NY and professionally
+  known as "Sample"
 
 governing_law: State of Delaware
 

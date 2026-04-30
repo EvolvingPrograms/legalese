@@ -1,87 +1,74 @@
 ---
 title: LANDSCAPING SERVICES AGREEMENT
+indent: true   # legal block style — first-line indent on every body paragraph
 
 schema:
   # Defined terms. Block form (one key per line) avoids flow-context quote
   # rules — values with commas / parens / apostrophes can be unquoted.
+
+  # Empty entries — register the slug; label auto-derives from snake→Title.
+  party:
+  location:
+  services:
+  schedule_a:
+  term:
+
+  # Single-line definitions.
   agreement:
     long: Landscaping Services Agreement
   customer:
     long: Customer
   contractor:
     long: Contractor
-  party:
-    term: Party
-  location:
-    term: Location
-  services:
-    term: Services
-  schedule_a:
-    term: Schedule A
 
-  # Static terms with baked expansions.
   initial_term:
-    term: Initial Term
     long: an initial term of two (2) years
   renewal_term:
-    term: Renewal Term
     long: successive renewal terms of one (1) year each
-  term:
-    term: Term
   monthly_fee:
-    term: Monthly Fee
     long: $1,850.00 per Location per month
   cure_period:
-    term: Cure Period
     long: thirty (30) days
+  insurance_floor:
+    long: $2,000,000 per occurrence
+  payment_date:
+    long: the fifteenth (15th) day of each calendar month
+  late_fee_rate:
+    long: one and one-half percent (1.5%) per month
+
+  # `term:` needed where the rendered label differs from the auto-derived one.
   non_renewal_notice:
     term: Non-Renewal Notice Period
     long: sixty (60) days
-  insurance_floor:
-    term: Insurance Floor
-    long: $2,000,000 per occurrence
   insurance_notice:
     term: Insurance Notice Period
     long: thirty (30) days
-  payment_date:
-    term: Payment Date
-    long: the fifteenth (15th) day of each calendar month
-  late_fee_rate:
-    term: Late Fee Rate
-    long: one and one-half percent (1.5%) per month
 
-  # Form fields.
+  # Form fields. `type: string` is the implicit default; only declare `type:`
+  # when it differs (date, list, etc.).
   effective_date:
     type: date
     required: true
 
   customer_name:
-    type: string
     required: true
   customer_entity:
-    type: string
     required: true
-    description: Customer entity form (e.g., Delaware limited liability company)
+    description: Form of customer entity (e.g., a Delaware corporation)
   customer_address:
-    type: string
     required: true
 
   contractor_name:
-    type: string
     required: true
   contractor_entity:
-    type: string
     required: true
-    description: Contractor entity form (e.g., Illinois corporation)
+    description: Form of contractor entity (e.g., Illinois corporation)
   contractor_address:
-    type: string
     required: true
 
   governing_law:
-    type: string
     default: State of Illinois
   venue:
-    type: string
     default: Cook County, Illinois
 
   locations:

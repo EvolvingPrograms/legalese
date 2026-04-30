@@ -73,8 +73,20 @@ export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Pro
     }
   }
 
-  const ast = runPandoc(body);
-  const ctx = { baseDir: opts.baseDir ?? process.cwd(), schema };
+  // Pre-process: expand collapsed empty Div fences `::: {.class} :::` into
+  // the two-line form pandoc requires. Linters that auto-format markdown
+  // often pull short fences onto one line; this keeps `::: {.gap} :::` etc.
+  // working as expected.
+  const preprocessed = body.replace(
+    /^(\s*):::\s*(\{[^}]+\})\s+:::\s*$/gm,
+    '$1::: $2\n$1:::',
+  );
+  const ast = runPandoc(preprocessed);
+  const ctx = {
+    baseDir: opts.baseDir ?? process.cwd(),
+    schema,
+    indent: meta.indent === true,
+  };
   const docBody = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
 
   const output = opts.output ?? meta.output;
