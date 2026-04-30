@@ -1,6 +1,6 @@
 // Pandoc block AST -> doc-builder block conversion.
 
-import { Paragraph, HeadingLevel } from 'docx';
+import { Paragraph, HeadingLevel, AlignmentType } from 'docx';
 import type { Table } from 'docx';
 import { p, list, spacer } from '@/blocks';
 
@@ -20,11 +20,13 @@ export function blockToDocBuilder(
       const [level, attrs, inlines] = blk.c as [number, [string, string[], unknown[]], PandocInline[]];
       const [, classes] = attrs;
       const pageBreak = classes.includes('pageBreak') || classes.includes('pagebreak');
+      const center = classes.includes('center');
       const runs = inlinesToRuns(inlines, { values, schema: ctx.schema });
       const headingLevel = level === 1 ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2;
       return [new Paragraph({
         heading: headingLevel,
         pageBreakBefore: pageBreak,
+        ...(center ? { alignment: AlignmentType.CENTER } : {}),
         children: runs,
       })];
     }
@@ -32,6 +34,27 @@ export function blockToDocBuilder(
     case 'Para':
     case 'Plain':
       return [p(...inlinesToRuns(blk.c as PandocInline[], { values, schema: ctx.schema }))];
+
+    case 'Div': {
+      // ::: {.center}
+      // Centered paragraph(s)
+      // :::
+      const [attrs, children] = blk.c as [[string, string[], unknown[]], PandocBlock[]];
+      const [, classes] = attrs;
+      const center = classes.includes('center');
+      const out: DocNode[] = [];
+      for (const child of children) {
+        if (center && (child.t === 'Para' || child.t === 'Plain')) {
+          out.push(new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: inlinesToRuns(child.c as PandocInline[], { values, schema: ctx.schema }),
+          }));
+        } else {
+          out.push(...blockToDocBuilder(child, values, ctx));
+        }
+      }
+      return out;
+    }
 
     case 'OrderedList':
     case 'BulletList': {
@@ -53,7 +76,7 @@ export function blockToDocBuilder(
       const [, classes] = attrs;
       const lang = classes[0];
       if (lang === 'fields') return [parseFieldsBlock(content, values, ctx.schema)];
-      if (lang === 'sig')    return [parseSigBlock(content, values)];
+      if (lang === 'sig')    return parseSigBlock(content, values);
       if (lang === 'grid')   return parseGridBlock(content, ctx, values);
       console.warn('Unknown fenced block:', lang);
       return [];
@@ -65,7 +88,6 @@ export function blockToDocBuilder(
     case 'BlockQuote':
     case 'DefinitionList':
     case 'Table':
-    case 'Div':
     case 'RawBlock':
     case 'Null':
       return [];

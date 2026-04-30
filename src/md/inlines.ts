@@ -39,11 +39,12 @@ interface MarkerCtx {
 }
 
 // Only set bold/italic when true so heading-style bold isn't overridden.
-function makeRun(text: string, bold: boolean, italic: boolean): Run {
+function makeRun(text: string, bold: boolean, italic: boolean, smallCaps = false): Run {
   return new TextRun({
     text,
-    ...(bold   ? { bold: true }    : {}),
-    ...(italic ? { italics: true } : {}),
+    ...(bold      ? { bold: true }      : {}),
+    ...(italic    ? { italics: true }   : {}),
+    ...(smallCaps ? { smallCaps: true } : {}),
   });
 }
 
@@ -127,6 +128,15 @@ function emitMarker(
   ctx: MarkerCtx,
 ): void {
   let inner = rawInner.trim();
+
+  // {{^TEXT}} — small-caps literal. Standard legal-drafting treatment for
+  // "WHEREAS", "RESOLVED", "WITNESSETH" etc. in board resolutions and
+  // formal recitals. Emits the literal text as a small-caps run, preserving
+  // bold/italic context.
+  if (inner.startsWith('^')) {
+    out.push(makeRun(inner.slice(1).trim(), bold, italic, true));
+    return;
+  }
 
   // {{$key}} — introduce a defined term (parens with article).
   const isIntroduce = inner.startsWith('$');

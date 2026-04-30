@@ -48,11 +48,17 @@ export function parseFieldsBlock(
 
 // Two-sided: first line `LEFT_HEADER || RIGHT_HEADER`, each subsequent line
 // `Label | key [tall]?  ||  Label | key [tall]?`.
-// Single-sided: omit `||` (or leave the right side fully blank) to render a
-// 2-column full-width signature table with a single merged header.
-export function parseSigBlock(content: string, values: Record<string, unknown>) {
+// Single-sided: omit `||` (or leave the right side fully blank).
+// Repeated: first line `from: $key` followed by single-sided template; emits
+// one stacked sig table per entry in `values[key]`. Each entry is an object;
+// row keys resolve against the entry, not against global values. Useful for
+// multi-director board resolutions, multi-party releases, etc.
+export function parseSigBlock(
+  content: string,
+  values: Record<string, unknown>,
+): (Paragraph | Table)[] {
   const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  if (lines.length === 0) return spacer();
+  if (lines.length === 0) return [spacer()];
 
   const splitSide = (sideText: string): SigRow => {
     const parts = sideText.split('|').map(s => s.trim());
@@ -65,6 +71,30 @@ export function parseSigBlock(content: string, values: Record<string, unknown>) 
     return [label, key, opts];
   };
 
+  // Repeater: `from: $key` on first line, single-sided template after.
+  const fromMatch = lines[0]!.match(/^from:\s*\$([a-z_][a-z0-9_]*)\s*$/i);
+  if (fromMatch) {
+    const key = fromMatch[1]!;
+    const entries = values[key];
+    if (!Array.isArray(entries)) {
+      if (entries !== undefined) {
+        console.warn(`sig: from $${key} expected array in values, got:`, entries);
+      }
+      return [spacer()];
+    }
+    const header = lines[1] ?? '';
+    const templateRows = lines.slice(2).map(splitSide);
+    const out: (Paragraph | Table)[] = [];
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i] as Record<string, unknown>;
+      out.push(signatureTable(entry, {
+        left: { header, rows: templateRows },
+      }));
+      if (i < entries.length - 1) out.push(spacer());
+    }
+    return out;
+  }
+
   const [leftHeader = '', rightHeader = ''] = lines[0]!.split('||').map(s => s.trim());
   const leftRows: SigRow[] = [];
   const rightRows: SigRow[] = [];
@@ -76,15 +106,15 @@ export function parseSigBlock(content: string, values: Record<string, unknown>) 
 
   const rightEmpty = !rightHeader && rightRows.every(([label, key]) => !label && !key);
   if (rightEmpty) {
-    return signatureTable(values, {
+    return [signatureTable(values, {
       left: { header: leftHeader, rows: leftRows },
-    });
+    })];
   }
 
-  return signatureTable(values, {
+  return [signatureTable(values, {
     left:  { header: leftHeader,  rows: leftRows },
     right: { header: rightHeader, rows: rightRows },
-  });
+  })];
 }
 
 // `grid` block — YAML body with `columns:` (required) plus one of:
