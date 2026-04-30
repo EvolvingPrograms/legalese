@@ -1,9 +1,9 @@
 ---
-name: legal-doc-builder
+name: legalese
 description: "Use this skill to produce a signable, professional .docx legal or business document (agreement, assignment, license, NDA, addendum, contract, schedule) from a markdown template + values YAML, OR when the user asks for any contract / agreement / license / assignment / addendum / NDA / schedule / signable Word doc — even if they don't say 'docx', they almost always want a polished fillable file rather than markdown. Load when the user wants fields prefilled from a values block, shows an existing legal template and wants to extend or replicate its style, asks for a Schedule A or schedule grid, needs side-by-side or single-party signature blocks, or describes a contract using defined-term language ('the Agreement', 'the Parties', 'Publisher's Share'). Defer here instead of writing raw docx-js code by hand."
 ---
 
-# Legal document builder
+# legalese
 
 Markdown template + values YAML → signable `.docx` in house style.
 
@@ -14,7 +14,7 @@ node $SKILL_DIR <template.md> --values-file <values.yml> --output <out.docx>
 ```
 
 `$SKILL_DIR` is the absolute path to this skill directory — substitute it
-literally (e.g. `node /mnt/skills/user/legal-doc-builder doc.md`). Don't use
+literally (e.g. `node /mnt/skills/user/legalese doc.md`). Don't use
 bash's `VAR=val command` inline-assignment syntax: `$SKILL_DIR` expands to the
 parent shell's (empty) value before the assignment takes effect, and Node ends
 up running the `.md` as a script. `pandoc` must be on `PATH` (it is here).

@@ -1,6 +1,6 @@
 {
-  "name": "legal-docs-plugin",
-  "version": "0.1.0",
+  "name": "legalese",
+  "version": "0.9.0",
   "type": "module",
   "license": "MIT",
   "author": "Spellcraft Inc.",

@@ -1,6 +1,6 @@
 # Test prompt
 
-Use this in a fresh Claude session (with the legal-doc-builder skill installed)
+Use this in a fresh Claude session (with the legalese skill installed)
 to exercise the full pipeline on a domain that does **not** match the shipped
 landscaping example. A clean run produces a signable `.docx` with defined
 terms, a flat Schedule A grid pulled from values via `rows: $key`, and a

@@ -43,8 +43,8 @@ jobs:
             ## Install as a library / CLI
 
             ```bash
-            bun add legal-doc-builder           # library
-            bun add -g legal-doc-builder        # global CLI: `md-to-docx`
+            bun add legalese           # library
+            bun add -g legalese        # global CLI: `md-to-docx`
             ```
 
             See the [README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md) for full usage.

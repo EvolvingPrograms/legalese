@@ -1,4 +1,4 @@
-# legal-doc-builder
+# legalese
 
 A TypeScript library for composing signable legal-style `.docx` documents from
 markdown. Out of the box it knows about the structures legal documents tend to
@@ -25,7 +25,7 @@ picking an appropriate template, filling values, and producing the `.docx`.
    ```
 
    Or grab `plugin.zip` from the latest [GitHub
-   release](https://github.com/SpellcraftAI/legal-doc-builder/releases).
+   release](https://github.com/SpellcraftAI/legalese/releases).
 
 2. Open <https://claude.ai/customize/skills> → **Create skill** → **Upload
    skill** → upload `plugin.zip`.
@@ -46,11 +46,11 @@ brew install pandoc
 # Debian/Ubuntu
 sudo apt-get install -y pandoc
 
-bun add legal-doc-builder      # or: npm i legal-doc-builder
+bun add legalese      # or: npm i legalese
 ```
 
 ```ts
-import { build, h2, p, dt, fieldTable, signatureTable } from 'legal-doc-builder';
+import { build, h2, p, dt, fieldTable, signatureTable } from 'legalese';
 
 await build({
   title: 'EXCLUSIVE SONGWRITER AGREEMENT',
@@ -72,7 +72,7 @@ The full public surface is re-exported from [`src/index.ts`](./src/index.ts).
 ### As a global CLI
 
 ```bash
-bun add -g legal-doc-builder   # or: npm i -g legal-doc-builder
+bun add -g legalese   # or: npm i -g legalese
 md-to-docx my-agreement.md
 md-to-docx my-agreement.md --output ./out/agreement.docx
 OUTPUT_DIR=./out md-to-docx my-agreement.md
