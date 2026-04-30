@@ -185,6 +185,32 @@ test('{{$An_key}} capitalizes the prose expansion but keeps the parens article l
   expect(plain(body)).not.toContain('(An “Initial Term”)');
 });
 
+// — Catalog-array values don't collide with term lookup —
+
+test('{{$the_key}} ignores object-array values (used by grids from: $key)', async () => {
+  // values.locations is a catalog for `grids from: $locations`; the term
+  // lookup must not splat the array of objects as a comma-separated expansion.
+  const body = await renderSourceToXml('_xp_array_collision', [
+    '---',
+    'title: TEST',
+    'output: _xp_array_collision.docx',
+    'schema:',
+    '  location: { term: "Location" }',
+    'values:',
+    '  locations:',
+    '    - { name: "A", services: [] }',
+    '    - { name: "B", services: [] }',
+    '---',
+    '',
+    'Services at {{$the_Locations}}.',
+  ].join('\n'));
+  const out = plain(body);
+  // No object-array splat (would look like "[object Object], and [object Object]")
+  expect(out).not.toContain('[object Object]');
+  // Falls through to inline-styled (no expansion → "the “Locations”").
+  expect(out).toContain('Services at the “Locations”.');
+});
+
 // — Case-insensitive lookup —
 
 test('{{Key}} and {{key}} resolve to the same schema entry', async () => {

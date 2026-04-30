@@ -194,6 +194,44 @@ Forms hit:
 - **Literal inline-styled** (`{{!Term}}`): `{{!Services}}` → "*Services*";
   `{{!Schedule A}}` → "*Schedule A*".
 
+### Worked Background paragraph — singular + plural collective intro
+
+A common drafting idiom is "(each, a *Term*; collectively, the *Terms*)".
+Both halves are introduced inline-styled forms with no expansion — singular
+via `{{$a_X}}`, plural collective via `{{$the_Xs}}`. The plural is
+auto-derived from the schema term, so you write the marker against the
+singular key:
+
+```markdown
+{{Customer}} owns and operates restaurant properties in the Chicago
+metropolitan area and requires year-round grounds maintenance at the
+properties listed in {{!Schedule A}} (each, {{$a_Location}}; collectively,
+{{$the_Locations}}). {{Contractor}} is engaged in the business of commercial
+landscaping and grounds maintenance and is willing to provide the
+{{Services}} described in this {{Agreement}} at each {{Location}} on the
+terms set out below.
+```
+
+With schema `customer`/`contractor`/`agreement`/`services`/`location` as
+plain terms (no `long:`, no values needed):
+
+> Customer owns and operates restaurant properties in the Chicago
+> metropolitan area and requires year-round grounds maintenance at the
+> properties listed in ***"Schedule A"*** (each, a ***"Location"***;
+> collectively, the ***"Locations"***). Contractor is engaged in the
+> business of commercial landscaping and grounds maintenance and is willing
+> to provide the Services described in this Agreement at each Location on
+> the terms set out below.
+
+Forms hit:
+- **Introduce-no-expansion, singular indefinite** (`{{$a_Location}}` →
+  "a *Location*").
+- **Introduce-no-expansion, plural definite** (`{{$the_Locations}}` →
+  "the *Locations*"). Plural auto-derives from `location` schema term.
+- **Plain references** for `Customer`, `Contractor`, `Agreement`,
+  `Services`, `Location` — no styling, no parens.
+- **Literal inline-styled** `{{!Schedule A}}` for the schedule reference.
+
 ## Schema entry fields
 
 ```yaml
