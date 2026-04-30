@@ -1,67 +1,73 @@
 # Test prompt
 
 Use this in a fresh Claude session (with the legal-doc-builder skill installed)
-to exercise the full pipeline on a domain different from the music-industry
-seed example. A clean run produces a signable `.docx` with defined terms,
-a Schedule A grid, and a two-sided signature block — no music vocabulary.
+to exercise the full pipeline on a domain that does **not** match the shipped
+landscaping example. A clean run produces a signable `.docx` with defined
+terms, a Schedule A grid (one sub-table per rented unit), and a two-sided
+signature block — no landscaping or music vocabulary.
 
 ---
 
-> Draft a Landscaping Services Agreement between **McDonald's USA, LLC**
-> (Delaware LLC, 110 N Carpenter St, Chicago, IL 60607) as the customer
-> and **Greenline Landscaping, Inc.** (Illinois corporation, 4421 W
-> Industrial Park Rd, Naperville, IL 60563) as the contractor, effective
-> June 1, 2026.
+> Draft a Construction Equipment Rental Agreement between **Midwest Builders
+> & Co.** (Illinois general partnership, 4400 W Roosevelt Rd, Bellwood, IL
+> 60104) as the lessee and **Atlas Heavy Rentals, LLC** (Delaware LLC, 18
+> Industrial Loop, Joliet, IL 60436) as the lessor, effective May 15, 2026.
 >
-> The contractor will provide year-round grounds maintenance at three
-> McDonald's restaurant locations in the Chicago metro:
+> Atlas will rent three pieces of equipment to Midwest for use at the lessee's
+> active job site at **2200 S Halsted St, Chicago, IL 60608**:
 >
-> - 1234 N Lincoln Ave, Chicago, IL 60614
-> - 5678 W Roosevelt Rd, Cicero, IL 60804
-> - 9012 S Cicero Ave, Oak Lawn, IL 60453
+> - one Caterpillar 320 hydraulic excavator
+> - one Genie S-65 telescopic boom lift
+> - one CAT XQ400 400 kW diesel generator
 >
-> Term: 2 years with auto-renewal in 1-year increments unless either party
-> gives 60 days' written notice of non-renewal. Either party may terminate
-> for material breach on 30 days' written notice and opportunity to cure.
+> Term: an initial rental period of ninety (90) days, renewable in 30-day
+> increments by mutual written agreement. Either party may terminate for
+> material breach on 14 days' written notice and opportunity to cure.
 >
-> Compensation: a flat monthly fee of \$1,850 per location, payable on the
-> 15th of each month, covering mowing, trimming, seasonal planting, mulching,
-> snow and ice removal, and trash policing. The contractor carries general
-> liability insurance of at least \$2,000,000 per occurrence.
+> Rates: each unit has its own daily rate and minimum billable period —
+> the excavator at \$850/day (28-day minimum), the boom lift at \$340/day
+> (14-day minimum), and the generator at \$420/day (7-day minimum). Atlas
+> invoices monthly on the 1st; Midwest pays within fifteen (15) days.
+> Atlas covers routine maintenance; Midwest is responsible for fuel,
+> operator labor, and any damage beyond ordinary wear.
 >
-> Schedule A is the per-location service spec — for each location, list the
-> service categories (Mowing & Trimming / Seasonal Planting / Snow & Ice
-> Removal / Trash Policing) with the service frequency (weekly / monthly /
-> as-needed) and any per-visit minimums. Make up reasonable details.
+> Insurance: Midwest carries commercial general liability of at least
+> \$3,000,000 per occurrence and names Atlas as additional insured.
+>
+> **Schedule A** is the per-unit equipment specification — for each unit,
+> list the make/model, serial number, daily rate, minimum billable period,
+> and delivery date. Make up reasonable serial numbers and stagger the
+> delivery dates across the first week of the term.
 >
 > Governing law: Illinois. Venue: Cook County, Illinois.
 >
-> The contractor's CEO Sarah Chen will sign for Greenline. McDonald's USA's
-> Director of Facilities Michael Torres will sign for McDonald's.
+> Atlas's COO **Devon Park** will sign for Atlas Heavy Rentals. Midwest's
+> Managing Partner **Rebecca Liu** will sign for Midwest Builders.
 
 ---
 
 **Things to watch for in the rendered output:**
 
-- **Defined terms** — `{{$the_agreement}}` should render as
-  `Landscaping Services Agreement (the *“Agreement”*)`; `{{$the_customer}}`
-  and `{{$the_contractor}}` introduce the parties with their full legal
-  descriptions.
-- **Indefinite articles** — `{{$a_location}}` (singular intro) and
-  `{{the_locations}}` (plural ref) should both work via bidirectional
-  schema lookup. If a location term were renamed to something starting with
-  a vowel, the article should auto-flip.
-- **Sentence-start capitalization** — at paragraph starts, the marker
-  should be capitalized (`{{The_parties}}`, `{{The_customer}}`).
-- **Schedule A grid** — three location entries, each rendering as its own
-  grid heading + service-spec table.
-- **Two-sided signature block** — McDonald's on left, Greenline on right;
-  Sarah Chen and Michael Torres in `sig_*_by` fields.
+- **Defined terms** — `{{$the_Agreement}}` should render as
+  `Construction Equipment Rental Agreement (the “Agreement”)`;
+  `{{$the_Lessee}}` and `{{$the_Lessor}}` introduce the parties with
+  their full legal descriptions and addresses.
+- **Static `long:` expansions** — fixed amounts and periods like the
+  insurance floor and cure period live in `schema.X.long`, not in
+  `values:`, so they bake into the template.
+- **Sentence-start capitalization** — paragraph starts use `{{The_Lessee}}`,
+  `{{The_Parties}}` (capital T in marker → capital T in output);
+  mid-sentence references use `{{the_Lessee}}` (lowercase).
+- **Schedule A grid** — one sub-table per unit, mixing the external-file
+  pattern and inline objects (e.g., put the excavator spec in a separate
+  `examples/atlas-excavator.yml`-style YAML and inline the other two).
+- **Two-sided signature block** — Lessee on left, Lessor on right;
+  Rebecca Liu and Devon Park in `sig_*_by` fields.
 
-**Run:**
+**Run (from project root, with `examples/` already created):**
 
 ```bash
-node $SKILL_DIR landscaping-services-agreement.md \
-  --values-file landscaping-values.yml \
-  --output Landscaping_Services_Agreement.docx
+node $SKILL_DIR equipment-rental-agreement.md \
+  --values-file equipment-rental-values.yml \
+  --output Equipment_Rental_Agreement.docx
 ```
