@@ -90,16 +90,35 @@ export function parseSigBlock(content: string, values: Record<string, unknown>) 
 // `grid` block — YAML body with `columns:` (required) plus one of:
 //
 //   rows: [ ... ]      — single table; rows are objects keyed by column.
+//   rows: $key         — single table; rows pulled from values[key] (flat array).
 //   empty_rows: N      — single table with N blank rows (for hand-fill at signing).
 //   from: [ ... ]      — repeater; emit one (optional heading + table) per entry.
 //                        Each entry is `{ heading?: string, rows: [...] }`,
 //                        either inline or a YAML file path with the same shape.
-//                        OR `$key` to pull the array from `values[key]`.
+//   from: $key         — repeater; entries pulled from values[key].
 //
 // Path resolution for `from:` entries that are file paths:
 //   - Literal array in template → relative to the .md file's directory.
 //   - `$key` from values        → relative to process.cwd() (CLI ergonomics:
 //                                  `cd /work && md-to-docx tpl.md ...`).
+
+/** Resolve `$key` references against the values map. Returns the array, or
+ *  null on missing/wrong-type (with a warning for misconfiguration). */
+function resolveDollarKey<T>(
+  raw: unknown,
+  values: Record<string, unknown> | undefined,
+  context: string,
+): T[] | null {
+  if (typeof raw !== 'string' || !raw.trim().startsWith('$')) return null;
+  const key = raw.trim().slice(1);
+  const v = values?.[key];
+  if (Array.isArray(v)) return v as T[];
+  if (v !== undefined) {
+    console.warn(`grid: ${context} $${key} expected array in values, got:`, v);
+  }
+  return [];
+}
+
 export function parseGridBlock(
   content: string,
   ctx: ParseCtx,
@@ -107,7 +126,7 @@ export function parseGridBlock(
 ): (Paragraph | Table)[] {
   const cfg = (yaml.load(content) || {}) as {
     columns?: GridColumn[];
-    rows?: GridRow[];
+    rows?: GridRow[] | string;
     empty_rows?: number;
     from?: string | (string | { heading?: string; rows?: GridRow[] })[];
   };
@@ -116,24 +135,11 @@ export function parseGridBlock(
 
   // Repeater mode — `from:` set.
   if (cfg.from !== undefined) {
-    let fromList: (string | { heading?: string; rows?: GridRow[] })[];
-    let pathBase: string;
-    if (typeof cfg.from === 'string' && cfg.from.trim().startsWith('$')) {
-      const key = cfg.from.trim().slice(1);
-      const v = values?.[key];
-      if (Array.isArray(v)) {
-        fromList = v as (string | { heading?: string; rows?: GridRow[] })[];
-      } else {
-        if (v !== undefined) {
-          console.warn(`grid: from $${key} expected array in values, got:`, v);
-        }
-        fromList = [];
-      }
-      pathBase = process.cwd();
-    } else {
-      fromList = (cfg.from ?? []) as (string | { heading?: string; rows?: GridRow[] })[];
-      pathBase = ctx.baseDir;
-    }
+    const dollar = resolveDollarKey<string | { heading?: string; rows?: GridRow[] }>(
+      cfg.from, values, 'from',
+    );
+    const fromList = dollar ?? ((cfg.from ?? []) as (string | { heading?: string; rows?: GridRow[] })[]);
+    const pathBase = dollar ? process.cwd() : ctx.baseDir;
 
     const out: (Paragraph | Table)[] = [];
     for (let i = 0; i < fromList.length; i++) {
@@ -158,9 +164,11 @@ export function parseGridBlock(
     return out;
   }
 
-  // Single-table mode.
-  let rows = cfg.rows || [];
-  if (cfg.empty_rows && !cfg.rows) {
+  // Single-table mode. `rows:` may be a literal array or a `$key` reference
+  // pulling a flat row array out of values.
+  const dollarRows = resolveDollarKey<GridRow>(cfg.rows, values, 'rows');
+  let rows: GridRow[] = dollarRows ?? (Array.isArray(cfg.rows) ? cfg.rows : []);
+  if (cfg.empty_rows && rows.length === 0) {
     rows = Array.from({ length: cfg.empty_rows }, () => ({}));
   }
   return [gridTable({ columns, rows })];

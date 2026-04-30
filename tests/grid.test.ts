@@ -102,6 +102,39 @@ test('from: $missing renders empty (no rows)', async () => {
   expect(body).not.toContain('UPC');
 });
 
+test('rows: $key pulls a flat row array from values (single table, no repeater)', async () => {
+  const TPL = [
+    '---',
+    'title: TEST',
+    'output: _grid_rows_dollar.docx',
+    '---',
+    '',
+    '```grid',
+    'rows: $units',
+    'columns:',
+    '  - {label: Model,  key: model,  width: 4000}',
+    '  - {label: Serial, key: serial, width: 2500}',
+    '```',
+  ].join('\n');
+
+  const out = path.resolve(OUT, '_grid_rows_dollar.docx');
+  await convertMarkdown(TPL, {
+    output: out,
+    baseDir: ROOT,
+    values: {
+      units: [
+        { model: 'Caterpillar 320', serial: 'CAT320-001' },
+        { model: 'Genie S-65',      serial: 'GEN-S65-002' },
+      ],
+    },
+  });
+
+  const body = plain(readDocumentXml(out));
+  expect(body).toContain('Caterpillar 320');
+  expect(body).toContain('CAT320-001');
+  expect(body).toContain('Genie S-65');
+});
+
 test('entry with no heading renders just the table', async () => {
   const out = path.resolve(OUT, '_grid_no_heading.docx');
   await convertMarkdown(TEMPLATE, {

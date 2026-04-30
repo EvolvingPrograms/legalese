@@ -294,12 +294,15 @@ Date                          || Date
 — width is relative; the renderer scales to page width) plus one of:
 
 - **`rows: [...]`** — single table; rows are objects keyed by column.
+- **`rows: $key`** — single table; row array pulled from `values[key]`.
 - **`empty_rows: N`** — single table with N blank rows (hand-fill at signing).
 - **`from: [...]`** — repeater; emits one (optional heading + sub-table) per
   entry. Use this for Schedule A patterns where the same column shape repeats
   per location / album / album-side.
+- **`from: $key`** — repeater; entry array pulled from `values[key]`.
 
-Use `key: '#'` to auto-number a column.
+`$key` resolves to `values[key]` and works the same in both `rows:` and
+`from:`. Use `key: '#'` to auto-number a column.
 
 Single table:
 
