@@ -40,7 +40,7 @@ const PANGRAM_TEMPLATE = [
   'This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between',
   '{{$the_Customer}} and {{$the_Contractor}}, individually {{$a_Party}} and',
   'collectively {{$the_Parties}}. {{The_Contractor}} shall provide',
-  '{{!Services}} at each {{Location}} listed in {{!Schedule A}} for',
+  '{{!Services}} at each {{Location}} listed in **{{Schedule_A}}** for',
   '{{$the_Monthly_fee}} per {{Location}}, subject to the {{Insurance}}',
   'requirements set out below.',
 ].join('\n');
@@ -106,8 +106,12 @@ test('{{!Services}}: literal label, inline-styled, no parens', () => {
   expect(body).toContain('shall provide “Services” at each');
 });
 
-test('{{!Schedule A}}: multi-word literal, inline-styled', () => {
-  expect(body).toContain('listed in “Schedule A”');
+test('**{{Schedule_A}}**: schedule ref renders plain (bold via markdown), no quote-italic styling', () => {
+  // Bare reference marker wrapped in markdown bold → "Schedule A" (bold only,
+  // no curly quotes, no italic). Conventional treatment for schedule/exhibit
+  // pointers, which aren't defined terms in the strict sense.
+  expect(body).toContain('listed in Schedule A');
+  expect(body).not.toContain('“Schedule A”');
 });
 
 // — Full pangram — sanity check the whole sentence flows correctly —
@@ -121,7 +125,7 @@ test('full rendered pangram matches expected output', () => {
     'and Greenline Landscaping, Inc. (the “Contractor”),',
     'individually a “Party” and collectively the “Parties”.',
     'The Contractor shall provide “Services” at each Location',
-    'listed in “Schedule A” for $1,850.00 (the “Monthly Fee”) per Location,',
+    'listed in Schedule A for $1,850.00 (the “Monthly Fee”) per Location,',
     'subject to the Insurance requirements set out below.',
   ].join(' ');
   // Lines were joined with spaces in the markdown source (soft wraps);

@@ -169,7 +169,7 @@ Mid-sentence uses `{{the_Agreement}}` (lowercase article); sentence-start uses
 This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between
 {{$the_Customer}} and {{$the_Contractor}}, individually {{$a_Party}} and
 collectively {{$the_Parties}}. {{The_Contractor}} shall provide
-{{!Services}} at each {{Location}} listed in {{!Schedule A}} for
+{{!Services}} at each {{Location}} listed in **{{Schedule_A}}** for
 {{$the_Monthly_fee}} per {{Location}}, subject to the {{Insurance}}
 requirements set out below.
 ```
@@ -183,7 +183,7 @@ for `effective_date`, `customer`, `contractor`, `monthly_fee`):
 > (the ***"Customer"***) and Greenline Landscaping, Inc. (the ***"Contractor"***),
 > individually a ***"Party"*** and collectively the ***"Parties"***. The
 > Contractor shall provide ***"Services"*** at each Location listed in
-> ***"Schedule A"*** for $1,850.00 (the ***"Monthly Fee"***) per Location,
+> **Schedule A** for $1,850.00 (the ***"Monthly Fee"***) per Location,
 > subject to the Insurance requirements set out below.
 
 Forms hit:
@@ -199,8 +199,16 @@ Forms hit:
   value lookup): `{{location}}` → "Location"; `{{the_contractor}}` →
   "the Contractor"; `{{The_contractor}}` (sentence start) → "The Contractor".
 
-- **Literal inline-styled** (`{{!Term}}`): `{{!Services}}` → "*Services*";
-  `{{!Schedule A}}` → "*Schedule A*".
+- **Literal inline-styled** (`{{!Term}}`): `{{!Services}}` → "*Services*"
+  (defined-term introduction, heavy emphasis).
+
+- **Schedule / exhibit references** — write `**{{Schedule_A}}**` (or any
+  bare reference marker wrapped in markdown bold) to render plain bold
+  *Schedule A* without the defined-term quote-and-italic styling. Schedule
+  refs are section pointers, not terms of art — bold-only is the
+  conventional treatment. The bare `{{Schedule_A}}` marker resolves
+  through the same case-insensitive snake→Title-Case path as any other
+  reference, so no schema entry is required.
 
 ### Worked Background paragraph — singular + plural collective intro
 

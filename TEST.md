@@ -3,71 +3,83 @@
 Use this in a fresh Claude session (with the legal-doc-builder skill installed)
 to exercise the full pipeline on a domain that does **not** match the shipped
 landscaping example. A clean run produces a signable `.docx` with defined
-terms, a Schedule A grid (one sub-table per rented unit), and a two-sided
-signature block — no landscaping or music vocabulary.
+terms, a flat Schedule A grid pulled from values via `rows: $key`, and a
+two-sided signature block — no landscaping, music, or rental vocabulary.
 
 ---
 
-> Draft a Construction Equipment Rental Agreement between **Midwest Builders
-> & Co.** (Illinois general partnership, 4400 W Roosevelt Rd, Bellwood, IL
-> 60104) as the lessee and **Atlas Heavy Rentals, LLC** (Delaware LLC, 18
-> Industrial Loop, Joliet, IL 60436) as the lessor, effective May 15, 2026.
+> Draft a Consulting Services Agreement between **Northwind Trading Co.**
+> (Delaware corporation, 200 W Madison St, Chicago, IL 60606) as the
+> client and **Aperture Strategy LLC** (Illinois LLC, 600 N State St,
+> Chicago, IL 60654) as the consultant, effective March 1, 2026.
 >
-> Atlas will rent three pieces of equipment to Midwest for use at the lessee's
-> active job site at **2200 S Halsted St, Chicago, IL 60608**:
+> Aperture will provide go-to-market strategy advisory work to Northwind's
+> commercial team across four discrete deliverables, each with its own due
+> date and fixed fee. Total engagement value of \$140,000.
 >
-> - one Caterpillar 320 hydraulic excavator
-> - one Genie S-65 telescopic boom lift
-> - one CAT XQ400 400 kW diesel generator
+> **Schedule A** (deliverables) — each row has a milestone name, a one-line
+> description, the due date, and the fee:
 >
-> Term: an initial rental period of ninety (90) days, renewable in 30-day
-> increments by mutual written agreement. Either party may terminate for
-> material breach on 14 days' written notice and opportunity to cure.
+> - Market Sizing Memo — quantitative TAM/SAM/SOM model for the
+>   commercial-team segments — due March 31, 2026 — \$28,000
+> - Competitive Landscape Briefing — written brief plus 90-minute
+>   workshop — due April 24, 2026 — \$32,000
+> - Pricing & Packaging Recommendations — strategy memo with three
+>   priced scenarios — due May 22, 2026 — \$40,000
+> - Go-to-Market Playbook — consolidated implementation plan and
+>   90-day rollout calendar — due June 19, 2026 — \$40,000
 >
-> Rates: each unit has its own daily rate and minimum billable period —
-> the excavator at \$850/day (28-day minimum), the boom lift at \$340/day
-> (14-day minimum), and the generator at \$420/day (7-day minimum). Atlas
-> invoices monthly on the 1st; Midwest pays within fifteen (15) days.
-> Atlas covers routine maintenance; Midwest is responsible for fuel,
-> operator labor, and any damage beyond ordinary wear.
+> Term: runs through final acceptance of the Go-to-Market Playbook;
+> automatically expires when the last deliverable is accepted unless extended
+> by written change order. Either party may terminate for material breach on
+> 14 days' written notice and opportunity to cure.
 >
-> Insurance: Midwest carries commercial general liability of at least
-> \$3,000,000 per occurrence and names Atlas as additional insured.
+> Payment: net-30 from the acceptance of each deliverable. Northwind has 10
+> business days to accept or reject each deliverable in writing; silence is
+> deemed acceptance.
 >
-> **Schedule A** is the per-unit equipment specification — for each unit,
-> list the make/model, serial number, daily rate, minimum billable period,
-> and delivery date. Make up reasonable serial numbers and stagger the
-> delivery dates across the first week of the term.
+> Confidentiality: standard 3-year mutual NDA — each party protects the
+> other's confidential information for three (3) years from disclosure.
+>
+> IP: all deliverables prepared specifically for Northwind are work-for-hire
+> and assigned on payment; Aperture retains its pre-existing materials and
+> any general methodology, with a perpetual license to Northwind for
+> internal use.
+>
+> Insurance: Aperture carries professional liability of at least
+> \$2,000,000 per claim and \$2,000,000 aggregate.
 >
 > Governing law: Illinois. Venue: Cook County, Illinois.
 >
-> Atlas's COO **Devon Park** will sign for Atlas Heavy Rentals. Midwest's
-> Managing Partner **Rebecca Liu** will sign for Midwest Builders.
+> Aperture's Managing Partner **Priya Shah** signs for Aperture. Northwind's
+> Chief Commercial Officer **Daniel Ortega** signs for Northwind.
 
 ---
 
 **Things to watch for in the rendered output:**
 
-- **Defined terms** — `{{$the_Agreement}}` should render as
-  `Construction Equipment Rental Agreement (the “Agreement”)`;
-  `{{$the_Lessee}}` and `{{$the_Lessor}}` introduce the parties with
-  their full legal descriptions and addresses.
-- **Static `long:` expansions** — fixed amounts and periods like the
-  insurance floor and cure period live in `schema.X.long`, not in
-  `values:`, so they bake into the template.
-- **Sentence-start capitalization** — paragraph starts use `{{The_Lessee}}`,
-  `{{The_Parties}}` (capital T in marker → capital T in output);
-  mid-sentence references use `{{the_Lessee}}` (lowercase).
-- **Schedule A grid** — one sub-table per unit, mixing the external-file
-  pattern and inline objects (e.g., put the excavator spec in a separate
-  `examples/atlas-excavator.yml`-style YAML and inline the other two).
-- **Two-sided signature block** — Lessee on left, Lessor on right;
-  Rebecca Liu and Devon Park in `sig_*_by` fields.
+- **Defined terms** — after a demonstrative like "This", use the bare
+  `{{$Agreement}}` introduce form, which renders as
+  `Consulting Services Agreement (“Agreement”)`. Reserve `{{$the_X}}` for
+  mid-sentence introductions where prose actually wants "(the X)".
+  `{{$Client}}` and `{{$Consultant}}` introduce the parties with their
+  full legal descriptions.
+- **Static `long:` expansions** — fixed amounts and durations like the
+  insurance floor, NDA term, cure period, and total engagement value live
+  in `schema.X.long`, not `values:`, so they bake into the template.
+- **Sentence-start capitalization** — paragraph starts use `{{The_Client}}`,
+  `{{The_Parties}}` (capital `T` in marker → capital `T` in output);
+  mid-sentence references use `{{the_Client}}`.
+- **Schedule A grid via `rows: $deliverables`** — the four-row table pulls
+  its rows from a flat `deliverables:` array in values. No `from:`
+  repeater needed (single table, no per-deliverable sub-headings).
+- **Two-sided signature block** — Client on left, Consultant on right;
+  Daniel Ortega and Priya Shah in `sig_*_by` fields.
 
-**Run (from project root, with `examples/` already created):**
+**Run (from project root):**
 
 ```bash
-node $SKILL_DIR equipment-rental-agreement.md \
-  --values-file equipment-rental-values.yml \
-  --output Equipment_Rental_Agreement.docx
+node $SKILL_DIR consulting-services-agreement.md \
+  --values-file consulting-services-values.yml \
+  --output Consulting_Services_Agreement.docx
 ```
