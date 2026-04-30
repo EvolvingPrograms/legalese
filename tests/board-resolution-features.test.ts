@@ -244,6 +244,33 @@ test('## Heading {.center} renders a centered heading', async () => {
   expect(para).toContain('Heading2');
 });
 
+// — Page numbers in footer —
+
+test('docx ships with a centered page-number footer (legal convention)', async () => {
+  const { convertMarkdown } = await import('@/md/convert');
+  const path = await import('node:path');
+  const { ROOT } = await import('./_helpers');
+  const fs = await import('node:fs');
+  const yauzl = await import('yauzl').catch(() => null);
+
+  const out = path.resolve(OUT, '_page_numbers.docx');
+  await convertMarkdown([
+    '---', 'title: TEST', '---',
+    '',
+    'Body.',
+  ].join('\n'), { output: out, baseDir: ROOT, values: {} });
+
+  // .docx is a zip; pull word/footer1.xml inline using bun's built-in unzip
+  // via the Bash-style shell. Easier: read the buffer and look for the footer
+  // entry header. For test simplicity, just spawn `unzip -p`.
+  const { execSync } = await import('node:child_process');
+  const footerXml = execSync(`unzip -p "${out}" word/footer1.xml`).toString();
+  // Centered paragraph with the PAGE field instruction.
+  expect(footerXml).toMatch(/<w:jc\s+w:val="center"\s*\/>/);
+  expect(footerXml).toContain('PAGE');
+  expect(footerXml).toContain('w:fldChar');
+});
+
 // — Sig repeater via from: $key —
 
 test('sig from: $directors with explicit values renders names and stacks blocks', async () => {

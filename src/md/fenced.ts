@@ -84,7 +84,9 @@ export function parseSigBlock(
     }
     const header = lines[1] ?? '';
     const templateRows = lines.slice(2).map(splitSide);
-    const out: (Paragraph | Table)[] = [];
+    // Leading spacer separates sig blocks from the preceding "The undersigned…"
+    // prose — standard legal layout convention.
+    const out: (Paragraph | Table)[] = [spacer()];
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i] as Record<string, unknown>;
       out.push(signatureTable(entry, {
@@ -106,12 +108,12 @@ export function parseSigBlock(
 
   const rightEmpty = !rightHeader && rightRows.every(([label, key]) => !label && !key);
   if (rightEmpty) {
-    return [signatureTable(values, {
+    return [spacer(), signatureTable(values, {
       left: { header: leftHeader, rows: leftRows },
     })];
   }
 
-  return [signatureTable(values, {
+  return [spacer(), signatureTable(values, {
     left:  { header: leftHeader,  rows: leftRows },
     right: { header: rightHeader, rows: rightRows },
   })];

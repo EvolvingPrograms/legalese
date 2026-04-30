@@ -30,6 +30,9 @@ export const signatureTable = (
     const VALUE_W = 6360;
 
     const rows = left.rows.map(normRow);
+    // Sig blocks are atomic — keepNext on every row except the last pins the
+    // whole table together so it never splits across a page break.
+    const lastIdx = rows.length;  // header is row 0, data rows 1..N
 
     return new Table({
       width: { size: TABLE_WIDTH, type: WidthType.DXA },
@@ -40,30 +43,35 @@ export const signatureTable = (
           cantSplit: true,
           children: [
             cell(
-              [new Paragraph({ alignment: AlignmentType.CENTER, children: [b(left.header)] })],
+              [new Paragraph({ keepNext: true, alignment: AlignmentType.CENTER, children: [b(left.header)] })],
               LABEL_W + VALUE_W,
               { columnSpan: 2, header: true },
             ),
           ],
         }),
-        ...rows.map((R) =>
-          new TableRow({
+        ...rows.map((R, idx) => {
+          const pinNext = idx + 1 < lastIdx;
+          return new TableRow({
             cantSplit: true,
             ...(R.opts.tall ? { height: { value: SIG_TALL, rule: HeightRule.ATLEAST } } : {}),
             children: [
-              cell([new Paragraph({ children: [b(R.label)] })], LABEL_W, { header: true }),
-              cell([new Paragraph({ children: [t(val(values, R.key))] })], VALUE_W),
+              cell([new Paragraph({ ...(pinNext ? { keepNext: true } : {}), children: [b(R.label)] })], LABEL_W, { header: true }),
+              cell([new Paragraph({ ...(pinNext ? { keepNext: true } : {}), children: [t(val(values, R.key))] })], VALUE_W),
             ],
-          }),
-        ),
+          });
+        }),
       ],
     });
   }
 
   // --- Two-sided layout ---
-  // Four columns: label | value | label | value. Both sides padded to equal length.
-  const LABEL_W = 1500;
-  const VALUE_W = 3180;
+  // Five columns: label | value | gutter | label | value. The gutter is a
+  // borderless gap (~240 twips) so the two halves visually breathe apart
+  // instead of sharing a border.
+  const GUTTER_W = 240;
+  const SIDE_W = (TABLE_WIDTH - GUTTER_W) / 2;
+  const LABEL_W = Math.round(SIDE_W * 0.32);
+  const VALUE_W = Math.round(SIDE_W) - LABEL_W;
 
   const sigVal = (key: string | null) =>
     cell(
@@ -81,21 +89,29 @@ export const signatureTable = (
   const lrows = pad(left.rows);
   const rrows = pad(right.rows);
 
+  // keepNext pins each row to the next so the whole sig block stays on one
+  // page. lastIdx is the count of data rows; header is row 0, data rows 1..N.
+  const lastIdx = lrows.length;
+
+  const gutter = (kn: object) =>
+    cell([new Paragraph({ ...kn, children: [t('')] })], GUTTER_W, { borders: 'none' });
+
   return new Table({
     width: { size: TABLE_WIDTH, type: WidthType.DXA },
-    columnWidths: [LABEL_W, VALUE_W, LABEL_W, VALUE_W],
+    columnWidths: [LABEL_W, VALUE_W, GUTTER_W, LABEL_W, VALUE_W],
     borders: TABLE_BORDERS,
     rows: [
       new TableRow({
         cantSplit: true,
         children: [
           cell(
-            [new Paragraph({ alignment: AlignmentType.CENTER, children: [b(left.header)] })],
+            [new Paragraph({ keepNext: true, alignment: AlignmentType.CENTER, children: [b(left.header)] })],
             LABEL_W + VALUE_W,
             { columnSpan: 2, header: true },
           ),
+          gutter({ keepNext: true }),
           cell(
-            [new Paragraph({ alignment: AlignmentType.CENTER, children: [b(right.header)] })],
+            [new Paragraph({ keepNext: true, alignment: AlignmentType.CENTER, children: [b(right.header)] })],
             LABEL_W + VALUE_W,
             { columnSpan: 2, header: true },
           ),
@@ -104,15 +120,18 @@ export const signatureTable = (
       ...lrows.map((L, idx) => {
         const R = rrows[idx]!;
         const tall = L.opts.tall || R.opts.tall;
+        const pinNext = idx + 1 < lastIdx;
+        const kn = pinNext ? { keepNext: true } : {};
 
         return new TableRow({
           cantSplit: true,
           ...(tall ? { height: { value: SIG_TALL, rule: HeightRule.ATLEAST } } : {}),
           children: [
-            cell([new Paragraph({ children: [b(L.label)] })], LABEL_W, { header: true }),
-            sigVal(L.key),
-            cell([new Paragraph({ children: [b(R.label)] })], LABEL_W, { header: true }),
-            sigVal(R.key),
+            cell([new Paragraph({ ...kn, children: [b(L.label)] })], LABEL_W, { header: true }),
+            cell([new Paragraph({ ...kn, children: [t(val(values, L.key))] })], VALUE_W),
+            gutter(kn),
+            cell([new Paragraph({ ...kn, children: [b(R.label)] })], LABEL_W, { header: true }),
+            cell([new Paragraph({ ...kn, children: [t(val(values, R.key))] })], VALUE_W),
           ],
         });
       }),

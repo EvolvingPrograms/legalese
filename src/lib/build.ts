@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import {
   Document, Packer, AlignmentType, LevelFormat,
+  Footer, Paragraph as DocxParagraph, TextRun, PageNumber,
 } from 'docx';
 import type { Paragraph, Table } from 'docx';
 
@@ -62,7 +63,22 @@ export const build = ({ title, output, body }: {
       }],
     },
     sections: [{
-      properties: { page: { size: PAGE, margin: MARGIN } },
+      properties: {
+        page: { size: PAGE, margin: MARGIN },
+        // Suppress page number on the title page; renumbering would also be
+        // possible via section breaks, but most legal docs are one section.
+        titlePage: false,
+      },
+      footers: {
+        // Bottom-centered numerals — standard legal convention. Kept simple
+        // ("1", "2", "3"); firms wanting "Page X of Y" can extend later.
+        default: new Footer({
+          children: [new DocxParagraph({
+            alignment: AlignmentType.CENTER,
+            children: [new TextRun({ children: [PageNumber.CURRENT] })],
+          })],
+        }),
+      },
       children: [
         ...(title ? [h1(title)] : []),
         // Cast through unknown[] before re-casting: TS2589 bails on deeply

@@ -1,0 +1,19 @@
+# Sample form values for examples/board-resolution.md.
+# Render (from project root):
+#   node $SKILL_DIR examples/board-resolution.md \
+#     --values-file examples/board-resolution-sample.yml \
+#     --output Board_Resolution.docx
+
+effective_date: "April 30, 2026"
+writer_name:    "Sample Writer"
+
+# Director sig values — paired into two two-sided sig blocks (1+2, 3+4)
+# in the template body so all four signatures fit on one page in a 2x2 grid.
+sig_director_1_name:  "Alex Morgan"
+sig_director_1_title: "Chair"
+sig_director_2_name:  "Priya Shah"
+sig_director_2_title: "Director"
+sig_director_3_name:  "Devon Park"
+sig_director_3_title: "Director"
+sig_director_4_name:  "Rebecca Liu"
+sig_director_4_title: "Director"

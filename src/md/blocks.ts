@@ -46,23 +46,38 @@ export function blockToDocBuilder(
       //                     heading and just wrap the closing prose so the
       //                     undersigned paragraph + sig tables land on a
       //                     fresh page.
+      // ::: {.gap}        — empty Div emits a tall blank paragraph, for vertical
+      //                     breathing room (e.g. before "[SIGNATURE PAGE TO
+      //                     FOLLOW.]"). When used alongside `{.center}` etc. on
+      //                     a non-empty Div, adds extra `before` spacing to
+      //                     the first paragraph.
       const [attrs, children] = blk.c as [[string, string[], unknown[]], PandocBlock[]];
       const [, classes] = attrs;
       const center = classes.includes('center');
       const indent = classes.includes('indent');
       const pageBreak = classes.includes('pageBreak') || classes.includes('pagebreak');
+      const gap = classes.includes('gap');
+
+      // Empty {.gap} — emit a tall blank paragraph (~one line height).
+      if (gap && children.length === 0) {
+        return [new Paragraph({ spacing: { before: 240, after: 240 }, children: [] })];
+      }
       const out: DocNode[] = [];
       let pageBreakApplied = !pageBreak;
       for (const child of children) {
         const isPara = child.t === 'Para' || child.t === 'Plain';
         // Para/Plain children are reconstructed in-place so we can apply Div
         // attributes (center, indent, pageBreak) directly to the Paragraph.
-        if (isPara && (center || indent || !pageBreakApplied)) {
+        if (isPara && (center || indent || gap || !pageBreakApplied)) {
           // Match the default body-paragraph styling (justified, 1.5 line,
           // before/after spacing) so Div paragraphs flow with the same
           // breathing room as plain prose. Center overrides justification.
+          // {.gap} adds extra `before` spacing for vertical breathing room.
+          const spacing = gap
+            ? { ...PARA_SPACING, before: 480 }
+            : PARA_SPACING;
           out.push(new Paragraph({
-            spacing: PARA_SPACING,
+            spacing,
             alignment: center ? AlignmentType.CENTER : AlignmentType.JUSTIFIED,
             ...(indent ? { indent: { firstLine: 720 } } : {}),
             ...(!pageBreakApplied ? { pageBreakBefore: true } : {}),

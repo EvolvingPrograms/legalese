@@ -55,6 +55,8 @@ The article rides in the marker prefix; the term comes from schema.
 | `{{$a_key}}` | `<expansion> (a ***Key***)` | introduce, indefinite |
 | `{{Term}}` | `(the ***Term***)` | literal define, parens (label not in schema) |
 | `{{!Term}}` | `***Term***` | literal define, inline-styled (sentence-start) |
+| `{{^TEXT}}` | small-caps run | "WHEREAS", "RESOLVED", "WITNESSETH" — formal recital/resolution keywords. Wrap in `**…**` for bold + small caps. |
+| `{{KEY}}` | uppercased substitution | All-caps marker → uppercases the resolved value/long/term. Useful in titles (`{{COMPANY}}` → "SAMPLE RECORDS, INC."). |
 
 Lookup is case-insensitive (`{{Operator}}` resolves to `schema.operator`).
 `a_` / `an_` auto-flips by the first letter of the resolved term — change
@@ -324,6 +326,33 @@ Signature [tall]              || Signature [tall]
 Date                          || Date
 ```
 ````
+
+For >2 signers (board resolutions, joint ventures), pair them via the same
+two-sided syntax — one `sig` block per pair stacks 2x2 in the page:
+
+````
+```sig
+DIRECTOR || DIRECTOR
+Name | sig_director_1_name        || Name | sig_director_2_name
+Title | sig_director_1_title      || Title | sig_director_2_title
+Signature [tall]                  || Signature [tall]
+Date                              || Date
+```
+
+```sig
+DIRECTOR || DIRECTOR
+Name | sig_director_3_name        || Name | sig_director_4_name
+Title | sig_director_3_title      || Title | sig_director_4_title
+Signature [tall]                  || Signature [tall]
+Date                              || Date
+```
+````
+
+A single-sided `from: $key` repeater also exists for cases where one stacked
+column is preferred — see `examples/board-resolution.md` for both patterns.
+
+Sig blocks are atomic — once they start they don't split across pages — and
+emit a leading spacer paragraph for breathing room from the preceding prose.
 
 **`grid`** — styled table. YAML body with `columns:` (each `{label, key, width}`
 — width is relative; the renderer scales to page width) plus one of:

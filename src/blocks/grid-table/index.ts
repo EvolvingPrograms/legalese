@@ -19,12 +19,15 @@ export const gridTable = ({ columns, rows }: { columns: GridColumn[]; rows: Grid
   const widths = columns.map((c) => Math.round(c.width * factor));
   widths[widths.length - 1] = TABLE_WIDTH - widths.slice(0, -1).reduce((s, w) => s + w, 0);
 
+  // keepNext on header cells pins the header row to the next (first data)
+  // row — prevents an orphan header at the bottom of a page when the table
+  // overflows. Subsequent rows can break across pages normally.
   const headerRow = new TableRow({
     tableHeader: true,
     cantSplit: true,
     children: columns.map((col, idx) =>
       cell(
-        [new Paragraph({ children: [b(col.label)] })],
+        [new Paragraph({ keepNext: true, children: [b(col.label)] })],
         widths[idx]!,
         { header: true },
       ),
