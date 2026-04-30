@@ -14,6 +14,7 @@
   "files": [
     "dist/",
     "examples/",
+    "fonts/",
     "README.md",
     "SKILL.md"
   ],
@@ -21,7 +22,7 @@
     "typecheck": "tsc -p .",
     "test": "bun test",
     "build": "bun build scripts/md-to-docx.ts --target=node --minify --outfile=dist/md-to-docx.js && chmod +x dist/md-to-docx.js",
-    "pack": "bun run build && zip -FSqr plugin.zip dist examples README.md SKILL.md package.json"
+    "pack": "bun run build && zip -FSqr plugin.zip dist examples fonts README.md SKILL.md package.json"
   },
   "devDependencies": {
     "@types/bun": "latest",
