@@ -79,9 +79,126 @@ OUTPUT_DIR=./out md-to-docx my-agreement.md
 ```
 
 The CLI takes a markdown file with front-matter (`title`, `output`, `values`)
-and the four supported fenced blocks (`fields`, `sig`, `grid`, `grids`). See
+and the three supported fenced blocks (`fields`, `sig`, `grid`). See
 [`examples/`](./examples) for ready-to-edit templates and [`SKILL.md`](./SKILL.md)
 for the full markdown DSL reference.
+
+## Markdown syntax
+
+A template is a markdown file with three pieces: YAML front-matter (schema +
+optional values + style), prose with `{{marker}}` substitutions, and fenced
+blocks for the structural elements legal documents need (form fields,
+signature blocks, schedule grids).
+
+### Front-matter
+
+```yaml
+---
+title: LANDSCAPING SERVICES AGREEMENT
+output: ./Landscaping_Agreement.docx     # optional; CLI flag wins
+
+schema:
+  agreement:        { long: "Landscaping Services Agreement" }
+  customer:         { long: "Customer" }
+  contractor:       { long: "Contractor" }
+  effective_date:   { type: date,   required: true }
+  monthly_fee:      { term: "Monthly Fee", long: "$1,850.00 per Location" }
+  governing_law:    { type: string, default: "State of Delaware" }
+
+values:                       # or pass --values-file foo.yml
+  effective_date: "June 1, 2026"
+  customer:   "McDonald's USA, LLC"
+  contractor: "Greenline Landscaping, Inc."
+
+style:
+  font: EB Garamond           # bundled; embeds into the .docx
+  size: 12
+  margin: 1440                # 1" all sides (twips)
+---
+```
+
+`schema` declares every defined term and form field. `values` (or
+`--values-file`) supplies per-deal data. Run `md-to-docx my.md --schema`
+to dump `values: / schema: / required: / missing:` without rendering.
+
+### Defined-term markers
+
+The article rides in the marker prefix; the term comes from schema.
+
+| Marker            | Renders                                  |
+|-------------------|------------------------------------------|
+| `{{key}}`         | `Key`                                    |
+| `{{the_key}}`     | `the Key`                                |
+| `{{The_key}}`     | `The Key` *(sentence-start)*             |
+| `{{a_key}}`       | `a Key` / `an Key` *(auto by vowel)*     |
+| `{{$key}}`        | `<expansion> ***"Key"***`                |
+| `{{$the_key}}`    | `<expansion> (the ***"Key"***)`          |
+| `{{!Term}}`       | `***"Term"***` *(literal, inline-styled)*|
+| `{{^WHEREAS}}`    | small-caps run                           |
+| `{{KEY}}`         | uppercased — useful in titles            |
+
+The `$` forms **introduce** a term (with its expansion + parenthetical
+definition); plain forms reference it after introduction. Lookups are
+case-insensitive; plurals auto-derive (`location` → `Locations`); `a_` /
+`an_` auto-flips by the first letter of the resolved term.
+
+```markdown
+This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between
+{{$the_Customer}} and {{$the_Contractor}}, individually {{$a_Party}} and
+collectively {{$the_Parties}}. {{The_Contractor}} shall provide
+{{!Services}} at each {{Location}} listed in **{{Schedule_A}}** for
+{{$the_Monthly_fee}} per {{Location}}.
+```
+
+### Fenced blocks
+
+**`fields`** — labelled form rows for blanks the parties fill in:
+
+````markdown
+```fields
+effective_date
+writer_name
+Licensing Fee | fee | prefix=$
+Spotify URL | spotify | sub=if credit required
+```
+````
+
+**`sig`** — signature block. First line is `LEFT_HEADER || RIGHT_HEADER`;
+omit `||` for single-party. `[tall]` = a roomy line for handwritten signature.
+
+````markdown
+```sig
+WRITER || COMPANY
+Name      | sig_writer_name   || Entity    | sig_company_entity
+Signature [tall]               || Signature [tall]
+Date                           || Date
+```
+````
+
+**`grid`** — styled table (full-grid borders, scaled column widths).
+Schedules, inventories, deliverable lists. Rows can be literal, pulled
+from `values[key]` via `rows: $key`, or repeated per-entry via `from:`.
+
+````markdown
+```grid
+columns:
+  - {label: '#',         key: '#',       width: 600}
+  - {label: 'Service',   key: service,   width: 3500}
+  - {label: 'Frequency', key: frequency, width: 1800}
+rows:
+  - { service: "Mowing",       frequency: "Weekly" }
+  - { service: "Snow Removal", frequency: "As-needed" }
+```
+````
+
+> **Don't use raw markdown tables.** The renderer ignores them — `grid`
+> is the only supported tabular form.
+
+> **Nested lists aren't supported.** Use a flat lettered list (`a.`,
+> `b.`, `c.` with blank lines between) or a `grid` block.
+
+The full DSL — every marker form, schema field, grid `from:` repeater,
+and style override — is documented in [`SKILL.md`](./SKILL.md).
 
 ## Repo layout
 

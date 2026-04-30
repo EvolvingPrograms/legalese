@@ -279,8 +279,6 @@ test('docx ships with a centered page-number footer (legal convention)', async (
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT } = await import('./_helpers');
-  const fs = await import('node:fs');
-  const yauzl = await import('yauzl').catch(() => null);
 
   const out = path.resolve(OUT, '_page_numbers.docx');
   await convertMarkdown([
