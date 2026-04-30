@@ -6,8 +6,9 @@
 
 effective_date: "June 1, 2026"
 
-# Dynamic introduce expansions — value beats schema `long:`.
-agreement:  "Landscaping Services Agreement"
+# Dynamic introduce expansions — value beats schema `long:`. Don't list a
+# value here that's identical to `long:` (e.g. agreement) — `long:` alone
+# already produces the right rendering, and a duplicate just adds noise.
 customer:   "McDonald's USA, LLC, a Delaware limited liability company, with offices at 110 N Carpenter St, Chicago, IL 60607"
 contractor: "Greenline Landscaping, Inc., an Illinois corporation, with offices at 4421 W Industrial Park Rd, Naperville, IL 60563"
 
