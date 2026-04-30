@@ -150,6 +150,30 @@ Don't double up — `{{$an_Initial_term}}` with `long: "an initial term…"` wou
 render `"an initial term of two (2) years (an Initial Term)"` — redundant
 article.
 
+The same pattern handles **proper-noun terms** (names, parties like
+Claude / a software product / a trade name) that take no article in
+prose:
+
+```yaml
+schema:
+  claude: { long: "an artificial intelligence model created by Anthropic" }
+```
+
+```markdown
+{{Human_writer}} has collaborated with {{$Claude}} on certain works.
+{{Claude}} contributed lyrical authorship.
+```
+
+Renders:
+
+> Human Writer has collaborated with an artificial intelligence model
+> created by Anthropic (***"Claude"***) on certain works. Claude
+> contributed lyrical authorship.
+
+First mention introduces with `{{$Claude}}` — bare `$` form, no `the_`
+prefix, so the parenthetical is `("Claude")` not `(the "Claude")`.
+Subsequent references use plain `{{Claude}}` and render as just "Claude".
+
 ### Worked pangram
 
 Markers mirror the case of the rendered word so the markdown reads like the
