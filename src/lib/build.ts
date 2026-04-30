@@ -5,6 +5,7 @@
  */
 
 import fs from 'node:fs';
+import path from 'node:path';
 import {
   Document, Packer, AlignmentType, LevelFormat,
   Footer, Paragraph as DocxParagraph, TextRun, PageNumber,
@@ -35,6 +36,46 @@ export interface DocStyleOpts {
   };
   body?: { indent?: number };
 }
+
+/** Bundled font families (Google Fonts under OFL/Apache). Read from
+ *  fonts/manifest.json at module load. The font binaries get embedded into
+ *  the .docx so the document renders correctly even on systems where the
+ *  font isn't installed. Resolves relative to the source file at runtime.
+ *  Looks for `fonts/` first in the install directory, then in the parent
+ *  (handles both `node $SKILL_DIR <doc>` and library/installed-package use). */
+function loadFontManifest(): { family: string; name: string; data: Buffer }[] {
+  // Walk up from this file to find a fonts/ directory.
+  const candidates = [
+    path.resolve(import.meta.dir, '..', 'fonts'),         // src/lib → fonts/
+    path.resolve(import.meta.dir, '..', '..', 'fonts'),   // dist/ → fonts/
+    path.resolve(process.cwd(), 'fonts'),                 // CWD-relative
+  ];
+  for (const dir of candidates) {
+    const manifestPath = path.join(dir, 'manifest.json');
+    if (!fs.existsSync(manifestPath)) continue;
+
+    const out: { family: string; name: string; data: Buffer }[] = [];
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      family: string; files: string[];
+    }[];
+
+    for (const fam of manifest) {
+      for (const file of fam.files) {
+        const tt = path.join(dir, file);
+        if (fs.existsSync(tt)) {
+          // docx FontOptions wants `name` for the family string. We keep
+          // a separate `family` field for our own filter (every variant
+          // shares one family but each variant is one entry).
+          out.push({ family: fam.family, name: fam.family, data: fs.readFileSync(tt) });
+        }
+      }
+    }
+    return out;
+  }
+  return [];
+}
+
+const BUNDLED_FONTS = loadFontManifest();
 
 /** Resolve margin spec into a 4-sided object. */
 function resolveMargin(spec: DocStyleOpts['margin']): { top: number; right: number; bottom: number; left: number } {
@@ -72,11 +113,29 @@ export const build = ({ title, output, body, style }: {
 
   const MARGINS = resolveMargin(s.margin);
 
+  // If the requested font is one of our bundled families, embed it in the
+  // .docx so the document renders correctly on systems without the font
+  // installed. Word may show a "Word found unreadable content" recovery
+  // prompt on open (docx-js's font-embedding emits fixed `<w:sig>` values
+  // that don't match the font's actual OS/2 table); accepting the prompt
+  // recovers the file cleanly. We embed only ONE file per family (the
+  // regular variant) because docx-js's FontOptions API doesn't expose
+  // variant flags — passing multiple files with the same name produces
+  // duplicate <w:font> entries that confuse Word. Bold/italic are
+  // synthesized.
+  const embeddedFonts = s.font
+    ? BUNDLED_FONTS
+        .filter((f) => f.family === s.font)
+        .slice(0, 1)
+        .map(({ name, data }) => ({ name, data }))
+    : [];
+
   const TOP_INDENT = ls.indent      ?? 540;
   const SUB_INDENT = ls.sub_indent  ?? 900;
   const SUB_HANG   = ls.sub_hanging ?? 360;
   const BOLD_NUM   = ls.bold_marker ?? true;
   const doc = new Document({
+    ...(embeddedFonts.length > 0 ? { fonts: embeddedFonts } : {}),
     styles: {
       default: {
         // Default paragraph spacing is tight (single line, no before/after) —

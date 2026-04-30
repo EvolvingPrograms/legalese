@@ -2,6 +2,10 @@
 title: LANDSCAPING SERVICES AGREEMENT
 indent: true   # legal block style — first-line indent on every body paragraph
 
+style:
+  font: EB Garamond   # bundled Google Font — embedded in the .docx, renders
+                      # correctly even on systems without it installed.
+
 schema:
   # Defined terms. Block form (one key per line) avoids flow-context quote
   # rules — values with commas / parens / apostrophes can be unquoted.

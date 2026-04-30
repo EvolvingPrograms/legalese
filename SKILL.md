@@ -475,6 +475,37 @@ markers, lose the visual hierarchy lawyers expect, and read as run-on
 prose. Always break clauses onto their own lines as a real lettered list
 even when nesting isn't available.
 
+## Bundled fonts
+
+Five Google Fonts ship with the skill in the `fonts/` directory and embed
+into the rendered `.docx` automatically when selected via `style.font:`.
+The document opens with the correct font on systems where it isn't
+installed — Word reads the embedded copy.
+
+| Family | Style | Notes |
+|---|---|---|
+| **EB Garamond** | classic Garamond serif | Default legal serif; close analog to Adobe Garamond |
+| **Source Serif 4** | modern, very readable | Adobe; tighter set width than Garamond |
+| **Crimson Pro** | tight Garamond alternative | Compact, good for dense docs |
+| **PT Serif** | workhorse legal serif | Standard, widely supported |
+| **Libre Baskerville** | Baskerville substitute | Higher contrast than Garamond |
+
+```yaml
+---
+title: ...
+style:
+  font: EB Garamond     # or any of the five bundled families above
+  size: 12
+---
+```
+
+When `style.font` matches a bundled family, the TTFs embed in the docx.
+Otherwise (e.g. `font: Times New Roman`), the font is referenced by name
+only — Word substitutes per the user's installation.
+
+To add or refresh fonts: edit and run `bun scripts/fetch-fonts.ts` (downloads
+from `github.com/google/fonts` raw URLs and updates `fonts/manifest.json`).
+
 ## Style overrides
 
 Set in front-matter under `style:` to override house defaults. All fields

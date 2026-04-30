@@ -4,6 +4,9 @@ title: |-
   OF
   {{COMPANY}}
 
+style:
+  font: EB Garamond   # bundled Google Font — embedded in the .docx.
+
 schema:
   # Defined terms — `definition:` (alias `long:`) baked into the template,
   # value override per-deal. Block form (one key per line) avoids the

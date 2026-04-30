@@ -31,5 +31,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "patchedDependencies": {
+    "docx@9.6.1": "patches/docx@9.6.1.patch"
   }
 }
