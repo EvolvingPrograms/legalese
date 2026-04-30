@@ -174,11 +174,14 @@ function emitMarker(
 
   // Snake_case reference: `{{key}}` plain, `{{the_key}}` / `{{a_key}}` with article.
   // Case-insensitive lookup. Single capitalized word with no schema hit falls
-  // through to literal-define (preserves the `{{!Compositions}}` idiom).
+  // through to literal-define (preserves the `{{!Compositions}}` idiom);
+  // capitalized multi-word keys (with underscore) always resolve as references
+  // so plurals like `{{Renewal_terms}}` work via bidirectional schema lookup.
   if (KEY_RE.test(inner)) {
     const isLowercase = inner === lookupKey;
     const directSchemaHit = ctx.schema?.[lookupKey] !== undefined;
-    if (isLowercase || directSchemaHit || articleRaw) {
+    const hasUnderscore = inner.includes('_');
+    if (isLowercase || directSchemaHit || articleRaw || hasUnderscore) {
       const label = termLabel(lookupKey, ctx.schema);
       const article = resolveArticle(label);
       emitReference(label, article, false, bold, italic, out);
