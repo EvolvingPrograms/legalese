@@ -165,6 +165,26 @@ test('{{!Term}} renders inline-styled (no parens, sentence-start define)', async
     .toContain('“Compositions” means all original works.');
 });
 
+// — Capitalized introduce keeps parens article lowercase —
+
+test('{{$An_key}} capitalizes the prose expansion but keeps the parens article lowercase', async () => {
+  const body = await renderSourceToXml('_xp_intro_cap_parens', [
+    '---',
+    'title: TEST',
+    'output: _xp_intro_cap_parens.docx',
+    'schema:',
+    '  initial_term: { term: "Initial Term", long: "an initial term of two (2) years" }',
+    '---',
+    '',
+    '{{$An_initial_term}} shall begin on the Effective Date.',
+  ].join('\n'));
+
+  // "An" capitalized in prose (sentence start), "an" lowercase in parens
+  // (legal-drafting convention).
+  expect(plain(body)).toContain('An initial term of two (2) years (an “Initial Term”)');
+  expect(plain(body)).not.toContain('(An “Initial Term”)');
+});
+
 // — Case-insensitive lookup —
 
 test('{{Key}} and {{key}} resolve to the same schema entry', async () => {

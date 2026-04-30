@@ -153,13 +153,21 @@ function emitMarker(
     const value = ctx.values[lookupKey];
     const expansion = formatExpansion(value) ?? termLong(lookupKey, ctx.schema) ?? '';
     const label = termLabel(lookupKey, ctx.schema);
-    const article = resolveArticle(label);
+    // Article inside the parenthetical define stays lowercase even when the
+    // marker is capitalized for sentence start — the cap signal applies to
+    // the expansion only. Standard legal style: "An initial term… (an *Term*)".
+    const articleRawLower = articleRaw?.toLowerCase() ?? null;
+    const parenArticle = articleRawLower
+      ? (articleRawLower === 'the' ? 'the' : pickAOrAn(label))
+      : null;
     if (expansion) {
       const exp = wantsCap ? cap(expansion) : expansion;
       out.push(makeRun(`${exp} `, bold, italic));
-      emitDefine(label, article, bold, italic, out);
+      emitDefine(label, parenArticle, bold, italic, out);
     } else {
-      emitInline(label, article, false, bold, italic, out);
+      // No expansion → inline-styled. Article here is in prose position, so
+      // capitalize per the marker case signal.
+      emitInline(label, resolveArticle(label), false, bold, italic, out);
     }
     return;
   }

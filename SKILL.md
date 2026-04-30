@@ -114,6 +114,36 @@ After first introduction, use the plain reference form everywhere:
 → "the Monthly Fee". Body reads natural English; one `long:` edit at the
 top changes the dollar amount everywhere it's introduced.
 
+#### Bake the article into `long:` when prose needs it
+
+When the long expansion is itself a noun phrase that wants its own article
+("an initial term of two years"), bake the article into `long:` and use
+the **bare `{{$key}}` introduce form** (no prefix) so the parenthetical
+emits no article either:
+
+```yaml
+schema:
+  initial_term: { term: "Initial Term", long: "an initial term of two (2) years" }
+  renewal_term: { term: "Renewal Term", long: "a successive renewal term of one (1) year" }
+```
+
+```markdown
+This Agreement shall continue for {{$initial_term}} unless renewed for
+{{$renewal_term}}, after which the Initial Term and any Renewal Terms
+together constitute the Term.
+```
+
+Renders:
+
+> This Agreement shall continue for an initial term of two (2) years
+> (***"Initial Term"***) unless renewed for a successive renewal term of
+> one (1) year (***"Renewal Term"***), after which the Initial Term and
+> any Renewal Terms together constitute the Term.
+
+Don't double up — `{{$an_initial_term}}` with `long: "an initial term…"`
+would render `"an initial term of two (2) years (an Initial Term)"` —
+redundant article.
+
 ### Worked pangram
 
 ```markdown
@@ -262,6 +292,12 @@ The shipped example `examples/recording-publishing-agreement.md` (with sibling
 `-sample.yml`) is the deepest reference — read it when in doubt about layout,
 defined-term placement, or grid blocks. Lists are double-spaced (blank line
 between items).
+
+**Nested lists are not supported.** A `1. … a. … i. …` hierarchy will only
+render the top level; the indented children get dropped. Use one of:
+- A flat lettered list with descriptive lead-ins ("(a) Mowing — weekly; (b) Snow removal — as needed; …").
+- Inline semicolon-separated clauses inside a single list item.
+- A `grid` block when the structure is genuinely tabular.
 
 ## Caveats to surface
 
