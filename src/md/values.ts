@@ -159,20 +159,25 @@ function readArticle(field: boolean | string | undefined): string | null | undef
 }
 
 /** Article a defining marker should emit before the term. Bidirectional and
- *  plural-aware:
- *    {{recording}}  → entry.article         (singular default)
+ *  plural-aware. **Opt-in: returns null unless the schema explicitly sets
+ *  `article:`** — this keeps `{{agreement}}` / `{{writer}}` rendering as plain
+ *  capitalized prose by default, and reserves auto-article for terms where the
+ *  author wants schema-driven O(1) flips (`{{recording}}` with article "a" →
+ *  flip to "an" everywhere by editing one schema field).
+ *
+ *    {{recording}}  → entry.article         (singular)
  *    {{recordings}} → entry.plural_article ?? entry.article  (plural)
  *    {{$recording}} → entry.article         (introducing singular)
  *  Returns:
- *    null    → no article (proper noun)
- *    string  → that article ("the" default; "a"/"an"/"such" via schema) */
+ *    null    → no article (default, or schema.article: false)
+ *    string  → that article ("a"/"an"/"the"/"such" via schema) */
 export function termArticle(key: string, schema: Schema | undefined): string | null {
-  if (!schema) return 'the';
+  if (!schema) return null;
 
   const direct = schema[key];
   if (typeof direct === 'object' && direct !== null) {
     const a = readArticle(direct.article);
-    return a === undefined ? 'the' : a;
+    return a ?? null;
   }
 
   const bi = resolveBidirectional(key, schema);
@@ -187,7 +192,7 @@ export function termArticle(key: string, schema: Schema | undefined): string | n
       if (a !== undefined) return a;
     }
   }
-  return 'the';
+  return null;
 }
 
 /** Long-form expansion for `{{$key}}` introductions when there's no runtime value. */

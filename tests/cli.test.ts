@@ -40,7 +40,7 @@ test('--set overrides front-matter values', async () => {
     '  writer_name: "Default"',
     '---',
     '',
-    'Signed by {{$writer_name}}.',
+    'Signed by {{$the_writer_name}}.',
   ].join('\n'));
 
   const out = path.resolve(FIXTURES, 'set-override.docx');
@@ -58,7 +58,7 @@ test('--values-file loads a YAML file', async () => {
     'title: TEST',
     '---',
     '',
-    '{{$writer_name}} signed on {{$effective_date}}.',
+    '{{$the_writer_name}} signed on {{$the_effective_date}}.',
   ].join('\n'));
 
   const valuesPath = path.resolve(FIXTURES, 'values.yaml');
@@ -78,7 +78,7 @@ test('--values - reads YAML from stdin', async () => {
     'title: TEST',
     '---',
     '',
-    'Hello, {{$writer_name}}.',
+    'Hello, {{$the_writer_name}}.',
   ].join('\n'));
 
   const out = path.resolve(FIXTURES, 'values-stdin.docx');
@@ -190,7 +190,7 @@ test('--strict succeeds when all required values are provided', async () => {
     '  writer_name: { type: string, required: true }',
     '---',
     '',
-    '{{$writer_name}}',
+    '{{$the_writer_name}}',
   ].join('\n'));
 
   const out = path.resolve(FIXTURES, 'strict-ok.docx');

@@ -37,11 +37,11 @@ test('soft wraps preserve marker semantics across line breaks', async () => {
     'title: TEST',
     'output: _wrap_marker.docx',
     'schema:',
-    '  party: { term: "Party", article: "a", plural_article: "the" }',
+    '  party: { term: "Party" }',
     '---',
     '',
     'Writer and Company are referred to individually as',
-    '{{$party}} and collectively as {{$parties}}.',
+    '{{$a_party}} and collectively as {{$the_parties}}.',
   ].join('\n'));
 
   expect(plain(xml)).toContain('individually as a “Party” and collectively as the “Parties”.');

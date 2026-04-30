@@ -7,128 +7,149 @@ description: "Use this skill to produce a signable, professional .docx legal or 
 
 Markdown template + values YAML → signable `.docx` in house style.
 
-## Start here
+## Run
 
-1. **Read an example end-to-end first** — it's faster than these docs.
-   - `examples/recording-assignment.md` — assignment with Schedule A grid.
-   - `examples/recording-publishing-agreement.md` — multi-section agreement.
-   Each ships a sibling `*-sample.yml` showing the values shape.
+```
+node $SKILL_DIR <template.md> --values-file <values.yml> --output <out.docx>
+```
 
-2. **Render**: `node $SKILL_DIR <template.md> --values-file <values.yml> --output <out.docx>`.
-   `pandoc` must be on PATH (already is in this environment).
-   `$SKILL_DIR` is the absolute path to this directory — substitute it literally
-   (e.g. `node /mnt/skills/user/legal-doc-builder doc.md`). Don't use bash's
-   inline `VAR=val command` syntax: `$SKILL_DIR` expands to the parent shell's
-   (empty) value before the assignment takes effect, so Node ends up running
-   the `.md` as a script.
+`$SKILL_DIR` is the absolute path to this skill directory — substitute it
+literally (e.g. `node /mnt/skills/user/legal-doc-builder doc.md`). Don't use
+bash's `VAR=val command` inline-assignment syntax: `$SKILL_DIR` expands to the
+parent shell's (empty) value before the assignment takes effect, and Node ends
+up running the `.md` as a script. `pandoc` must be on `PATH` (it is here).
 
-3. **Inspect what a template needs**: `node $SKILL_DIR <template.md> --schema` prints `values:` + `schema:` + `required:` + `missing:` as YAML.
+Inspect what a template needs without rendering:
+`node $SKILL_DIR <template.md> --schema` — prints `values:`, `schema:`,
+`required:`, `missing:` as YAML.
 
 ## Workflow
 
-For any new document request, work in this order:
+1. **Identify** the parties, deal type, and operative terms.
+2. **Schema first** — declare every defined term (`term:`, optional `long:`,
+   `plural:` for irregulars) and every form field (`type:`, `required:`,
+   `description:`, `default:`).
+3. **Body** — write natural prose with markers; let the schema drive labels.
+4. **Values YAML** — fill in everything you know. For unknowns, ask the user
+   one batched question. Re-run `--schema` to confirm `missing:` is empty.
+5. **Render**, validate (`python3 /mnt/skills/public/docx/scripts/office/validate.py`),
+   and `present_files` the `.docx` plus the values YAML.
 
-1. **Identify the parties, deal type, and operative terms** from the user's request. Pick the closest example template as a seed; copy it to the work dir.
-2. **Write the schema first** — declare every defined term used in the body (`agreement`, `parties`, domain-specific nouns) with `term`/`long`/`article` fields, plus form fields with `type` and `required` flags. Then write the body using markers throughout — single source of truth.
-3. **Fill the values YAML with everything you already know** from the user's request: party names, addresses, dates, dollar amounts, governing law, signature names, etc. Use sensible defaults where the user didn't specify (state of incorporation = company HQ state, governing law = company state, effective date = today).
-4. **List the gaps** — any required field still empty, or schedule rows the user didn't fully provide. Ask the user a single batched question for the remaining info, not a back-and-forth. Run `--schema` if you're unsure what's missing; the `missing:` list is authoritative.
-5. **Update the values YAML** as the user supplies answers and re-render. The template is unchanged; only the values file moves. This is the whole point of the templating system — iteration is cheap.
-6. **Validate** the .docx (`python3 /mnt/skills/public/docx/scripts/office/validate.py <out>`), render to PDF + a page image to spot-check layout, then `present_files` the .docx and the values YAML so the user can re-run with edits.
+## Marker syntax
 
-## Marker syntax (the only thing pandoc doesn't already handle)
+The article rides in the marker prefix; the term comes from schema.
 
-| Marker | Renders | Use |
+| Marker | Renders | Notes |
 |---|---|---|
-| `{{Term}}` | `(the *“Term”*)` | Define inline (parenthetical) |
-| `{{!Term}}` | `*“Term”*` | Define inline (no parens, sentence-start) |
-| `{{snake_key}}` | `<article> Some Key` | Reference; auto-emits article from schema |
-| `{{!snake_key}}` | `Some Key` | Reference; suppress article (write your own determiner) |
-| `{{$snake_key}}` | `<expansion> (<article> *“Some Key”*)` | Introduce: substitute value (or `schema.long`) and define |
+| `{{key}}` | `Key` | plain, no article |
+| `{{the_key}}` | `the Key` | definite |
+| `{{The_key}}` | `The Key` | sentence-start cap |
+| `{{a_key}}` | `a Key` / `an Key` | auto-picks by leading vowel sound |
+| `{{An_key}}` | `An Key` / `A Key` | capitalized indefinite |
+| `{{$key}}` | `<expansion> ***Key***` | introduce, inline-styled (no expansion → just styled) |
+| `{{$the_key}}` | `<expansion> (the ***Key***)` | introduce + parenthetical define |
+| `{{$a_key}}` | `<expansion> (a ***Key***)` | introduce, indefinite |
+| `{{Term}}` | `(the ***Term***)` | literal define, parens (label not in schema) |
+| `{{!Term}}` | `***Term***` | literal define, inline-styled (sentence-start) |
 
-Article auto-capitalizes at sentence start (paragraph start, or after `.!?`). Apostrophes in `term:`/`long:` strings are upgraded to curly. Plurals auto-derive (`recording` → `recordings`); irregulars use `plural: "People"` in schema.
+Lookup is case-insensitive (`{{Operator}}` resolves to `schema.operator`).
+`a_` / `an_` auto-flips by the first letter of the resolved term — change
+`recording.term: "Recording"` → `"Original Sound Recording"` and every
+`{{a_recording}}` flips from "a Recording" to "an Original Sound Recording"
+without touching the body. Plurals auto-derive (`recording` → `recordings`);
+irregulars use `plural: "People"` in schema.
 
-There is no plain `${value}` substitution syntax — every marker emits a defined-term form. To inline raw values into prose without parenthetical-define behavior, hardcode them, put them in a `fields` block, or accept the `{{$key}}` form.
+For values that fill the prose expansion (party names, dates), set them in
+the values YAML at the *schema key*, not a side field. With
+`schema.assignor: { long: "Assignor" }`, then `values.assignor: "Acme
+Records LLC"` — `{{$the_assignor}}` renders
+`Acme Records LLC (the "Assignor")`.
 
-### How `{{$key}}` expansion works
+### One-paragraph pangram
 
-`{{$key}}` renders as **`<expansion> (<article> *“term”*)`** — two distinct pieces, both pulled from different schema fields:
-
-```
-expansion  ←  values[key]   ??  schema[key].long   ??  (omit; collapse to inline-styled)
-term       ←  schema[key].term  ??  snake_case → Title Case
-article    ←  schema[key].article  ??  "the"
-```
-
-Worked examples (with `schema.agreement = { long: "Copyright Assignment" }`, no `term` field):
-
-| Marker | Renders | Why |
-|---|---|---|
-| `{{$agreement}}` | `Copyright Assignment (the *“Agreement”*)` | `long` is the expansion; `term` derives from the key (`agreement` → `Agreement`) |
-| `{{agreement}}` | `the Agreement` | reference form, plain capitalized, schema's article |
-| `{{!agreement}}` | `Agreement` | reference, no article |
-
-Common mistake: assuming the parenthetical repeats the long form. It doesn't — the long form is the **prose expansion**; the parens always show the **short term**. If you want the same string in both, set `term:` and `long:` to the same value (rarely useful).
-
-**Putting real party names in values gives clean recitals.** When the schema has `operator: { long: "Operator" }`, `{{$operator}}` alone renders the redundant `Operator (the “Operator”)`. Set `values.operator` to the actual entity to override the long-form expansion:
-
-```yaml
-# values.yml
-operator: "Lumiere Cinema LLC"
-vendor:   "Popcorn Republic Inc."
+```markdown
+This {{$the_agreement}}, dated {{$the_effective_date}}, is between
+{{$the_assignor}} and {{$the_assignee}}, individually {{$a_party}} and
+collectively {{$the_parties}}. Each {{recording}} listed in {{!Schedule A}}
+is assigned to {{the_assignee}}, subject to {{the_writers_share}} retained
+by {{the_assignor}}.
 ```
 
-Now `{{$operator}}` renders `Lumiere Cinema LLC (the “Operator”)` — the recital reads naturally and references via `{{operator}}` still produce `the Operator`.
+Renders as (with schema declaring `agreement.long`, `assignor.long`,
+`assignee.long`, `party`, `recording`, `writers_share`, plus values for
+`effective_date`, `assignor`, `assignee`):
 
-**Plural introduce form works via the singular schema entry.** With `schema.location = { term: "Location" }`, `{{$locations}}` resolves to the plural side automatically:
+> This Copyright Assignment (the ***"Agreement"***), dated April 29, 2026
+> (the ***"Effective Date"***), is between Acme Records LLC (the ***"Assignor"***)
+> and Buyer Holdings Inc. (the ***"Assignee"***), individually a ***"Party"*** and
+> collectively the ***"Parties"***. Each Recording listed in ***"Schedule A"*** is
+> assigned to the Assignee, subject to the Writer's Share retained by the
+> Assignor.
 
-| Marker | Renders |
-|---|---|
-| `{{$location}}` | `the *“Location”*` (singular intro) |
-| `{{$locations}}` | `the *“Locations”*` (plural intro, auto-derived) |
-| `{{location}}` | `the Location` (singular ref) |
-| `{{locations}}` | `the Locations` (plural ref) |
-
-**Don't collide values keys with defined-term keys when the value is an array of grid data.** If `schema.location` exists and `values.locations` is also an array of `{ album, tracks }` objects (used by `grids: from: $locations`), then a stray `{{$locations}}` in prose will try to stringify the array → `[object Object], [object Object]`. Name catalog/grid-source values with a clearly different key (`menu_catalog`, `albums`, `recordings_data`) so the marker layer and the grids layer don't reach for the same key.
+Forms hit: introduce-with-expansion (`$the_…`), introduce-no-expansion
+(`$a_party`, `$the_parties` — inline styled), plain reference
+(`{{recording}}`, no article; `{{the_assignee}}` / `{{the_writers_share}}`,
+plain capitalized with article), literal inline-styled (`{{!Schedule A}}`).
 
 ## Schema entry fields
 
 ```yaml
 schema:
-  agreement:        { long: "Exclusive Songwriter Agreement" }
-  party:            { term: "Party", article: "a", plural_article: "the" }
-  term:             { term: "Term" }
-  publishers_share: { term: "Publisher's Share", long: "a 50% share" }
-  effective_date:   { type: date, required: true }
-  writer_name:      { type: string, required: true, description: "Writer legal name" }
+  agreement:    { long: "Copyright Assignment" }
+  party:        { term: "Party" }                 # plural auto-derives: Parties
+  person:       { term: "Person", plural: "People" } # irregular plural
+  effective_date:    { type: date,   required: true }
+  writer_name:       { type: string, required: true, description: "Writer legal name" }
+  governing_law:     { type: string, default: "State of Delaware" }
 ```
 
-`article` accepts `false` (no article) or any string (`"a"`, `"an"`, `"such"`); default is `"the"`.
+## Fenced blocks
 
-## Fenced blocks (full reference: read an example)
+**`fields`** — bare snake_case keys (label resolves from schema
+description/term, else snake→Title), or explicit `Label | key | prefix=$ | sub=hint`.
+Don't combine bare key with opts — the first pipe forces label-then-key parsing.
 
-- ` ```fields ` — one row per line. **Two shapes, no mixing**: either a **bare key** (`operator_name` — label auto-derives from `schema.description` / `schema.term` / snake→Title) **or** explicit pipe form (`Operator | operator_name | prefix=$ | sub=hint`). A bare key with `| sub=…` appended doesn't work — the first pipe forces label-then-key parsing.
-- ` ```sig ` — `LEFT_HEADER || RIGHT_HEADER` then `Label | key [tall]? || Label | key [tall]?` per row. Omit `||` for single-party.
-- ` ```grid ` / ` ```grids ` — YAML body; `grids: from: $albums` resolves the catalog from a values key (paths in values are CWD-relative).
+````
+```fields
+effective_date
+writer_name
+Licensing Fee | fee | prefix=$
+Spotify URL | spotify | sub=if credit required
+```
+````
 
-## Pitfalls
+**`sig`** — first line is `LEFT_HEADER || RIGHT_HEADER`; each row is
+`Label | key [tall]? || Label | key [tall]?`. Omit `||` for single-party.
 
-- **Lists are double-spaced** — separate each item with a blank line so multi-line items wrap cleanly:
+````
+```sig
+WRITER || COMPANY
+Name | sig_writer_name        || Entity     | sig_company_entity
+Email | sig_writer_email      || By (name)  | sig_company_by
+                              || Title      | sig_company_title
+Signature [tall]              || Signature [tall]
+Date                          || Date
+```
+````
 
-  ```
-  a. First item, possibly long enough to wrap onto another line.
+**`grid`** / **`grids`** — YAML body. `grids: from: $albums` resolves the
+catalog from a values key (paths in values are CWD-relative).
 
-  b. Second item.
+## Reference
 
-  c. Third item.
-  ```
-- **Don't put markers at sentence start with prose-supplied determiner**: `the {{agreement}}` would render `the the Agreement`. Use `the {{!agreement}}` or schema-drive (`{{agreement}}` → `the Agreement` from schema).
-- **Output path** comes from `--output`, then `$OUTPUT_DIR`, then front-matter `output:`, then `<input>.docx`.
+The shipped example `examples/recording-publishing-agreement.md` (with sibling
+`-sample.yml`) is the deepest reference — read it when in doubt about layout,
+defined-term placement, or grid blocks. Lists are double-spaced (blank line
+between items).
 
-## When to surface to the user
+## Caveats to surface
 
-- These are template-grade, not legal advice — recommend an attorney pass.
-- After rendering, copy the `.docx` to `/mnt/user-data/outputs/` and call `present_files`.
+- Template-grade, not legal advice — recommend an attorney pass.
+- After rendering, copy the `.docx` to `/mnt/user-data/outputs/` and
+  `present_files`.
 
-## Installation (point users at the README)
+## Installation
 
-If the user asks how to install or distribute this skill, point them to the [README](./README.md) — it covers the Claude.ai upload flow, the `bun add legal-doc-builder` library install, and the `md-to-docx` global CLI.
+If the user asks how to install or distribute this skill, point them at the
+[README](./README.md) — it covers Claude.ai upload, library install, and the
+global CLI.

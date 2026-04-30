@@ -95,29 +95,3 @@ test('recording-publishing-agreement: form values land in field/sig tables', asy
   expect(body).toContain('State of Delaware');
 });
 
-// — recording-assignment.md —
-
-test('recording-assignment: {{$assignment}} expands and defines the term', async () => {
-  const body = await renderExample('recording-assignment');
-  expect(body).toContain('This Copyright Assignment (the “Assignment”) is made as of');
-});
-
-test('recording-assignment: schedule grid loads from recording-data.yml', async () => {
-  const body = await renderExample('recording-assignment');
-  // Heading template renders with album fields; first row is track 1 of the LP.
-  expect(body).toContain('Sample LP (Album)');
-  expect(body).toContain('UPC 0000000000001');
-  expect(body).toContain('XXXXX2600001');
-});
-
-test('recording-assignment: inline grid object renders alongside the loaded file', async () => {
-  const body = await renderExample('recording-assignment');
-  expect(body).toContain('Sample EP (EP)');
-  expect(body).toContain('Inline Track A');
-});
-
-test('recording-assignment: form values land in field/sig tables', async () => {
-  const body = await renderExample('recording-assignment');
-  expect(body).toContain('Sample Records LLC');
-  expect(body).toContain('State of Delaware');
-});

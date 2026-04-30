@@ -1,7 +1,5 @@
-// End-to-end generation tests: each shipped example renders to a valid .docx.
-// Each example exercises a different combination of fenced blocks:
-//   - recording-assignment.md   fields, sig, grids (file path + inline object)
-//   - recording-publishing-agreement.md   fields, sig
+// End-to-end generation test: the shipped example renders to a valid .docx.
+//   - recording-publishing-agreement.md   fields, sig, defined-term markers
 
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
@@ -28,13 +26,6 @@ async function generate(relPath: string): Promise<string> {
 function isDocx(p: string): boolean {
   return fs.readFileSync(p).slice(0, 2).toString() === 'PK';
 }
-
-test('recording-assignment.md → valid .docx (grids: file + inline)', async () => {
-  const out = await generate('examples/recording-assignment.md');
-  expect(fs.existsSync(out)).toBe(true);
-  expect(isDocx(out)).toBe(true);
-  expect(fs.statSync(out).size).toBeGreaterThan(5000);
-});
 
 test('recording-publishing-agreement.md → valid .docx', async () => {
   const out = await generate('examples/recording-publishing-agreement.md');

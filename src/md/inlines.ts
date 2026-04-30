@@ -1,34 +1,37 @@
 // Pandoc inline AST -> docx TextRun[] conversion.
 //
-// Marker forms (curly quotes always; bold-italic for the term):
+// Marker forms:
 //
-//   {{Term}}       → (the *“Term”*)        — define inline (literal label)
-//   {{!Term}}      → (*“Term”*)             — define, proper-noun opt-out
-//   {{snake_key}}  → *“Some Key”*           — reference (no parens, no article)
-//   {{$snake_key}} → <expansion> (the *“Some Key”*) — introduce
-//   {{!$snake_key}}→ <expansion> (*“Some Key”*)     — introduce, no article
+//   {{Term}}       → (the *“Term”*)              — define inline (parens)
+//   {{!Term}}      → *“Term”*                     — define inline-styled, no parens
+//   {{snake_key}}  → <article> Some Key           — reference, plain capitalized
+//   {{!snake_key}} → Some Key                     — reference, no article
+//   {{$snake_key}} → <expansion> (<article> *“Some Key”*) — introduce + define
 //
-// `{{Term}}` vs `{{snake_key}}` is disambiguated by snake_case: an identifier
-// matching /^[a-z][a-z0-9_]*$/ is treated as a key lookup; anything else
-// (capitalized words, spaces) is a literal label.
+// **Capitalization signal**: an uppercase first letter on the marker key is
+// the explicit "capitalize the article / expansion" signal. Sentence-start
+// detection is intentionally absent — the author writes `{{Operator}}` (cap)
+// vs `{{operator}}` (lower) to control output. `{{Operator}}` → "The Operator".
 //
-// The introduction expansion (for `{{$key}}`) resolves to:
+// **Case-insensitive lookup**: `{{Operator}}` resolves to schema's `operator`.
+//
+// **Snake_case disambiguator** (kept for backward compat): a single capitalized
+// word like `{{Term}}` falls through to literal-define unless schema has the
+// lowercased key directly — preserves `{{!Compositions}}` inline-styled idiom.
+//
+// `{{$key}}` expansion resolves to:
 //   1. values[key], if set
 //   2. else schema[key].long, if declared
-//   3. else nothing — the marker collapses to a plain define
-//
-// Articles default to "the" for defining forms; suppress per-marker with `!`
-// or per-key via `schema[key].article: false`. Reference form never emits an
-// article — the surrounding prose owns it ("the {{some_key}} shall…").
+//   3. else collapses to inline-styled (no parens)
 
 import { TextRun } from 'docx';
 
 import type { PandocInline, Schema } from './types';
-import { termLabel, termArticle, termLong } from './values';
+import { termLabel, termLong } from './values';
 
 type Run = TextRun;
 
-const KEY_RE = /^[a-z][a-z0-9_]*$/;
+const KEY_RE = /^[a-z][a-z0-9_]*$/i;
 
 interface MarkerCtx {
   values: Record<string, unknown>;
@@ -61,8 +64,14 @@ function formatExpansion(value: unknown): string | null {
   return s === '' ? null : s;
 }
 
+/** Capitalize the first character of a string. */
+function cap(s: string): string {
+  return s ? s[0]!.toUpperCase() + s.slice(1) : s;
+}
+
 /** Parenthetical defined-term emission: `(<article> *“Label”*)` or `(*“Label”*)`.
- *  `article` is the literal string ("the", "a", "such", …) or null for none. */
+ *  `article` is the literal string ("the", "a", "such", …) or null for none.
+ *  Article inside parens is conventionally lowercase even at sentence start. */
 function emitDefine(label: string, article: string | null, bold: boolean, italic: boolean, out: Run[]): void {
   out.push(makeRun(article ? `(${article} ` : '(', bold, italic));
   out.push(makeRun(`“${label}”`, true, true));
@@ -70,32 +79,41 @@ function emitDefine(label: string, article: string | null, bold: boolean, italic
 }
 
 /** Inline-styled introduction (no parens): `<article> *“Label”*`.
- *  `sentenceStart` capitalizes the article. */
-function emitInline(label: string, article: string | null, sentenceStart: boolean, bold: boolean, italic: boolean, out: Run[]): void {
+ *  `capArticle` capitalizes the article (signaled by uppercase first char in marker). */
+function emitInline(label: string, article: string | null, capArticle: boolean, bold: boolean, italic: boolean, out: Run[]): void {
   if (article) {
-    const a = sentenceStart ? cap(article) : article;
-    out.push(makeRun(`${a} `, bold, italic));
+    out.push(makeRun(`${capArticle ? cap(article) : article} `, bold, italic));
   }
   out.push(makeRun(`“${label}”`, true, true));
 }
 
-/** Capitalize the first character of a string. */
-function cap(s: string): string {
-  return s ? s[0]!.toUpperCase() + s.slice(1) : s;
-}
-
 /** Inline reference: `<article> Label` as plain capitalized prose, no styling.
- *  Standard legal convention: define a term once with parens + italics + quotes,
- *  then reference it as plain capitalized prose ("the Writer's Share"). The
- *  article is the schema's article for the key (default "the"); pass null to
- *  suppress it. The `sentenceStart` flag capitalizes the article ("the" → "The"). */
-function emitReference(label: string, article: string | null, sentenceStart: boolean, bold: boolean, italic: boolean, out: Run[]): void {
+ *  `capArticle` capitalizes the article. */
+function emitReference(label: string, article: string | null, capArticle: boolean, bold: boolean, italic: boolean, out: Run[]): void {
   if (article) {
-    const a = sentenceStart ? cap(article) : article;
-    out.push(makeRun(`${a} ${label}`, bold, italic));
+    out.push(makeRun(`${capArticle ? cap(article) : article} ${label}`, bold, italic));
   } else {
     out.push(makeRun(label, bold, italic));
   }
+}
+
+/** Split an article prefix (`the_` / `a_` / `an_`) off the marker key, if any.
+ *  Returns `{ articleRaw: string | null, key: string }`.
+ *  `articleRaw` preserves the author's case so we can detect the capital signal. */
+function stripArticlePrefix(inner: string): { articleRaw: string | null; key: string } {
+  const m = inner.match(/^(the|a|an)_/i);
+  if (!m) return { articleRaw: null, key: inner };
+  return { articleRaw: m[1]!, key: inner.slice(m[0].length) };
+}
+
+/** Pick "a" vs "an" based on the leading sound of the term.
+ *  Vowel-letter heuristic with a small list of common exceptions. */
+function pickAOrAn(term: string): 'a' | 'an' {
+  const first = term.trim().toLowerCase();
+  // Common exceptions: "an honor", "a unicorn", "a one-time", "a user".
+  if (/^(honor|honest|hour|heir)/.test(first)) return 'an';
+  if (/^(uni|use|user|euro|one)/.test(first)) return 'a';
+  return /^[aeiou]/.test(first) ? 'an' : 'a';
 }
 
 function emitMarker(
@@ -104,71 +122,86 @@ function emitMarker(
   italic: boolean,
   out: Run[],
   ctx: MarkerCtx,
-  sentenceStart: boolean,
 ): void {
   let inner = rawInner.trim();
 
-  let properOverride = false;
-  if (inner.startsWith('!')) { properOverride = true; inner = inner.slice(1).trim(); }
+  // {{$key}} — introduce a defined term (parens with article).
+  const isIntroduce = inner.startsWith('$');
+  if (isIntroduce) inner = inner.slice(1).trim();
 
-  // {{$key}} — introduce a defined term.
-  //   With expansion (value or schema.long):  <expansion> (<article> *“Term”*)
-  //   Without expansion:                      <article> *“Term”*    — inline styled
-  if (inner.startsWith('$')) {
-    const key = inner.slice(1).trim();
-    const value = ctx.values[key];
-    const expansion = formatExpansion(value) ?? termLong(key, ctx.schema) ?? '';
-    const article = termArticle(key, ctx.schema);
-    const label = termLabel(key, ctx.schema);
+  // Article prefix on reference / introduce: `the_X`, `a_X`, `an_X`.
+  const { articleRaw, key: afterPrefix } = stripArticlePrefix(inner);
+  inner = afterPrefix;
+
+  // Capitalization signal — uppercase first letter of the marker (or its
+  // article prefix if present) forces capitalization of the emitted article.
+  const wantsCap = /^[A-Z]/.test(articleRaw ?? inner);
+  const lookupKey = inner.toLowerCase();
+
+  // Resolve the article for the marker. Prefix takes precedence; otherwise no
+  // article is emitted.
+  function resolveArticle(label: string): string | null {
+    if (!articleRaw) return null;
+    const lc = articleRaw.toLowerCase();
+    let article = lc === 'the' ? 'the' : pickAOrAn(label);
+    if (wantsCap) article = cap(article);
+    return article;
+  }
+
+  // {{$key}} / {{$the_key}} / {{$a_key}} — introduce a defined term.
+  if (isIntroduce) {
+    const value = ctx.values[lookupKey];
+    const expansion = formatExpansion(value) ?? termLong(lookupKey, ctx.schema) ?? '';
+    const label = termLabel(lookupKey, ctx.schema);
+    const article = resolveArticle(label);
     if (expansion) {
-      const exp = sentenceStart ? cap(expansion) : expansion;
+      const exp = wantsCap ? cap(expansion) : expansion;
       out.push(makeRun(`${exp} `, bold, italic));
       emitDefine(label, article, bold, italic, out);
     } else {
-      emitInline(label, article, sentenceStart, bold, italic, out);
+      emitInline(label, article, false, bold, italic, out);
     }
     return;
   }
 
-  // {{snake_key}} reference — auto-article from schema + plain label.
-  // {{!snake_key}} reference — suppress the article (author writes own determiner).
+  // Snake_case reference: `{{key}}` plain, `{{the_key}}` / `{{a_key}}` with article.
+  // Case-insensitive lookup. Single capitalized word with no schema hit falls
+  // through to literal-define (preserves the `{{!Compositions}}` idiom).
   if (KEY_RE.test(inner)) {
-    const article = properOverride ? null : termArticle(inner, ctx.schema);
-    emitReference(termLabel(inner, ctx.schema), article, sentenceStart, bold, italic, out);
-    return;
+    const isLowercase = inner === lookupKey;
+    const directSchemaHit = ctx.schema?.[lookupKey] !== undefined;
+    if (isLowercase || directSchemaHit || articleRaw) {
+      const label = termLabel(lookupKey, ctx.schema);
+      const article = resolveArticle(label);
+      emitReference(label, article, false, bold, italic, out);
+      return;
+    }
   }
 
   // {{Term}}  — literal define, parenthetical: "(the *“Term”*)"
   // {{!Term}} — literal define, inline-styled, no parens: "*“Term”*"
-  if (properOverride) emitInline(inner, null, sentenceStart, bold, italic, out);
-  else                emitDefine(inner, 'the', bold, italic, out);
+  if (inner.startsWith('!')) emitInline(inner.slice(1).trim(), null, false, bold, italic, out);
+  else                       emitDefine(inner, 'the', bold, italic, out);
 }
 
 // Scan plain text for `{{...}}` markers, emitting runs for both the surrounding
-// text and each marker. `paragraphStart` is true when this is the very first
-// emit in a paragraph — used to detect sentence-start for marker capitalization.
+// text and each marker.
 function emitText(
   text: string,
   bold: boolean,
   italic: boolean,
   out: Run[],
   ctx: MarkerCtx,
-  paragraphStart: boolean,
 ): void {
   const re = /\{\{([^}]+)\}\}/g;
   let last = 0;
   let m: RegExpExecArray | null;
 
   while ((m = re.exec(text)) !== null) {
-    const preceding = text.slice(0, m.index);
     if (m.index > last) {
       out.push(makeRun(text.slice(last, m.index), bold, italic));
     }
-    const trimmed = preceding.replace(/\s+$/, '');
-    const sentenceStart = trimmed === ''
-      ? paragraphStart                  // marker at start of gathered text
-      : /[.!?]$/.test(trimmed);         // mid-text — preceding ends with terminal punctuation
-    emitMarker(m[1]!, bold, italic, out, ctx, sentenceStart);
+    emitMarker(m[1]!, bold, italic, out, ctx);
     last = m.index + m[0].length;
   }
 
@@ -196,28 +229,20 @@ function gatherText(inlines: PandocInline[], start: number): { text: string; end
 }
 
 /** Convert a Pandoc inline node array into an array of docx TextRuns.
- *  Handles Strong, Emph, Quoted, Code, Span, and the three `{{...}}` marker forms.
- *  `paragraphStart` (default true) is used by the marker layer to capitalize
- *  articles when a marker sits at the start of a sentence/paragraph. */
+ *  Handles Strong, Emph, Quoted, Code, Span, and the `{{...}}` marker forms. */
 export function inlinesToRuns(
   inlines: PandocInline[],
   opts: {
     bold?: boolean; italic?: boolean;
     values?: Record<string, unknown>; schema?: Schema;
-    paragraphStart?: boolean;
   } = {},
 ): Run[] {
-  const { bold = false, italic = false, values = {}, schema, paragraphStart = true } = opts;
+  const { bold = false, italic = false, values = {}, schema } = opts;
   const ctx: MarkerCtx = { values, schema };
   const out: Run[] = [];
 
-  // Track whether the next emit is at paragraph-start. Flip to false after
-  // anything has been emitted into `out` (text, marker, or styled child).
-  let atParaStart = paragraphStart;
-
   for (let i = 0; i < inlines.length; i++) {
     const node = inlines[i]!;
-    const passParaStart = atParaStart;
 
     switch (node.t) {
       case 'Str':
@@ -225,22 +250,22 @@ export function inlinesToRuns(
       case 'SoftBreak':
       case 'LineBreak': {
         const { text, end } = gatherText(inlines, i);
-        emitText(text, bold, italic, out, ctx, passParaStart);
+        emitText(text, bold, italic, out, ctx);
         i = end - 1;
         break;
       }
 
       case 'Strong':
-        out.push(...inlinesToRuns(node.c as PandocInline[], { bold: true, italic, values, schema, paragraphStart: passParaStart }));
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold: true, italic, values, schema }));
         break;
 
       case 'Emph':
       case 'Underline':
-        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic: true, values, schema, paragraphStart: passParaStart }));
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic: true, values, schema }));
         break;
 
       case 'Strikeout':
-        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic, values, schema, paragraphStart: passParaStart }));
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic, values, schema }));
         break;
 
       case 'Quoted': {
@@ -267,9 +292,6 @@ export function inlinesToRuns(
 
       // Note, Cite, Image, Link, RawInline, Math: ignored.
     }
-
-    // After the first content-bearing node, no longer at paragraph start.
-    if (out.length > 0) atParaStart = false;
   }
 
   return out;

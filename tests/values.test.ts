@@ -130,11 +130,11 @@ test('termLabel: missing schema falls back to derived label', () => {
 
 // — termArticle —
 
-test('termArticle: defaults to "the"', () => {
-  expect(termArticle('agreement', undefined)).toBe('the');
-  expect(termArticle('agreement', {})).toBe('the');
-  expect(termArticle('agreement', { agreement: 'string' })).toBe('the');
-  expect(termArticle('agreement', { agreement: { type: 'string' } })).toBe('the');
+test('termArticle: defaults to null (no article) when schema does not set article', () => {
+  expect(termArticle('agreement', undefined)).toBeNull();
+  expect(termArticle('agreement', {})).toBeNull();
+  expect(termArticle('agreement', { agreement: 'string' })).toBeNull();
+  expect(termArticle('agreement', { agreement: { type: 'string' } })).toBeNull();
 });
 
 test('termArticle: schema.article: false → null (no article)', () => {
