@@ -1,9 +1,8 @@
-// `grids: from: $key` resolves to a values array.
+// `grid: from: $key` resolves to a values array.
 //
 // Lets templates accept the catalog of grid sources at render time without
-// baking paths into the .md. The value should be an array of YAML file paths
-// (relative to the template's .md file) and/or inline objects with the same
-// shape as a loaded file.
+// baking paths into the .md. The value should be an array of `{heading?, rows}`
+// objects, file paths to YAMLs of the same shape, or a mix of both.
 
 import { test, expect, beforeAll } from 'bun:test';
 import fs from 'node:fs';
@@ -18,35 +17,33 @@ beforeAll(() => {
 const TEMPLATE = [
   '---',
   'title: TEST',
-  'output: _grids_from_values.docx',
+  'output: _grid_from_values.docx',
   '---',
   '',
   '## Catalog',
   '',
-  '```grids',
+  '```grid',
   'from: $albums',
-  'heading: "{album.title} — UPC {album.upc}"',
-  'rows: tracks',
   'columns:',
   '  - {label: "#",     key: n,     width: 600}',
   '  - {label: Title,   key: title, width: 5000}',
   '```',
 ].join('\n');
 
-test('from: $key resolves to a values array of inline objects', async () => {
-  const out = path.resolve(OUT, '_grids_from_values.docx');
+test('from: $key resolves to a values array of inline entries', async () => {
+  const out = path.resolve(OUT, '_grid_from_values.docx');
   await convertMarkdown(TEMPLATE, {
     output: out,
     baseDir: ROOT,
     values: {
       albums: [
         {
-          album: { title: 'Album A', upc: '111' },
-          tracks: [{ n: 1, title: 'Track A1' }, { n: 2, title: 'Track A2' }],
+          heading: 'Album A — UPC 111',
+          rows: [{ n: 1, title: 'Track A1' }, { n: 2, title: 'Track A2' }],
         },
         {
-          album: { title: 'Album B', upc: '222' },
-          tracks: [{ n: 1, title: 'Track B1' }],
+          heading: 'Album B — UPC 222',
+          rows: [{ n: 1, title: 'Track B1' }],
         },
       ],
     },
@@ -60,19 +57,17 @@ test('from: $key resolves to a values array of inline objects', async () => {
   expect(body).toContain('Track B1');
 });
 
-test('from: $key with mixed file paths and inline objects', async () => {
+test('from: $key with mixed file paths and inline entries', async () => {
   // Paths from `$key` resolve relative to CWD; use an absolute path so the
   // test is independent of where it's run from.
   const dataPath = path.resolve(OUT, '_grid_data.yml');
   fs.writeFileSync(dataPath, [
-    'album:',
-    '  title: "From File"',
-    '  upc: "999"',
-    'tracks:',
+    'heading: "From File — UPC 999"',
+    'rows:',
     '  - { n: 1, title: "FileTrack" }',
   ].join('\n'));
 
-  const out = path.resolve(OUT, '_grids_from_mixed.docx');
+  const out = path.resolve(OUT, '_grid_from_mixed.docx');
   await convertMarkdown(TEMPLATE, {
     output: out,
     baseDir: ROOT,
@@ -80,8 +75,8 @@ test('from: $key with mixed file paths and inline objects', async () => {
       albums: [
         dataPath,            // absolute path
         {
-          album: { title: 'Inline', upc: '333' },
-          tracks: [{ n: 1, title: 'InlineTrack' }],
+          heading: 'Inline — UPC 333',
+          rows: [{ n: 1, title: 'InlineTrack' }],
         },
       ],
     },
@@ -94,8 +89,8 @@ test('from: $key with mixed file paths and inline objects', async () => {
   expect(body).toContain('InlineTrack');
 });
 
-test('from: $missing renders empty (warns and produces no rows)', async () => {
-  const out = path.resolve(OUT, '_grids_from_missing.docx');
+test('from: $missing renders empty (no rows)', async () => {
+  const out = path.resolve(OUT, '_grid_from_missing.docx');
   await convertMarkdown(TEMPLATE, {
     output: out,
     baseDir: ROOT,
@@ -103,7 +98,22 @@ test('from: $missing renders empty (warns and produces no rows)', async () => {
   });
 
   const body = plain(readDocumentXml(out));
-  // Heading from the test ("Catalog") still renders; no album-specific text.
   expect(body).toContain('Catalog');
   expect(body).not.toContain('UPC');
+});
+
+test('entry with no heading renders just the table', async () => {
+  const out = path.resolve(OUT, '_grid_no_heading.docx');
+  await convertMarkdown(TEMPLATE, {
+    output: out,
+    baseDir: ROOT,
+    values: {
+      albums: [
+        { rows: [{ n: 1, title: 'Untitled' }] },
+      ],
+    },
+  });
+
+  const body = plain(readDocumentXml(out));
+  expect(body).toContain('Untitled');
 });

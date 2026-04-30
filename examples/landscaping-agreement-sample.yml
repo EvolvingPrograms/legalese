@@ -31,28 +31,24 @@ sig_contractor_by:     "Sarah Chen"
 sig_contractor_title:  "Chief Executive Officer"
 
 # Schedule A catalog: array of YAML paths (CWD-relative) and/or inline objects.
-# Consumed by `grids: from: $locations` in the template. Mixing both forms is
+# Consumed by `grid: from: $locations` in the template. Mixing both forms is
 # supported — pull recurring/standard locations from a checked-in YAML, then
-# add one-off entries inline per deal.
+# add one-off entries inline per deal. Each entry is `{heading?, rows}`.
 locations:
-  # External file — same shape as an inline entry (location: + services:).
+  # External file — same shape as an inline entry.
   - examples/landscaping-lincoln-park.yml
 
   # Inline entry.
-  - location:
-      name: "Cicero — Roosevelt Rd"
-      address: "5678 W Roosevelt Rd, Cicero, IL 60804"
-    services:
+  - heading: "Cicero — Roosevelt Rd — 5678 W Roosevelt Rd, Cicero, IL 60804"
+    rows:
       - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$130 per visit" }
       - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$575 per rotation" }
       - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$210 per event" }
       - { service: "Trash Policing",            frequency: "Daily",                              minimum: "$45 per visit" }
 
   # Inline entry.
-  - location:
-      name: "Oak Lawn — Cicero Ave"
-      address: "9012 S Cicero Ave, Oak Lawn, IL 60453"
-    services:
+  - heading: "Oak Lawn — Cicero Ave — 9012 S Cicero Ave, Oak Lawn, IL 60453"
+    rows:
       - { service: "Mowing & Trimming",         frequency: "Weekly (Apr–Oct)",                   minimum: "$135 per visit" }
       - { service: "Seasonal Planting & Mulch", frequency: "Quarterly",                          minimum: "$600 per rotation" }
       - { service: "Snow & Ice Removal",        frequency: "As-needed (≥1\" snow or ice event)", minimum: "$215 per event" }

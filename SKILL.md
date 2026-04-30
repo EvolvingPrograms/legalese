@@ -26,12 +26,16 @@ Inspect what a template needs without rendering:
 ## Workflow
 
 1. **Identify** the parties, deal type, and operative terms.
+
 2. **Schema first** — declare every defined term (`term:`, optional `long:`,
    `plural:` for irregulars) and every form field (`type:`, `required:`,
    `description:`, `default:`).
+
 3. **Body** — write natural prose with markers; let the schema drive labels.
+
 4. **Values YAML** — fill in everything you know. For unknowns, ask the user
    one batched question. Re-run `--schema` to confirm `missing:` is empty.
+
 5. **Render**, validate (`python3 /mnt/skills/public/docx/scripts/office/validate.py`),
    and `present_files` the `.docx` plus the values YAML.
 
@@ -66,10 +70,12 @@ two pieces drawn from different schema/values fields:
 
 - **`term`** = the short label inside the parens (e.g. `"Agreement"`,
   `"Monthly Fee"`). Defaults to snake_case → Title Case.
+
 - **`long`** = the prose expansion that appears *before* the parens. Use
   for **static** content baked into the template — full deal name, fixed
   percentages, dollar amounts, durations, anything that won't change
   between renders.
+
 - **`values[key]`** = a runtime override of the expansion. Use for
   **dynamic** per-deal data — party names, addresses, effective dates,
   amounts that vary per contract. Wins over `long:`.
@@ -102,24 +108,24 @@ contractor: "Greenline Landscaping, Inc."
 ```
 
 `{{$the_Agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
-(value beats `long:`); `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the ***"Monthly Fee"***)`
-(no value, falls back to `long:`).
+(value beats `long:`); `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the
+***"Monthly Fee"***)` (no value, falls back to `long:`).
 
-Now references like `{{$the_Publishers_share}}` always render
-`a 50% share (the ***"Publisher's Share"***)` regardless of values, and
-`{{$the_Monthly_fee}}` always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
+Now references like `{{$the_Publishers_share}}` always render `a 50% share (the
+***"Publisher's Share"***)` regardless of values, and `{{$the_Monthly_fee}}`
+always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
 
 After first introduction, use the plain reference form everywhere:
-`{{the_Publishers_share}}` → "the Publisher's Share"; `{{the_Monthly_fee}}`
-→ "the Monthly Fee". Body reads natural English; one `long:` edit at the
-top changes the dollar amount everywhere it's introduced.
+`{{the_Publishers_share}}` → "the Publisher's Share"; `{{the_Monthly_fee}}` →
+"the Monthly Fee". Body reads natural English; one `long:` edit at the top
+changes the dollar amount everywhere it's introduced.
 
 #### Bake the article into `long:` when prose needs it
 
-When the long expansion is itself a noun phrase that wants its own article
-("an initial term of two years"), bake the article into `long:` and use
-the **bare `{{$key}}` introduce form** (no prefix) so the parenthetical
-emits no article either:
+When the long expansion is itself a noun phrase that wants its own article ("an
+initial term of two years"), bake the article into `long:` and use the **bare
+`{{$key}}` introduce form** (no prefix) so the parenthetical emits no article
+either:
 
 ```yaml
 schema:
@@ -140,15 +146,15 @@ Renders:
 > one (1) year (***"Renewal Term"***), after which the Initial Term and
 > any Renewal Terms together constitute the Term.
 
-Don't double up — `{{$an_Initial_term}}` with `long: "an initial term…"`
-would render `"an initial term of two (2) years (an Initial Term)"` —
-redundant article.
+Don't double up — `{{$an_Initial_term}}` with `long: "an initial term…"` would
+render `"an initial term of two (2) years (an Initial Term)"` — redundant
+article.
 
 ### Worked pangram
 
-Markers mirror the case of the rendered word so the markdown reads like
-the legal document — `{{Writer}}` looks like "Writer" in the output, the
-article prefix carries its own case (`the_` / `The_`):
+Markers mirror the case of the rendered word so the markdown reads like the
+legal document — `{{Writer}}` looks like "Writer" in the output, the article
+prefix carries its own case (`the_` / `The_`):
 
 > …governed by {{the_Agreement}}. {{The_Agreement}} shall remain in effect…
 
@@ -156,9 +162,8 @@ renders:
 
 > …governed by the Agreement. The Agreement shall remain in effect…
 
-Mid-sentence uses `{{the_Agreement}}` (lowercase article); sentence-start
-uses `{{The_Agreement}}` (capital `T` in the marker → capital `T` in the
-output).
+Mid-sentence uses `{{the_Agreement}}` (lowercase article); sentence-start uses
+`{{The_Agreement}}` (capital `T` in the marker → capital `T` in the output).
 
 ```markdown
 This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between
@@ -170,8 +175,8 @@ requirements set out below.
 ```
 
 With schema (`agreement.long`, `customer.long`, `contractor.long`,
-`monthly_fee.term`, `services`/`location`/`insurance`/`party` terms, plus
-values for `effective_date`, `customer`, `contractor`, `monthly_fee`):
+`monthly_fee.term`, `services`/`location`/`insurance`/`party` terms, plus values
+for `effective_date`, `customer`, `contractor`, `monthly_fee`):
 
 > This Landscaping Services Agreement (the ***"Agreement"***), dated
 > June 1, 2026 (the ***"Effective Date"***), is between McDonald's USA, LLC
@@ -186,21 +191,23 @@ Forms hit:
   `$the_agreement` → "Landscaping Services Agreement (the *Agreement*)";
   `$the_customer` → "McDonald's USA, LLC (the *Customer*)";
   `$the_monthly_fee` → "$1,850.00 (the *Monthly Fee*)".
+
 - **Introduce + no expansion** (`{{$X}}` with no value/long → inline-styled):
   `$a_party` → "a *Party*"; `$the_parties` → "the *Parties*".
+
 - **Plain references** (`{{X}}` / `{{the_X}}` — emit the styled term, no
   value lookup): `{{location}}` → "Location"; `{{the_contractor}}` →
   "the Contractor"; `{{The_contractor}}` (sentence start) → "The Contractor".
+
 - **Literal inline-styled** (`{{!Term}}`): `{{!Services}}` → "*Services*";
   `{{!Schedule A}}` → "*Schedule A*".
 
 ### Worked Background paragraph — singular + plural collective intro
 
-A common drafting idiom is "(each, a *Term*; collectively, the *Terms*)".
-Both halves are introduced inline-styled forms with no expansion — singular
-via `{{$a_X}}`, plural collective via `{{$the_Xs}}`. The plural is
-auto-derived from the schema term, so you write the marker against the
-singular key:
+A common drafting idiom is "(each, a *Term*; collectively, the *Terms*)". Both
+halves are introduced inline-styled forms with no expansion — singular via
+`{{$a_X}}`, plural collective via `{{$the_Xs}}`. The plural is auto-derived from
+the schema term, so you write the marker against the singular key:
 
 ```markdown
 {{Customer}} owns and operates restaurant properties in the Chicago
@@ -212,8 +219,8 @@ landscaping and grounds maintenance and is willing to provide the
 terms set out below.
 ```
 
-With schema `customer`/`contractor`/`agreement`/`services`/`location` as
-plain terms (no `long:`, no values needed):
+With schema `customer`/`contractor`/`agreement`/`services`/`location` as plain
+terms (no `long:`, no values needed):
 
 > Customer owns and operates restaurant properties in the Chicago
 > metropolitan area and requires year-round grounds maintenance at the
@@ -226,10 +233,13 @@ plain terms (no `long:`, no values needed):
 Forms hit:
 - **Introduce-no-expansion, singular indefinite** (`{{$a_Location}}` →
   "a *Location*").
+
 - **Introduce-no-expansion, plural definite** (`{{$the_Locations}}` →
   "the *Locations*"). Plural auto-derives from `location` schema term.
+
 - **Plain references** for `Customer`, `Contractor`, `Agreement`,
   `Services`, `Location` — no styling, no parens.
+
 - **Literal inline-styled** `{{!Schedule A}}` for the schedule reference.
 
 ## Schema entry fields
@@ -246,15 +256,16 @@ schema:
 
 ## Fenced blocks
 
-This skill uses a **custom renderer** — not pandoc's default markdown→docx.
-For tables, **always use the `grid` / `grids` fenced block, not raw markdown
-tables**. Markdown tables won't render in the output; the grid block is the
-only supported tabular form (it produces the styled, full-grid-bordered
-look that matches the rest of the document).
+This skill uses a **custom renderer** — not pandoc's default markdown→docx. For
+tables, **always use the `grid` fenced block, not raw markdown tables**.
+Markdown tables won't render in the output; the grid block is the only
+supported tabular form (it produces the styled, full-grid-bordered look that
+matches the rest of the document).
 
 **`fields`** — bare snake_case keys (label resolves from schema
-description/term, else snake→Title), or explicit `Label | key | prefix=$ | sub=hint`.
-Don't combine bare key with opts — the first pipe forces label-then-key parsing.
+description/term, else snake→Title), or explicit `Label | key | prefix=$ |
+sub=hint`. Don't combine bare key with opts — the first pipe forces
+label-then-key parsing.
 
 ````
 ```fields
@@ -279,11 +290,18 @@ Date                          || Date
 ```
 ````
 
-**`grid`** — single styled table. YAML body with `columns:` (each
-`{label, key, width}` — width is relative; the renderer scales to page
-width) and either `rows:` (array of objects keyed by column) or
-`empty_rows: N` (blank rows to hand-fill at signing). Use `key: '#'` to
-auto-number a column.
+**`grid`** — styled table. YAML body with `columns:` (each `{label, key, width}`
+— width is relative; the renderer scales to page width) plus one of:
+
+- **`rows: [...]`** — single table; rows are objects keyed by column.
+- **`empty_rows: N`** — single table with N blank rows (hand-fill at signing).
+- **`from: [...]`** — repeater; emits one (optional heading + sub-table) per
+  entry. Use this for Schedule A patterns where the same column shape repeats
+  per location / album / album-side.
+
+Use `key: '#'` to auto-number a column.
+
+Single table:
 
 ````
 ```grid
@@ -298,28 +316,20 @@ rows:
 ```
 ````
 
-**`grids`** — repeated grids sharing one column spec; one grid per entry
-in `from:`. Each entry is either a YAML file path (CWD-relative) or an
-inline object. The same `heading:` template + `rows:` dot-path apply to
-each loaded entry. `from: $albums` (string starting with `$`) pulls the
-list from the values map — handy for templates that accept the catalog
-at render time.
+Repeater (`from:`). Each entry is `{heading?, rows}`, supplied either inline
+or as a YAML file path with the same shape — and you can **mix both** in the
+same array. `from: $key` pulls the array from `values[key]` so callers can
+supply the catalog at render time:
 
 ````
-```grids
+```grid
 from: $locations
-heading: "{location.name} — {location.address}"
-rows: services
 columns:
+  - {label: '#',          key: '#',       width: 600}
   - {label: 'Service',    key: service,   width: 3500}
   - {label: 'Frequency',  key: frequency, width: 1800}
 ```
 ````
-
-Each entry in `from:` is either a **YAML file path** (CWD-relative) or
-an **inline object** — and you can mix both in the same array. Pull
-recurring/standard entries from checked-in YAMLs and add one-offs
-inline:
 
 ```yaml
 # values.yml
@@ -328,48 +338,45 @@ locations:
   - examples/landscaping-lincoln-park.yml
 
   # Inline entry.
-  - location:
-      name: "Roosevelt Rd"
-      address: "5678 W Roosevelt Rd, Cicero"
-    services:
-      - { service: "Mowing", frequency: "Weekly" }
+  - heading: "Roosevelt Rd — 5678 W Roosevelt Rd, Cicero"
+    rows:
+      - { service: "Mowing",       frequency: "Weekly" }
       - { service: "Snow Removal", frequency: "As-needed" }
 ```
 
 ```yaml
-# examples/landscaping-lincoln-park.yml — same top-level keys as inline.
-location:
-  name: "Lincoln Ave"
-  address: "1234 N Lincoln Ave, Chicago"
-services:
+# examples/landscaping-lincoln-park.yml — same shape as an inline entry.
+heading: "Lincoln Ave — 1234 N Lincoln Ave, Chicago"
+rows:
   - { service: "Mowing", frequency: "Weekly" }
 ```
 
-You get one heading + grid per entry. Use this for Schedule A patterns
-where the same column shape repeats per location/album/album-side.
-
-**Don't grep the bundled `dist/md-to-docx.js`** to understand block
-syntax — the bundle is minified and won't help. The four blocks above
-(`fields`, `sig`, `grid`, `grids`) are the complete custom syntax; the
-shipped example exercises all of them.
+**Don't grep the bundled `dist/md-to-docx.js`** to understand block syntax —
+the bundle is minified and won't help. The three blocks above (`fields`,
+`sig`, `grid`) are the complete custom syntax; the shipped example exercises
+all of them.
 
 ## Reference
 
 The shipped example `examples/landscaping-agreement.md` (with sibling
-`-sample.yml` and `landscaping-lincoln-park.yml` for the mixed-grid pattern)
-is the deepest reference — read it when in doubt about layout,
-defined-term placement, or grid blocks. Lists are double-spaced (blank line
-between items).
+`-sample.yml` and `landscaping-lincoln-park.yml` for the mixed-grid pattern) is
+the deepest reference — read it when in doubt about layout, defined-term
+placement, or grid blocks. Lists are double-spaced (blank line between items).
 
 **Nested lists are not supported.** A `1. … a. … i. …` hierarchy will only
-render the top level; the indented children get dropped. Use one of:
-- A flat lettered list with descriptive lead-ins ("(a) Mowing — weekly; (b) Snow removal — as needed; …").
-- Inline semicolon-separated clauses inside a single list item.
+render the top level; the indented children get dropped. Use one of: 
+
+- A flat lettered list with descriptive lead-ins ("(a) Mowing — weekly; (b) Snow
+removal — as needed; …"). 
+
+- Inline semicolon-separated clauses inside a single list item. 
+
 - A `grid` block when the structure is genuinely tabular.
 
 ## Caveats to surface
 
-- Template-grade, not legal advice — recommend an attorney pass.
+- Template-grade, not legal advice.
+
 - After rendering, copy the `.docx` to `/mnt/user-data/outputs/` and
   `present_files`.
 

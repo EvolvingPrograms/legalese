@@ -5,7 +5,7 @@ import type { Table } from 'docx';
 import { p, list, spacer } from '@/blocks';
 
 import { inlinesToRuns } from './inlines';
-import { parseFieldsBlock, parseSigBlock, parseGridBlock, parseGridsBlock } from './fenced';
+import { parseFieldsBlock, parseSigBlock, parseGridBlock } from './fenced';
 import type { PandocBlock, PandocInline, ConvertCtx } from './types';
 
 type DocNode = Paragraph | Table;
@@ -54,8 +54,7 @@ export function blockToDocBuilder(
       const lang = classes[0];
       if (lang === 'fields') return [parseFieldsBlock(content, values, ctx.schema)];
       if (lang === 'sig')    return [parseSigBlock(content, values)];
-      if (lang === 'grid')   return [parseGridBlock(content)];
-      if (lang === 'grids')  return parseGridsBlock(content, ctx, values);
+      if (lang === 'grid')   return parseGridBlock(content, ctx, values);
       console.warn('Unknown fenced block:', lang);
       return [];
     }

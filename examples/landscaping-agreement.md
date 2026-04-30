@@ -244,13 +244,11 @@ For each {{Location}} below, the following table sets out the service
 categories, frequency, and per-visit minimums applicable under this
 {{Agreement}}.
 
-```grids
-# `from:` accepts an array of YAML paths (relative to the CWD) and/or inline
-# objects, OR a `$key` reference that resolves to an array in values — so
-# callers can supply the catalog at render time without editing the template.
+```grid
+# `from:` turns a single grid into a repeater: one (heading + sub-table) per
+# entry. Each entry is `{heading?, rows}`, supplied either as a YAML file path
+# (CWD-relative when pulled via $key) or inline. `$locations` is a values key.
 from: $locations
-heading: "{location.name} — {location.address}"
-rows: services
 columns:
   - {label: '#',           key: '#',         width: 600}
   - {label: 'Service',     key: service,     width: 3500}

@@ -1,4 +1,4 @@
-// Parsers for the custom fenced blocks: ```fields, ```sig, ```grid, ```grids.
+// Parsers for the custom fenced blocks: ```fields, ```sig, ```grid.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -87,132 +87,81 @@ export function parseSigBlock(content: string, values: Record<string, unknown>) 
   });
 }
 
-// YAML body with `columns` and either `rows` or `empty_rows: N`.
-export function parseGridBlock(content: string) {
-  const cfg = (yaml.load(content) || {}) as {
-    columns?: GridColumn[];
-    rows?: GridRow[];
-    empty_rows?: number;
-  };
-  const columns = cfg.columns || [];
-  let rows = cfg.rows || [];
-  if (cfg.empty_rows && !cfg.rows) {
-    rows = Array.from({ length: cfg.empty_rows }, () => ({}));
-  }
-  return gridTable({ columns, rows });
-}
-
-// Dot-path lookup: 'a.b.c' -> obj.a.b.c. Returns undefined for missing keys.
-function getPath(obj: unknown, p: string): unknown {
-  if (!p) return obj;
-  return p.split('.').reduce<unknown>(
-    (acc, k) => (acc != null && typeof acc === 'object' ? (acc as any)[k] : undefined),
-    obj,
-  );
-}
-
-// '{a.b}' interpolation against a context object. Missing keys render as ''.
-function interpolate(tpl: string, ctx: unknown): string {
-  return tpl.replace(/\{([^}]+)\}/g, (_, expr) => {
-    const v = getPath(ctx, expr.trim());
-    return v == null ? '' : String(v);
-  });
-}
-
-// Multi-grid block: emits N (heading paragraph + grid) pairs, all sharing one
-// `columns:` spec.
+// `grid` block — YAML body with `columns:` (required) plus one of:
 //
-// Supported keys:
-//   columns:  GridColumn[] (required)
-//   from:     (string | object)[]  each entry is either a YAML file path
-//                                   (relative to the source markdown file) or
-//                                   an inline object with the same shape.
-//             OR `$key`             — string starting with `$` resolves to
-//                                   `values[key]`, expected to be an array of
-//                                   the same shape. Lets templates accept
-//                                   data sources via values rather than baking
-//                                   paths into the .md file.
-//   rows:     string                dot-path inside each loaded object to the
-//                                   row array (e.g. `tracks` or `data.items`).
-//                                   Omit to treat the loaded value as the rows.
-//   heading:  string | false        template interpolated against each loaded
-//                                   object (`{album.title}`); `false` to omit
-export function parseGridsBlock(
+//   rows: [ ... ]      — single table; rows are objects keyed by column.
+//   empty_rows: N      — single table with N blank rows (for hand-fill at signing).
+//   from: [ ... ]      — repeater; emit one (optional heading + table) per entry.
+//                        Each entry is `{ heading?: string, rows: [...] }`,
+//                        either inline or a YAML file path with the same shape.
+//                        OR `$key` to pull the array from `values[key]`.
+//
+// Path resolution for `from:` entries that are file paths:
+//   - Literal array in template → relative to the .md file's directory.
+//   - `$key` from values        → relative to process.cwd() (CLI ergonomics:
+//                                  `cd /work && md-to-docx tpl.md ...`).
+export function parseGridBlock(
   content: string,
   ctx: ParseCtx,
   values?: Record<string, unknown>,
 ): (Paragraph | Table)[] {
   const cfg = (yaml.load(content) || {}) as {
     columns?: GridColumn[];
-    from?: string | (string | Record<string, unknown>)[];
-    rows?: string;
-    heading?: string | false;
+    rows?: GridRow[];
+    empty_rows?: number;
+    from?: string | (string | { heading?: string; rows?: GridRow[] })[];
   };
 
   const columns = cfg.columns || [];
-  const rowsPath = cfg.rows;
-  const headingTpl = cfg.heading;
 
-  // Resolve `from` — either a literal array or `$key` lookup in values.
-  // Path-resolution rule:
-  //   - Literal `from: [./x.yml]` in the template → resolves against the .md
-  //     file's directory (template owns that bundled data).
-  //   - `from: $key` from values → resolves against process.cwd() so callers
-  //     can reference paths from wherever they invoke the CLI (matches typical
-  //     CLI ergonomics: `cd /work && md-to-docx tpl.md --values-file my.yml`).
-  let fromList: (string | Record<string, unknown>)[];
-  let pathBase: string;
-  if (typeof cfg.from === 'string' && cfg.from.trim().startsWith('$')) {
-    const key = cfg.from.trim().slice(1);
-    const v = values?.[key];
-    if (Array.isArray(v)) {
-      fromList = v as (string | Record<string, unknown>)[];
-    } else {
-      // Undefined → catalog not provided yet (legitimate during --schema dry
-      // runs or unfilled drafts); silently render no grids. Anything else
-      // (string/number/object) is a misconfiguration worth flagging.
-      if (v !== undefined) {
-        console.warn(`grids: from $${key} expected array in values, got:`, v);
+  // Repeater mode — `from:` set.
+  if (cfg.from !== undefined) {
+    let fromList: (string | { heading?: string; rows?: GridRow[] })[];
+    let pathBase: string;
+    if (typeof cfg.from === 'string' && cfg.from.trim().startsWith('$')) {
+      const key = cfg.from.trim().slice(1);
+      const v = values?.[key];
+      if (Array.isArray(v)) {
+        fromList = v as (string | { heading?: string; rows?: GridRow[] })[];
+      } else {
+        if (v !== undefined) {
+          console.warn(`grid: from $${key} expected array in values, got:`, v);
+        }
+        fromList = [];
       }
-      fromList = [];
-    }
-    pathBase = process.cwd();
-  } else {
-    fromList = (cfg.from ?? []) as (string | Record<string, unknown>)[];
-    pathBase = ctx.baseDir;
-  }
-
-  const items: { heading: string | null; rows: GridRow[] }[] = [];
-
-  for (const source of fromList) {
-    let data: unknown;
-    if (typeof source === 'string') {
-      const abs = path.isAbsolute(source) ? source : path.resolve(pathBase, source);
-      data = yaml.load(fs.readFileSync(abs, 'utf8'));
+      pathBase = process.cwd();
     } else {
-      data = source;
+      fromList = (cfg.from ?? []) as (string | { heading?: string; rows?: GridRow[] })[];
+      pathBase = ctx.baseDir;
     }
-    const rowsAny = rowsPath ? getPath(data, rowsPath) : data;
-    const rows = (Array.isArray(rowsAny) ? rowsAny : []) as GridRow[];
-    const heading = (headingTpl === false || headingTpl == null)
-      ? null
-      : interpolate(headingTpl, data);
-    items.push({ heading, rows });
+
+    const out: (Paragraph | Table)[] = [];
+    for (let i = 0; i < fromList.length; i++) {
+      const source = fromList[i]!;
+      let entry: { heading?: string; rows?: GridRow[] };
+      if (typeof source === 'string') {
+        const abs = path.isAbsolute(source) ? source : path.resolve(pathBase, source);
+        entry = (yaml.load(fs.readFileSync(abs, 'utf8')) || {}) as typeof entry;
+      } else {
+        entry = source;
+      }
+      if (entry.heading) {
+        out.push(new Paragraph({
+          spacing: { before: 200, after: 80 },
+          keepNext: true,
+          children: [b(entry.heading)],
+        }));
+      }
+      out.push(gridTable({ columns, rows: entry.rows ?? [] }));
+      if (i < fromList.length - 1) out.push(spacer());
+    }
+    return out;
   }
 
-  const out: (Paragraph | Table)[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (!item) continue;
-    if (item.heading) {
-      out.push(new Paragraph({
-        spacing: { before: 200, after: 80 },
-        keepNext: true,
-        children: [b(item.heading)],
-      }));
-    }
-    out.push(gridTable({ columns, rows: item.rows }));
-    if (i < items.length - 1) out.push(spacer());
+  // Single-table mode.
+  let rows = cfg.rows || [];
+  if (cfg.empty_rows && !cfg.rows) {
+    rows = Array.from({ length: cfg.empty_rows }, () => ({}));
   }
-  return out;
+  return [gridTable({ columns, rows })];
 }
