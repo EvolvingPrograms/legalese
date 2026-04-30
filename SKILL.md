@@ -197,8 +197,64 @@ Date                          || Date
 ```
 ````
 
-**`grid`** / **`grids`** — YAML body. `grids: from: $albums` resolves the
-catalog from a values key (paths in values are CWD-relative).
+**`grid`** — single styled table. YAML body with `columns:` (each
+`{label, key, width}` — width is relative; the renderer scales to page
+width) and either `rows:` (array of objects keyed by column) or
+`empty_rows: N` (blank rows to hand-fill at signing). Use `key: '#'` to
+auto-number a column.
+
+````
+```grid
+columns:
+  - {label: '#',          key: '#',       width: 600}
+  - {label: 'Service',    key: service,   width: 3500}
+  - {label: 'Frequency',  key: frequency, width: 1800}
+  - {label: 'Per-visit',  key: minimum,   width: 1500}
+rows:
+  - { service: "Mowing & Trimming", frequency: "Weekly",     minimum: "$120" }
+  - { service: "Snow Removal",      frequency: "As-needed",  minimum: "$200" }
+```
+````
+
+**`grids`** — repeated grids sharing one column spec; one grid per entry
+in `from:`. Each entry is either a YAML file path (CWD-relative) or an
+inline object. The same `heading:` template + `rows:` dot-path apply to
+each loaded entry. `from: $albums` (string starting with `$`) pulls the
+list from the values map — handy for templates that accept the catalog
+at render time.
+
+````
+```grids
+from: $locations
+heading: "{location.name} — {location.address}"
+rows: services
+columns:
+  - {label: 'Service',    key: service,   width: 3500}
+  - {label: 'Frequency',  key: frequency, width: 1800}
+```
+````
+
+With `values.locations` as an array like:
+
+```yaml
+locations:
+  - location:
+      name: "Lincoln Ave"
+      address: "1234 N Lincoln Ave, Chicago"
+    services:
+      - { service: "Mowing", frequency: "Weekly" }
+      - { service: "Snow Removal", frequency: "As-needed" }
+  - location: { name: "Roosevelt Rd", address: "5678 W Roosevelt Rd, Cicero" }
+    services: [ ... ]
+```
+
+…you get one heading + grid per entry. Use this for Schedule A patterns
+where the same column shape repeats per location/album/album-side.
+
+**Don't grep the bundled `dist/md-to-docx.js`** to understand block
+syntax — the bundle is minified and won't help. The four blocks above
+(`fields`, `sig`, `grid`, `grids`) are the complete custom syntax; the
+shipped example exercises all of them.
 
 ## Reference
 
