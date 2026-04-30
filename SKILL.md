@@ -395,14 +395,30 @@ the deepest reference — read it when in doubt about layout, defined-term
 placement, or grid blocks. Lists are double-spaced (blank line between items).
 
 **Nested lists are not supported.** A `1. … a. … i. …` hierarchy will only
-render the top level; the indented children get dropped. Use one of: 
+render the top level; the indented children get dropped. Use one of:
 
-- A flat lettered list with descriptive lead-ins ("(a) Mowing — weekly; (b) Snow
-removal — as needed; …"). 
+- A **flat lettered list** with descriptive lead-ins, double-spaced (blank
+  line between items) so the renderer treats each as its own list item:
 
-- Inline semicolon-separated clauses inside a single list item. 
+  ```markdown
+  Upon termination, the following shall apply:
+
+  a. Consultant shall promptly deliver all work-in-progress;
+
+  b. Client shall pay for all accepted Deliverables and a pro-rata
+  portion of any in-progress Deliverable; and
+
+  c. Sections 5, 7, 8, 9, 10, and 11 shall survive.
+  ```
 
 - A `grid` block when the structure is genuinely tabular.
+
+**Don't write inline lettered lists** like
+`"…the following shall apply: (a) Consultant shall…; (b) Client shall…; and (c) Sections … shall survive."`
+— they collapse the structure into a single paragraph with parenthetical
+markers, lose the visual hierarchy lawyers expect, and read as run-on
+prose. Always break clauses onto their own lines as a real lettered list
+even when nesting isn't available.
 
 ## Caveats to surface
 

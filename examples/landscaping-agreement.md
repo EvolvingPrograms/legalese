@@ -19,7 +19,9 @@ schema:
   cure_period:      { term: "Cure Period",      long: "thirty (30) days" }
   non_renewal_notice: { term: "Non-Renewal Notice Period", long: "sixty (60) days" }
   insurance_floor:  { term: "Insurance Floor",  long: "$2,000,000 per occurrence" }
+  insurance_notice: { term: "Insurance Notice Period", long: "thirty (30) days" }
   payment_date:     { term: "Payment Date",     long: "the fifteenth (15th) day of each calendar month" }
+  late_fee_rate:    { term: "Late Fee Rate",    long: "one and one-half percent (1.5%) per month" }
 
   # Form fields.
   effective_date:     { type: date,   required: true }
@@ -125,9 +127,9 @@ of {{the_Services}} (including storm cleanup beyond ordinary snow events,
 tree removal, and irrigation repair) shall be invoiced separately and only
 upon prior written authorization from {{Customer}}.
 
-Late payments shall accrue interest at the lesser of one and one-half
-percent (1.5%) per month or the maximum rate permitted by law, computed
-from the Payment Date until paid in full.
+Late payments shall accrue interest at the lesser of {{$the_Late_fee_rate}}
+or the maximum rate permitted by law, computed from the Payment Date until
+paid in full.
 
 ## 7. Insurance
 
@@ -136,8 +138,8 @@ liability insurance with limits of not less than {{$the_Insurance_floor}},
 and shall name {{Customer}} as an additional insured on such policy.
 {{Contractor}} shall furnish {{Customer}} with a certificate of insurance
 evidencing such coverage on the Effective Date and on each policy renewal,
-and shall provide at least thirty (30) days' prior written notice of any
-cancellation or material reduction in coverage.
+and shall provide at least {{$the_Insurance_notice}}' prior written notice of
+any cancellation or material reduction in coverage.
 
 {{Contractor}} shall also maintain workers' compensation insurance as
 required by applicable law and commercial automobile liability insurance
@@ -208,11 +210,12 @@ date of termination. Sections 6 (with respect to amounts then accrued),
 
 ## 12. Governing Law and Venue
 
-This {{Agreement}} is governed by the law of the State of Illinois,
-without regard to its conflict-of-laws principles. Venue for any dispute
-arising under this {{Agreement}} shall lie exclusively in the state or
-federal courts located in Cook County, Illinois, and each {{Party}}
-consents to the jurisdiction of such courts.
+This {{Agreement}} is governed by the law of the State identified as the
+Governing Law in Section 1, without regard to its conflict-of-laws
+principles. Venue for any dispute arising under this {{Agreement}} shall
+lie exclusively in the state or federal courts of the Venue identified
+in Section 1, and each {{Party}} consents to the jurisdiction of such
+courts.
 
 ## 13. General Provisions
 
