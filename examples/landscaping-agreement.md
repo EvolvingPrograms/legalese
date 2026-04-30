@@ -70,7 +70,7 @@ venue
 
 {{Customer}} owns and operates restaurant properties in the Chicago
 metropolitan area and requires year-round grounds maintenance at the
-properties listed in {{!Schedule A}} (each, {{$a_Location}}; collectively,
+properties listed in **{{Schedule_A}}** (each, {{$a_Location}}; collectively,
 {{$the_Locations}}). {{Contractor}} is engaged in the business of commercial
 landscaping and grounds maintenance and is willing to provide the
 {{Services}} described in this {{Agreement}} at each {{Location}} on the
