@@ -231,6 +231,7 @@ terms (no `long:`, no values needed):
 > the terms set out below.
 
 Forms hit:
+
 - **Introduce-no-expansion, singular indefinite** (`{{$a_Location}}` →
   "a *Location*").
 
@@ -304,7 +305,7 @@ Date                          || Date
 `$key` resolves to `values[key]` and works the same in both `rows:` and
 `from:`. Use `key: '#'` to auto-number a column.
 
-Single table:
+Single table — rows literal in the template:
 
 ````
 ```grid
@@ -318,6 +319,25 @@ rows:
   - { service: "Snow Removal",      frequency: "As-needed",  minimum: "$200" }
 ```
 ````
+
+Single table — rows pulled from values:
+
+````
+```grid
+columns:
+  - {label: 'Make / Model', key: model,      width: 4000}
+  - {label: 'Serial',       key: serial,     width: 2500}
+  - {label: 'Daily Rate',   key: daily_rate, width: 1500}
+rows: $units
+```
+````
+
+```yaml
+# values.yml
+units:
+  - { model: "Caterpillar 320", serial: "CAT320-001",  daily_rate: "$850/day" }
+  - { model: "Genie S-65",      serial: "GEN-S65-002", daily_rate: "$340/day" }
+```
 
 Repeater (`from:`). Each entry is `{heading?, rows}`, supplied either inline
 or as a YAML file path with the same shape — and you can **mix both** in the
