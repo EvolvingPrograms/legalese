@@ -1,4 +1,4 @@
-// CLI integration tests — exercise scripts/md-to-docx.ts via `bun run` so we
+// CLI integration tests — exercise scripts/legalese.ts via `bun run` so we
 // hit the real argv parsing, value-source merging, stdin handling, and the
 // --schema introspection mode.
 
@@ -9,7 +9,7 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 import { OUT, ROOT, plain, readDocumentXml } from './_helpers';
 
-const CLI = path.resolve(ROOT, 'scripts/md-to-docx.ts');
+const CLI = path.resolve(ROOT, 'scripts/legalese.ts');
 const FIXTURES = path.resolve(OUT, 'cli-fixtures');
 
 /** Run the CLI under `bun run` and return stdout, stderr, and exit status. */

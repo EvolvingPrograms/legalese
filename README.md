@@ -69,26 +69,26 @@ await build({
 
 The full public surface is re-exported from [`src/index.ts`](./src/index.ts).
 
-### As a global CLI
+## Syntax
 
-```bash
-bun add -g legalese   # or: npm i -g legalese
-md-to-docx my-agreement.md
-md-to-docx my-agreement.md --output ./out/agreement.docx
-OUTPUT_DIR=./out md-to-docx my-agreement.md
-```
+The core idea is that **defined terms are variables, not strings**. 
 
-The CLI takes a markdown file with front-matter (`title`, `output`, `values`)
-and the three supported fenced blocks (`fields`, `sig`, `grid`). See
-[`examples/`](./examples) for ready-to-edit templates and [`SKILL.md`](./SKILL.md)
-for the full markdown DSL reference.
+In a typical legal document, "the Customer" appears thirty times across the
+body, schedules, and signature block — and changing the customer's name means
+thirty hand-edits with thirty chances to miss one. Here you declare the term
+*once* in `schema:`, refer to it everywhere by `{{the_Customer}}` /
+`{{The_Customer}}` / `{{$the_Customer}}`, and a single edit at the top ripples
+through the whole document. 
 
-## Markdown syntax
+Plurals derive automatically; the correct article (`a` vs `an`) flips with the
+term it precedes; sentence- start capitalization rides on the marker case. Same
+idea for static expansions — `monthly_fee.long: "$1,850.00 per Location"` lives
+in one place and renders consistently every time it's introduced.
 
 A template is a markdown file with three pieces: YAML front-matter (schema +
 optional values + style), prose with `{{marker}}` substitutions, and fenced
-blocks for the structural elements legal documents need (form fields,
-signature blocks, schedule grids).
+blocks for the structural elements legal documents need (form fields, signature
+blocks, schedule grids).
 
 ### Front-matter
 
@@ -102,6 +102,9 @@ schema:
   customer:         { long: "Customer" }
   contractor:       { long: "Contractor" }
   effective_date:   { type: date,   required: true }
+  services:         { term: "Services",
+                      long: "certain landscaping and grounds-maintenance
+                             services described in this Agreement" }
   monthly_fee:      { term: "Monthly Fee", long: "$1,850.00 per Location" }
   governing_law:    { type: string, default: "State of Delaware" }
 
@@ -118,8 +121,8 @@ style:
 ```
 
 `schema` declares every defined term and form field. `values` (or
-`--values-file`) supplies per-deal data. Run `md-to-docx my.md --schema`
-to dump `values: / schema: / required: / missing:` without rendering.
+`--values-file`) supplies per-deal data. Run `legalese my.md --schema` to dump
+`values: / schema: / required: / missing:` without rendering.
 
 ### Defined-term markers
 
@@ -139,22 +142,37 @@ The article rides in the marker prefix; the term comes from schema.
 
 The `$` forms **introduce** a term (with its expansion + parenthetical
 definition); plain forms reference it after introduction. Lookups are
-case-insensitive; plurals auto-derive (`location` → `Locations`); `a_` /
-`an_` auto-flips by the first letter of the resolved term.
+case-insensitive; plurals auto-derive (`location` → `Locations`); `a_` / `an_`
+auto-flips by the first letter of the resolved term.
 
-```markdown
+```
 This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between
 {{$the_Customer}} and {{$the_Contractor}}, individually {{$a_Party}} and
 collectively {{$the_Parties}}. {{The_Contractor}} shall provide
-{{!Services}} at each {{Location}} listed in **{{Schedule_A}}** for
-{{$the_Monthly_fee}} per {{Location}}.
+{{$the_Services}} at each {{Location}} listed in **{{Schedule_A}}** for
+{{$the_Monthly_fee}}.
 ```
+
+Renders (with the schema and values from the front-matter example above):
+
+> This Landscaping Services Agreement (the ***"Agreement"***), dated June
+> 1, 2026 (the ***"Effective Date"***), is between McDonald's USA, LLC
+> (the ***"Customer"***) and Greenline Landscaping, Inc. (the
+> ***"Contractor"***), individually a ***"Party"*** and collectively the
+> ***"Parties"***. The Contractor shall provide certain landscaping and
+> grounds-maintenance services described in this Agreement (the
+> ***"Services"***) at each Location listed in **Schedule A** for
+> $1,850.00 per Location (the ***"Monthly Fee"***).
+
+Now rename `customer` to `client` in `schema:` *once* — every reference
+above flips to "Client" / "the Client" / "Clients" / "a Client" without
+touching the body.
 
 ### Fenced blocks
 
 **`fields`** — labelled form rows for blanks the parties fill in:
 
-````markdown
+````
 ```fields
 effective_date
 writer_name
@@ -163,10 +181,18 @@ Spotify URL | spotify | sub=if credit required
 ```
 ````
 
-**`sig`** — signature block. First line is `LEFT_HEADER || RIGHT_HEADER`;
-omit `||` for single-party. `[tall]` = a roomy line for handwritten signature.
+Renders as a two-column field table:
 
-````markdown
+| Effective Date  |                            |
+| --------------- | -------------------------- |
+| Writer Name     |                            |
+| Licensing Fee   | $                          |
+| Spotify URL     | *if credit required*       |
+
+**`sig`** — signature block. First line is `LEFT_HEADER || RIGHT_HEADER`; omit
+`||` for single-party. `[tall]` = a roomy line for handwritten signature.
+
+````
 ```sig
 WRITER || COMPANY
 Name      | sig_writer_name   || Entity    | sig_company_entity
@@ -175,11 +201,35 @@ Date                           || Date
 ```
 ````
 
-**`grid`** — styled table (full-grid borders, scaled column widths).
-Schedules, inventories, deliverable lists. Rows can be literal, pulled
-from `values[key]` via `rows: $key`, or repeated per-entry via `from:`.
+Renders as two stacked blocks side-by-side. Each block is its own table
+with a centered header spanning both columns, bold labels on the left,
+and a roomy signature row sized for ink:
 
-````markdown
+<table align="left" width="310">
+<tr><th colspan="2"><div align="center"><b>WRITER</b></div></th></tr>
+<tr><td width="90"><b>Name</b></td><td width="220">&nbsp;</td></tr>
+<tr><td><b>Title</b></td><td>&nbsp;</td></tr>
+<tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
+<tr><td><b>Date</b></td><td>&nbsp;</td></tr>
+</table>
+
+<img align="left" width="24" height="1" alt="" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"/>
+
+<table align="left" width="310">
+<tr><th colspan="2"><div align="center"><b>COMPANY</b></div></th></tr>
+<tr><td width="90"><b>Entity</b></td><td width="220">&nbsp;</td></tr>
+<tr><td><b>By&nbsp;(name)</b></td><td>&nbsp;</td></tr>
+<tr><td><b>Signature</b></td><td height="80">&nbsp;</td></tr>
+<tr><td><b>Date</b></td><td>&nbsp;</td></tr>
+</table>
+
+<br clear="all"/>
+
+**`grid`** — styled table (full-grid borders, scaled column widths). Schedules,
+inventories, deliverable lists. Rows can be literal, pulled from `values[key]`
+via `rows: $key`, or repeated per-entry via `from:`.
+
+````
 ```grid
 columns:
   - {label: '#',         key: '#',       width: 600}
@@ -191,14 +241,117 @@ rows:
 ```
 ````
 
-> **Don't use raw markdown tables.** The renderer ignores them — `grid`
-> is the only supported tabular form.
+Renders as a numbered, full-grid table:
 
-> **Nested lists aren't supported.** Use a flat lettered list (`a.`,
-> `b.`, `c.` with blank lines between) or a `grid` block.
+| **#** | **Service**  | **Frequency** |
+| ----- | ------------ | ------------- |
+| 1     | Mowing       | Weekly        |
+| 2     | Snow Removal | As-needed     |
 
-The full DSL — every marker form, schema field, grid `from:` repeater,
-and style override — is documented in [`SKILL.md`](./SKILL.md).
+> **Don't use raw markdown tables.** The renderer ignores them — `grid` is the
+> only supported tabular form.
+
+> **Nested lists aren't supported.** Use a flat lettered list (`a.`, `b.`, `c.`
+> with blank lines between) or a `grid` block.
+
+The full DSL — every marker form, schema field, grid `from:` repeater, and style
+override — is documented in [`SKILL.md`](./SKILL.md).
+
+## Programmatic API
+
+Two flavours of every entry point: one that writes to a file, one that returns
+the bytes in memory. Use the buffer variants when you don't have (or don't want)
+a filesystem — browsers, serverless handlers, anywhere you'd rather hold the
+document and stream it back to a caller.
+
+### Markdown → .docx (Node, system pandoc)
+
+```ts
+import { convertMarkdown, convertMarkdownToBuffer } from 'legalese';
+
+const src = `---
+title: NDA
+schema:
+  disclosing_party: { long: "Disclosing Party" }
+  receiving_party:  { long: "Receiving Party" }
+values:
+  disclosing_party: "Acme Inc."
+  receiving_party:  "Beta LLC"
+---
+
+This NDA is between {{$the_Disclosing_party}} and {{$the_Receiving_party}}.
+`;
+
+// Write to disk:
+await convertMarkdown(src, { output: './nda.docx' });
+
+// Or hold the bytes in memory:
+const buf: Buffer = await convertMarkdownToBuffer(src);
+```
+
+Both functions accept caller-supplied `values` (which override the `values:`
+block in the source), `title`, `baseDir`, and a `strict` flag that throws if any
+`required: true` schema fields are missing.
+
+### Markdown → .docx (browser, WASM pandoc)
+
+```ts
+import { convertMarkdownToBuffer } from 'legalese/browser';
+
+// pandoc-wasm is an optional peer dep — install it explicitly:
+//   npm i pandoc-wasm    (~56 MB on disk, ~15 MB gzipped over the wire)
+
+const bytes = await convertMarkdownToBuffer(src);
+const blob = new Blob([bytes], {
+  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+});
+// Hand to <a download>, fetch upload, FileSystemAccess API, etc.
+```
+
+The `legalese/browser` subpath is byte-identical to `legalese` except its
+`convertMarkdown*` defaults to the WASM engine. It deliberately never imports
+`node:child_process`, so bundlers (Vite, esbuild, Rollup, etc.) don't end up
+trying to polyfill the system-pandoc shell-out.
+
+### Lower-level pieces
+
+If you want to walk the parsed AST, render block-by-block, or stop short of
+producing a docx:
+
+```ts
+import {
+  splitFrontMatter,    // string  → { meta, body }
+  runPandoc,           // body    → PandocAst (Node)
+  runPandocWasm,       // body    → PandocAst (browser/Node)
+  blockToDocBuilder,   // AST block → BodyEntry[]
+  buildToBuffer,       // BodyEntry[] → Buffer
+} from 'legalese';
+
+const { meta, body } = splitFrontMatter(src);
+const ast = await runPandocWasm(body);
+const entries = ast.blocks.flatMap((b) =>
+  blockToDocBuilder(b, meta.values ?? {}, { baseDir: '/' }),
+);
+const docx = await buildToBuffer({ title: meta.title, body: entries });
+```
+
+You can also inject any parser into `convertMarkdown*` via the `parse` option —
+useful for caching the AST, plugging in a custom markdown flavour, or running
+tests against a synthetic AST without spinning up pandoc at all.
+
+### As a global CLI
+
+```bash
+bun add -g legalese   # or: npm i -g legalese
+legalese my-agreement.md
+legalese my-agreement.md --output ./out/agreement.docx
+OUTPUT_DIR=./out legalese my-agreement.md
+```
+
+The CLI takes a markdown file with front-matter (`title`, `output`, `values`)
+and the three supported fenced blocks (`fields`, `sig`, `grid`). See
+[`examples/`](./examples) for ready-to-edit templates and
+[`SKILL.md`](./SKILL.md) for the full markdown DSL reference.
 
 ## Repo layout
 
@@ -213,7 +366,7 @@ src/                       pure TypeScript library
     grid-table/
     signature-table/
   md/                      markdown frontend (pandoc → AST → builder)
-scripts/md-to-docx.ts      CLI entry (bundled to dist/)
+scripts/legalese.ts      CLI entry (bundled to dist/)
 examples/                  ready-to-edit markdown templates
 tests/                     end-to-end generation tests
 SKILL.md                   skill manifest — instructions Claude reads at load time
@@ -225,7 +378,7 @@ SKILL.md                   skill manifest — instructions Claude reads at load 
 bun install
 bun test            # end-to-end generation tests
 bun run typecheck   # tsc --noEmit
-bun run build       # bundle CLI → dist/md-to-docx.js
+bun run build       # bundle CLI → dist/legalese.js
 bun run pack        # build + zip → plugin.zip
 ```
 

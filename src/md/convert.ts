@@ -1,19 +1,27 @@
 // Top-level: markdown source string -> .docx file on disk.
 //
-// Output path resolution lives in the CLI (scripts/md-to-docx.ts); this layer
+// Output path resolution lives in the CLI (scripts/legalese.ts); this layer
 // just accepts a final `output` override or reads the front-matter `output:`.
 //
 // Values flow: caller passes `values` (already merged from CLI/file/stdin in
 // the CLI), front-matter `values:` and `schema[key].default` are merged
 // underneath. Caller > front-matter > schema-default.
 
-import { build } from '@/lib/build';
+import { build, buildToBuffer } from '@/lib/build';
+import type { BodyEntry } from '@/types';
 
 import { splitFrontMatter } from './front-matter';
-import { runPandoc } from './pandoc';
 import { blockToDocBuilder } from './blocks';
 import { mergeValues, schemaDefaults, missingRequired, termLabel, termLong } from './values';
-import type { Schema } from './types';
+import type { PandocAst, Schema } from './types';
+
+// System-pandoc default parser. Loaded lazily so the browser entry point
+// (which always passes `parse: runPandocWasm`) doesn't statically pull
+// `node:child_process` into the bundler graph.
+async function defaultParse(body: string): Promise<PandocAst> {
+  const { runPandoc } = await import('./pandoc');
+  return runPandoc(body);
+}
 
 /** Resolve `{{key}}` plain-reference markers in a title string. Strips
  *  $/!/article-prefix decorators (titles take the bare label, not the
@@ -46,6 +54,11 @@ function substituteTitleMarkers(
   });
 }
 
+/** Markdown → Pandoc AST. The default uses the system `pandoc` binary
+ *  (Node only). Pass `runPandocWasm` from `@/md/pandoc-wasm` — or import
+ *  from `legalese/browser` — to use the WASM build instead. */
+export type ParseFn = (body: string) => PandocAst | Promise<PandocAst>;
+
 export interface ConvertOptions {
   output?: string;
   title?: string;
@@ -54,9 +67,16 @@ export interface ConvertOptions {
   values?: Record<string, unknown>;
   /** Throw if any `schema` keys flagged required are missing from the merged values. */
   strict?: boolean;
+  /** Markdown parser. Defaults to system `pandoc`. Inject `runPandocWasm`
+   *  for browser/no-system-pandoc use; the `legalese/browser` entry point
+   *  pre-wires this. */
+  parse?: ParseFn;
 }
 
-export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Promise<string> {
+/** Internal: source string → ready-to-render `BodyEntry[]` plus the
+ *  resolved title and style. Shared by both the Buffer-returning and
+ *  filesystem-writing entry points. */
+async function srcToDocBody(srcText: string, opts: ConvertOptions) {
   const { meta, body } = splitFrontMatter(srcText);
   const schema = meta.schema as Schema | undefined;
 
@@ -81,10 +101,11 @@ export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Pro
     /^(\s*):::\s*(\{[^}]+\})\s+:::\s*$/gm,
     '$1::: $2\n$1:::',
   );
-  const ast = runPandoc(preprocessed);
+  const parse = opts.parse ?? defaultParse;
+  const ast = await parse(preprocessed);
   const style = (meta.style ?? {}) as Record<string, any>;
   const ctx = {
-    baseDir: opts.baseDir ?? process.cwd(),
+    baseDir: opts.baseDir ?? (typeof process !== 'undefined' ? process.cwd() : '/'),
     schema,
     indent: meta.indent === true,
     bodyIndent: style.body?.indent as number | undefined,
@@ -93,20 +114,28 @@ export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Pro
       | { before?: number; after?: number; line?: number }
       | undefined,
   };
-  const docBody = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
-
-  const output = opts.output ?? meta.output;
-  if (!output) {
-    throw new Error('No output path: pass opts.output or set front-matter `output:`');
-  }
+  const docBody: BodyEntry[] = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
 
   const rawTitle = opts.title ?? meta.title;
   const title = rawTitle ? substituteTitleMarkers(rawTitle, schema, values) : undefined;
 
-  return build({
-    title,
-    output,
-    body: docBody,
-    style: meta.style as Record<string, unknown> | undefined,
-  });
+  return { title, body: docBody, style: meta.style as Record<string, unknown> | undefined, output: meta.output };
+}
+
+/** Render markdown source to a .docx in memory and return the raw bytes —
+ *  no filesystem access. Use in the browser, serverless handlers, or any
+ *  place you want the document as a Buffer/Blob rather than a file. */
+export async function convertMarkdownToBuffer(srcText: string, opts: ConvertOptions = {}): Promise<Buffer> {
+  const { title, body, style } = await srcToDocBody(srcText, opts);
+  return buildToBuffer({ title, body, style });
+}
+
+/** Render markdown source to a .docx on disk. Resolves to the output path. */
+export async function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Promise<string> {
+  const { title, body, style, output: metaOutput } = await srcToDocBody(srcText, opts);
+  const output = opts.output ?? metaOutput;
+  if (!output) {
+    throw new Error('No output path: pass opts.output or set front-matter `output:`');
+  }
+  return build({ title, output, body, style });
 }

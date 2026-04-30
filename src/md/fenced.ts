@@ -132,7 +132,7 @@ export function parseSigBlock(
 // Path resolution for `from:` entries that are file paths:
 //   - Literal array in template → relative to the .md file's directory.
 //   - `$key` from values        → relative to process.cwd() (CLI ergonomics:
-//                                  `cd /work && md-to-docx tpl.md ...`).
+//                                  `cd /work && legalese tpl.md ...`).
 
 /** Resolve `$key` references against the values map. Returns the array, or
  *  null on missing/wrong-type (with a warning for misconfiguration). */

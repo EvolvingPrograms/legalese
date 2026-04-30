@@ -437,7 +437,7 @@ rows:
   - { service: "Mowing", frequency: "Weekly" }
 ```
 
-**Don't grep the bundled `dist/md-to-docx.js`** to understand block syntax —
+**Don't grep the bundled `dist/legalese.js`** to understand block syntax —
 the bundle is minified and won't help. The three blocks above (`fields`,
 `sig`, `grid`) are the complete custom syntax; the shipped example exercises
 all of them.

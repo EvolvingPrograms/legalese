@@ -97,13 +97,16 @@ function resolveMargin(spec: DocStyleOpts['margin']): { top: number; right: numb
   };
 }
 
-/** Write `body` (flat or nested) to `output` as a .docx; resolves to the output path. */
-export const build = ({ title, output, body, style }: {
+export interface BuildArgs {
   title?: string;
-  output: string;
   body: BodyEntry[];
   style?: DocStyleOpts | Record<string, unknown>;
-}): Promise<string> => {
+}
+
+/** Compose the Document object — shared by `buildToBuffer` (pure, returns
+ *  bytes) and `build` (writes to disk). Splitting them out lets browser
+ *  callers consume `buildToBuffer` without pulling in `node:fs`. */
+const composeDocument = ({ title, body, style }: BuildArgs) => {
   const s  = (style ?? {}) as DocStyleOpts;
   const ls = s.list ?? {};
   const sp = s.spacing ?? {};
@@ -233,7 +236,21 @@ export const build = ({ title, output, body, style }: {
     }],
   });
 
-  return Packer.toBuffer(doc).then((buffer) => {
+  return doc;
+};
+
+/** Compose `body` into a .docx and return the raw bytes — no filesystem
+ *  involvement. Use this in the browser, in serverless handlers that
+ *  return a Response, or anywhere you'd rather hold the document in
+ *  memory than land it on disk. */
+export const buildToBuffer = (args: BuildArgs): Promise<Buffer> => {
+  const doc = composeDocument(args);
+  return Packer.toBuffer(doc);
+};
+
+/** Write `body` (flat or nested) to `output` as a .docx; resolves to the output path. */
+export const build = ({ output, ...rest }: BuildArgs & { output: string }): Promise<string> => {
+  return buildToBuffer(rest).then((buffer) => {
     fs.writeFileSync(output, buffer);
     return output;
   });

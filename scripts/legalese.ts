@@ -14,14 +14,14 @@
 //   3. front-matter `values:`             (defaults baked into the template)
 //   4. schema[key].default                (per-key fallback)
 //
-//   md-to-docx my.md
-//   md-to-docx my.md --schema             # print the values+schema as YAML, no render
-//   md-to-docx my.md --values-file v.yaml
-//   md-to-docx my.md --values - <<EOF
+//   legalese my.md
+//   legalese my.md --schema             # print the values+schema as YAML, no render
+//   legalese my.md --values-file v.yaml
+//   legalese my.md --values - <<EOF
 //   writer_name: Lewis
 //   effective_date: 2026-04-29
 //   EOF
-//   md-to-docx my.md --set writer_name=Lewis --set effective_date=2026-04-29
+//   legalese my.md --set writer_name=Lewis --set effective_date=2026-04-29
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,7 +46,7 @@ interface ParsedArgs {
 }
 
 function printUsage() {
-  console.error('Usage: md-to-docx <input.md> [options]');
+  console.error('Usage: legalese <input.md> [options]');
   console.error('  --output, -o <path>      Output .docx path (overrides front-matter `output:`)');
   console.error('  --values-file <path>     Load values from a flat YAML map');
   console.error('  --values -               Read values YAML from stdin');

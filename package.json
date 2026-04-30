@@ -5,11 +5,21 @@
   "license": "MIT",
   "author": "Spellcraft Inc.",
   "private": true,
-  "main": "dist/md-to-docx.js",
+  "main": "dist/legalese.js",
   "module": "src/index.ts",
   "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./browser": {
+      "types": "./src/browser.ts",
+      "default": "./src/browser.ts"
+    }
+  },
   "bin": {
-    "md-to-docx": "dist/md-to-docx.js"
+    "legalese": "dist/legalese.js"
   },
   "files": [
     "dist/",
@@ -21,7 +31,7 @@
   "scripts": {
     "typecheck": "tsc -p .",
     "test": "bun test",
-    "build": "bun build scripts/md-to-docx.ts --target=node --minify --outfile=dist/md-to-docx.js && chmod +x dist/md-to-docx.js",
+    "build": "bun build scripts/legalese.ts --target=node --minify --outfile=dist/legalese.js && chmod +x dist/legalese.js",
     "pack": "bun run build && zip -FSqr plugin.zip dist examples fonts README.md SKILL.md package.json"
   },
   "devDependencies": {
