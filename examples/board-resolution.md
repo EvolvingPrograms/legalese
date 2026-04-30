@@ -8,7 +8,7 @@ style:
   font: EB Garamond   # bundled Google Font — embedded in the .docx.
 
 schema:
-  # Defined terms — `definition:` (alias `long:`) baked into the template,
+  # Defined terms — `definition:` (alias `def:`) baked into the template,
   # value override per-deal. Block form (one key per line) avoids the
   # flow-context quote rules — values with commas / parens / apostrophes
   # can be unquoted. Use `>-` (folded scalar) to wrap long values.
@@ -23,27 +23,27 @@ schema:
 
   # Single-line definitions.
   company:
-    long: Sample Records, Inc.
+    def: Sample Records, Inc.
   agreement:
-    long: an Exclusive Recording and Publishing Agreement
+    def: an Exclusive Recording and Publishing Agreement
   advance:
-    long: a recoupable advance of $25,000.00
+    def: a recoupable advance of $25,000.00
 
   # `term:` needed for these — apostrophes break the auto-derive.
   publishers_share:
     term: Publisher's Share
-    long: a fifty percent (50%) share of all publisher rights
+    def: a fifty percent (50%) share of all publisher rights
   writers_share:
     term: Writer's Share
-    long: the remaining fifty percent (50%) share
+    def: the remaining fifty percent (50%) share
 
   # Multi-line definitions — `>-` folds the wrapped lines into one sentence.
   term:
-    long: >-
+    def: >-
       an initial three (3) year term, automatically renewable for successive
       one-year periods
   net_proceeds:
-    long: >-
+    def: >-
       all gross revenues actually received by the Company, less direct
       distribution and collection costs
 

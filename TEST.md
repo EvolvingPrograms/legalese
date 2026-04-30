@@ -64,9 +64,9 @@ two-sided signature block — no landscaping, music, or rental vocabulary.
   mid-sentence introductions where prose actually wants "(the X)".
   `{{$Client}}` and `{{$Consultant}}` introduce the parties with their
   full legal descriptions.
-- **Static `long:` expansions** — fixed amounts and durations like the
+- **Static `def:` expansions** — fixed amounts and durations like the
   insurance floor, NDA term, cure period, and total engagement value live
-  in `schema.X.long`, not `values:`, so they bake into the template.
+  in `schema.X.def`, not `values:`, so they bake into the template.
 - **Sentence-start capitalization** — paragraph starts use `{{The_Client}}`,
   `{{The_Parties}}` (capital `T` in marker → capital `T` in output);
   mid-sentence references use `{{the_Client}}`.

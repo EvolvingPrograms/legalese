@@ -13,7 +13,7 @@ import {
   smartLabel,
   termLabel,
   termArticle,
-  termLong,
+  termDef,
   fieldLabel,
 } from '@/md/values';
 
@@ -147,18 +147,18 @@ test('termArticle: schema.article string overrides ("a", "an", "such")', () => {
   })).toBe('a');
 });
 
-// — termLong —
+// — termDef —
 
-test('termLong: returns schema.long when set', () => {
-  expect(termLong('agreement', {
-    agreement: { long: 'Exclusive Songwriter Agreement' },
+test('termDef: returns schema.def when set', () => {
+  expect(termDef('agreement', {
+    agreement: { def: 'Exclusive Songwriter Agreement' },
   })).toBe('Exclusive Songwriter Agreement');
 });
 
-test('termLong: undefined when no schema or no long field', () => {
-  expect(termLong('agreement', undefined)).toBeUndefined();
-  expect(termLong('agreement', { agreement: 'string' })).toBeUndefined();
-  expect(termLong('agreement', { agreement: { type: 'string' } })).toBeUndefined();
+test('termDef: undefined when no schema or no long field', () => {
+  expect(termDef('agreement', undefined)).toBeUndefined();
+  expect(termDef('agreement', { agreement: 'string' })).toBeUndefined();
+  expect(termDef('agreement', { agreement: { type: 'string' } })).toBeUndefined();
 });
 
 // — smartLabel —
@@ -175,9 +175,9 @@ test('termLabel applies smartLabel to schema.term', () => {
   })).toBe('Publisher’s Share');
 });
 
-test('termLong applies smartLabel to schema.long', () => {
-  expect(termLong('writers_share', {
-    writers_share: { long: "the writer's 50% share" },
+test('termDef applies smartLabel to schema.def', () => {
+  expect(termDef('writers_share', {
+    writers_share: { def: "the writer's 50% share" },
   })).toBe('the writer’s 50% share');
 });
 

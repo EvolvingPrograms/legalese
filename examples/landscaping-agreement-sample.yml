@@ -6,8 +6,8 @@
 
 effective_date: June 1, 2026
 
-# Dynamic introduce expansions — value beats schema `long:`. Don't list a
-# value here that's identical to `long:` (e.g. agreement) — `long:` alone
+# Dynamic introduce expansions — value beats schema `def:`. Don't list a
+# value here that's identical to `def:` (e.g. agreement) — `def:` alone
 # already produces the right rendering, and a duplicate just adds noise.
 # Use `|-` block scalars for long entries so you can wrap lines without
 # quote-escape gymnastics.

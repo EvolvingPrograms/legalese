@@ -12,7 +12,7 @@ import type { BodyEntry } from '@/types';
 
 import { splitFrontMatter } from './front-matter';
 import { blockToDocBuilder } from './blocks';
-import { mergeValues, schemaDefaults, missingRequired, termLabel, termLong } from './values';
+import { mergeValues, schemaDefaults, missingRequired, termLabel, termDef } from './values';
 import type { PandocAst, Schema } from './types';
 
 // System-pandoc default parser. Loaded lazily so the browser entry point
@@ -44,12 +44,12 @@ function substituteTitleMarkers(
     if (articleMatch) inner = inner.slice(articleMatch[0].length);
     const lookupKey = inner.toLowerCase();
     const allCaps = /^[A-Z][A-Z0-9_]*$/.test(inner);
-    // Prefer runtime value (deal-specific), then schema.long (template-baked
+    // Prefer runtime value (deal-specific), then schema.def (template-baked
     // expansion), then the bare label.
     const v = values[lookupKey];
     let resolved: string;
     if (typeof v === 'string' && v.trim() !== '') resolved = v;
-    else resolved = termLong(lookupKey, schema) ?? termLabel(lookupKey, schema);
+    else resolved = termDef(lookupKey, schema) ?? termLabel(lookupKey, schema);
     return allCaps ? resolved.toUpperCase() : resolved;
   });
 }

@@ -1,7 +1,6 @@
 ---
 title: LANDSCAPING SERVICES AGREEMENT
 indent: true   # legal block style — first-line indent on every body paragraph
-
 style:
   font: EB Garamond   # bundled Google Font — embedded in the .docx, renders
                       # correctly even on systems without it installed.
@@ -19,34 +18,34 @@ schema:
 
   # Single-line definitions.
   agreement:
-    long: Landscaping Services Agreement
+    def: Landscaping Services Agreement
   customer:
-    long: Customer
+    def: Customer
   contractor:
-    long: Contractor
+    def: Contractor
 
   initial_term:
-    long: an initial term of two (2) years
+    def: an initial term of two (2) years
   renewal_term:
-    long: successive renewal terms of one (1) year each
+    def: successive renewal terms of one (1) year each
   monthly_fee:
-    long: $1,850.00 per Location per month
+    def: $1,850.00 per Location per month
   cure_period:
-    long: thirty (30) days
+    def: thirty (30) days
   insurance_floor:
-    long: $2,000,000 per occurrence
+    def: $2,000,000 per occurrence
   payment_date:
-    long: the fifteenth (15th) day of each calendar month
+    def: the fifteenth (15th) day of each calendar month
   late_fee_rate:
-    long: one and one-half percent (1.5%) per month
+    def: one and one-half percent (1.5%) per month
 
   # `term:` needed where the rendered label differs from the auto-derived one.
   non_renewal_notice:
     term: Non-Renewal Notice Period
-    long: sixty (60) days
+    def: sixty (60) days
   insurance_notice:
     term: Insurance Notice Period
-    long: thirty (30) days
+    def: thirty (30) days
 
   # Form fields. `type: string` is the implicit default; only declare `type:`
   # when it differs (date, list, etc.).

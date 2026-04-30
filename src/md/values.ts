@@ -195,9 +195,9 @@ export function termArticle(key: string, schema: Schema | undefined): string | n
   return null;
 }
 
-/** Long-form expansion for `{{$key}}` introductions when there's no runtime value. */
-export function termLong(key: string, schema: Schema | undefined): string | undefined {
+/** Definition expansion for `{{$key}}` introductions when there's no runtime value. */
+export function termDef(key: string, schema: Schema | undefined): string | undefined {
   const entry: SchemaEntry | undefined = schema?.[key];
-  if (typeof entry === 'object' && entry !== null && entry.long) return smartLabel(entry.long);
+  if (typeof entry === 'object' && entry !== null && entry.def) return smartLabel(entry.def);
   return undefined;
 }

@@ -27,7 +27,7 @@ Inspect what a template needs without rendering:
 
 1. **Identify** the parties, deal type, and operative terms.
 
-2. **Schema first** — declare every defined term (`term:`, optional `long:`,
+2. **Schema first** — declare every defined term (`term:`, optional `def:`,
    `plural:` for irregulars) and every form field (`type:`, `required:`,
    `description:`, `default:`).
 
@@ -65,7 +65,7 @@ Lookup is case-insensitive (`{{Operator}}` resolves to `schema.operator`).
 without touching the body. Plurals auto-derive (`recording` → `recordings`);
 irregulars use `plural: "People"` in schema.
 
-### `term` vs `long` vs `values[key]`
+### `term` vs `def` vs `values[key]`
 
 Every `{{$the_X}}` introduce form renders **`<expansion> (the *"Term"*)`** —
 two pieces drawn from different schema/values fields:
@@ -73,14 +73,14 @@ two pieces drawn from different schema/values fields:
 - **`term`** = the short label inside the parens (e.g. `"Agreement"`,
   `"Monthly Fee"`). Defaults to snake_case → Title Case.
 
-- **`long`** = the prose expansion that appears *before* the parens. Use
+- **`def`** = the prose expansion that appears *before* the parens. Use
   for **static** content baked into the template — full deal name, fixed
   percentages, dollar amounts, durations, anything that won't change
   between renders.
 
 - **`values[key]`** = a runtime override of the expansion. Use for
   **dynamic** per-deal data — party names, addresses, effective dates,
-  amounts that vary per contract. Wins over `long:`.
+  amounts that vary per contract. Wins over `def:`.
 
 Example template `schema:`:
 
@@ -88,28 +88,28 @@ Example template `schema:`:
 schema:
   # Dynamic — values supply the expansion at render time
   agreement:
-    long: "Agreement"
+    def: "Agreement"
   customer:
-    long: "Customer"
+    def: "Customer"
   contractor:
-    long: "Contractor"
+    def: "Contractor"
   effective_date:
     type: date
     required: true
 
-  # Static — `long:` bakes the expansion into the template
+  # Static — `def:` bakes the expansion into the template
   publishers_share:
     term: "Publisher's Share"
-    long: "a 50% share"
+    def: "a 50% share"
   monthly_fee:
     term: "Monthly Fee"
-    long: "$1,850.00 per Location"
+    def: "$1,850.00 per Location"
   cure_period:
     term: "Cure Period"
-    long: "thirty (30) days"
+    def: "thirty (30) days"
   insurance_floor:
     term: "Insurance Floor"
-    long: "$2,000,000 per occurrence"
+    def: "$2,000,000 per occurrence"
 ```
 
 Companion values YAML (passed as `--values-file landscaping.yml`):
@@ -123,8 +123,8 @@ contractor: "Greenline Landscaping, Inc."
 ```
 
 `{{$the_Agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
-(value beats `long:`); `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the
-***"Monthly Fee"***)` (no value, falls back to `long:`).
+(value beats `def:`); `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the
+***"Monthly Fee"***)` (no value, falls back to `def:`).
 
 Now references like `{{$the_Publishers_share}}` always render `a 50% share (the
 ***"Publisher's Share"***)` regardless of values, and `{{$the_Monthly_fee}}`
@@ -132,13 +132,13 @@ always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
 
 After first introduction, use the plain reference form everywhere:
 `{{the_Publishers_share}}` → "the Publisher's Share"; `{{the_Monthly_fee}}` →
-"the Monthly Fee". Body reads natural English; one `long:` edit at the top
+"the Monthly Fee". Body reads natural English; one `def:` edit at the top
 changes the dollar amount everywhere it's introduced.
 
-#### Bake the article into `long:` when prose needs it
+#### Bake the article into `def:` when prose needs it
 
 When the long expansion is itself a noun phrase that wants its own article ("an
-initial term of two years"), bake the article into `long:` and use the **bare
+initial term of two years"), bake the article into `def:` and use the **bare
 `{{$key}}` introduce form** (no prefix) so the parenthetical emits no article
 either:
 
@@ -146,10 +146,10 @@ either:
 schema:
   initial_term:
     term: "Initial Term"
-    long: "an initial term of two (2) years"
+    def: "an initial term of two (2) years"
   renewal_term:
     term: "Renewal Term"
-    long: "a successive renewal term of one (1) year"
+    def: "a successive renewal term of one (1) year"
 ```
 
 ```markdown
@@ -165,7 +165,7 @@ Renders:
 > one (1) year (***"Renewal Term"***), after which the Initial Term and
 > any Renewal Terms together constitute the Term.
 
-Don't double up — `{{$an_Initial_term}}` with `long: "an initial term…"` would
+Don't double up — `{{$an_Initial_term}}` with `def: "an initial term…"` would
 render `"an initial term of two (2) years (an Initial Term)"` — redundant
 article.
 
@@ -176,7 +176,7 @@ prose:
 ```yaml
 schema:
   claude:
-    long: "an artificial intelligence model created by Anthropic"
+    def: "an artificial intelligence model created by Anthropic"
 ```
 
 ```markdown
@@ -218,7 +218,7 @@ collectively {{$the_Parties}}. {{The_Contractor}} shall provide
 requirements set out below.
 ```
 
-With schema (`agreement.long`, `customer.long`, `contractor.long`,
+With schema (`agreement.def`, `customer.def`, `contractor.def`,
 `monthly_fee.term`, `services`/`location`/`insurance`/`party` terms, plus values
 for `effective_date`, `customer`, `contractor`, `monthly_fee`):
 
@@ -272,7 +272,7 @@ terms set out below.
 ```
 
 With schema `customer`/`contractor`/`agreement`/`services`/`location` as plain
-terms (no `long:`, no values needed):
+terms (no `def:`, no values needed):
 
 > Customer owns and operates restaurant properties in the Chicago
 > metropolitan area and requires year-round grounds maintenance at the
@@ -302,7 +302,7 @@ Forms hit:
 ```yaml
 schema:
   agreement:
-    long: "Copyright Assignment"
+    def: "Copyright Assignment"
   party:
     term: "Party"                 # plural auto-derives: Parties
   person:

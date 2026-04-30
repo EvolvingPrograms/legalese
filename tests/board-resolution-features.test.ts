@@ -73,7 +73,7 @@ test('title with \\n produces line breaks inside one centered Heading 1 paragrap
   expect(h1Match![0]).toContain('Sample Records, Inc.');
 });
 
-test('title marker {{Company}} (mixed case) resolves via values then schema.long, preserves case', async () => {
+test('title marker {{Company}} (mixed case) resolves via values then schema.def, preserves case', async () => {
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml, plain } = await import('./_helpers');
@@ -82,14 +82,14 @@ test('title marker {{Company}} (mixed case) resolves via values then schema.long
     '---',
     'title: "Resolutions of {{Company}}"',
     'schema:',
-    '  company: { long: "Sample Records, Inc." }',
+    '  company: { def: "Sample Records, Inc." }',
     '---',
     '',
     'Body.',
   ].join('\n'), {
     output: out,
     baseDir: ROOT,
-    values: {},  // no value → falls back to schema.long
+    values: {},  // no value → falls back to schema.def
   });
   const body = plain(readDocumentXml(out));
   expect(body).toContain('Resolutions of Sample Records, Inc.');
@@ -104,7 +104,7 @@ test('title marker {{COMPANY}} (all caps) uppercases the substituted text', asyn
     '---',
     'title: "RESOLUTIONS OF {{COMPANY}}"',
     'schema:',
-    '  company: { long: "Sample Records, Inc." }',
+    '  company: { def: "Sample Records, Inc." }',
     '---',
     '',
     'Body.',
@@ -117,7 +117,7 @@ test('title marker {{COMPANY}} (all caps) uppercases the substituted text', asyn
   expect(body).toContain('RESOLUTIONS OF SAMPLE RECORDS, INC.');
 });
 
-test('title marker prefers value over schema.long; all-caps still uppercases', async () => {
+test('title marker prefers value over schema.def; all-caps still uppercases', async () => {
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml, plain } = await import('./_helpers');
@@ -126,7 +126,7 @@ test('title marker prefers value over schema.long; all-caps still uppercases', a
     '---',
     'title: "RESOLUTIONS OF {{COMPANY}}"',
     'schema:',
-    '  company: { long: "Default Co." }',
+    '  company: { def: "Default Co." }',
     '---',
     '',
     'Body.',

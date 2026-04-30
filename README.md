@@ -82,7 +82,7 @@ through the whole document.
 
 Plurals derive automatically; the correct article (`a` vs `an`) flips with the
 term it precedes; sentence- start capitalization rides on the marker case. Same
-idea for static expansions — `monthly_fee.long: "$1,850.00 per Location"` lives
+idea for static expansions — `monthly_fee.def: "$1,850.00 per Location"` lives
 in one place and renders consistently every time it's introduced.
 
 A template is a markdown file with three pieces: YAML front-matter (schema +
@@ -99,21 +99,21 @@ output: ./Landscaping_Agreement.docx     # optional; CLI flag wins
 
 schema:
   agreement:
-    long: "Landscaping Services Agreement"
+    def: "Landscaping Services Agreement"
   customer:
-    long: "Customer"
+    def: "Customer"
   contractor:
-    long: "Contractor"
+    def: "Contractor"
   effective_date:
     type: date
     required: true
   services:
     term: "Services"
-    long: "certain landscaping and grounds-maintenance
+    def: "certain landscaping and grounds-maintenance
            services described in this Agreement"
   monthly_fee:
     term: "Monthly Fee"
-    long: "$1,850.00 per Location"
+    def: "$1,850.00 per Location"
   governing_law:
     type: string
     default: "State of Delaware"
@@ -293,9 +293,9 @@ const src = `---
 title: NDA
 schema:
   disclosing_party:
-    long: "Disclosing Party"
+    def: "Disclosing Party"
   receiving_party:
-    long: "Receiving Party"
+    def: "Receiving Party"
 values:
   disclosing_party: "Acme Inc."
   receiving_party:  "Beta LLC"

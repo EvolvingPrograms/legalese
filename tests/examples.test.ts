@@ -51,9 +51,9 @@ test('landscaping: §0 introduces Party / Parties inline-styled', async () => {
   expect(body).toContain('individually as a “Party” and collectively as the “Parties”');
 });
 
-test('landscaping: §3 introduces Initial Term / Renewal Term / Term from schema.long', async () => {
+test('landscaping: §3 introduces Initial Term / Renewal Term / Term from schema.def', async () => {
   const body = await renderExample('landscaping-agreement');
-  // {{$the_Initial_term}} — `long: "an initial term of two (2) years"` baked
+  // {{$the_Initial_term}} — `def: "an initial term of two (2) years"` baked
   // into schema, bare {{$key}}-style is in §3 but uses {{$the_Initial_term}}
   // here so the parens article is "the".
   expect(body).toContain('an initial term of two (2) years (the “Initial Term”)');
@@ -69,7 +69,7 @@ test('landscaping: {{$the_Locations}} (plural) does not splat the catalog array'
   expect(body).toContain('collectively, the “Locations”');
 });
 
-test('landscaping: {{$the_Monthly_fee}} expands schema.long (no value override)', async () => {
+test('landscaping: {{$the_Monthly_fee}} expands schema.def (no value override)', async () => {
   const body = await renderExample('landscaping-agreement');
   expect(body).toContain('$1,850.00 per Location per month (the “Monthly Fee”)');
 });

@@ -50,8 +50,10 @@ export type SchemaEntry =
       default?: unknown;
       /** Short-form label used by the defined-term marker. Defaults to snake_case → Title Case. */
       term?: string;
-      /** Long-form expansion used by `{{$key}}` introductions when no value is set. */
-      long?: string;
+      /** Definition expansion used by `{{$key}}` introductions when no value
+       *  is set. Renders as `<def> (the *"Term"*)` — the prose that the
+       *  defined-term parenthetical attaches to. */
+      def?: string;
       /** Article used for singular references and `{{$key}}` introductions.
        *    true   → "the" (default)
        *    false  → none (proper-noun: `(*“Term”*)`)

@@ -21,13 +21,13 @@
 //
 // `{{$key}}` expansion resolves to:
 //   1. values[key], if set
-//   2. else schema[key].long, if declared
+//   2. else schema[key].def, if declared
 //   3. else collapses to inline-styled (no parens)
 
 import { TextRun } from 'docx';
 
 import type { PandocInline, Schema } from './types';
-import { termLabel, termLong } from './values';
+import { termLabel, termDef } from './values';
 
 type Run = TextRun;
 
@@ -51,7 +51,7 @@ function makeRun(text: string, bold: boolean, italic: boolean, smallCaps = false
 /** Render a value for use in `{{$key}}` introductions.
  *  Primitive arrays become Oxford-comma lists ("A, B, and C"); strings/numbers
  *  stringify as-is; null/undefined/empty-string and arrays of objects become
- *  null so the caller falls back to schema.long. (Object arrays are catalog
+ *  null so the caller falls back to schema.def. (Object arrays are catalog
  *  data for `grids from: $key`, not term expansions.)
  *
  *  Internal newlines fold into spaces — YAML `|-` block scalars used to wrap
@@ -181,7 +181,7 @@ function emitMarker(
   // {{$key}} / {{$the_key}} / {{$a_key}} — introduce a defined term.
   if (isIntroduce) {
     const value = ctx.values[lookupKey];
-    const expansion = formatExpansion(value) ?? termLong(lookupKey, ctx.schema) ?? '';
+    const expansion = formatExpansion(value) ?? termDef(lookupKey, ctx.schema) ?? '';
     const rawLabel = termLabel(lookupKey, ctx.schema);
     const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
     // Article inside the parenthetical define stays lowercase even when the
