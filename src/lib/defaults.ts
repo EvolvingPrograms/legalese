@@ -14,7 +14,8 @@ export const TABLE_WIDTH = 9360;                                              //
 export const PARA_SPACING = { before: 120, after: 120, line: 360 };           // 1.5
 export const LIST_SPACING = { before: 60,  after: 60,  line: 360 };
 export const SIG_TALL = 1200;                                                 // signature row height (DXA)
-export const SUBLIST_REF = 'sublist';
+export const SUBLIST_REF = 'sublist';      // (a) (b) (c) — nested under a top-level item
+export const TOPLIST_REF = 'toplist';      // 1. 2. 3.   — top-level numbered sections
 
 export const CELL_BORDER = { style: BorderStyle.SINGLE, size: 4, color: '000000' };
 export const FULL_BORDERS = {

@@ -2,7 +2,7 @@
 
 import { Paragraph, HeadingLevel, AlignmentType } from 'docx';
 import type { Table } from 'docx';
-import { p, list, spacer } from '@/blocks';
+import { p, list, listItem, numberedListItem, nextListInstance, spacer } from '@/blocks';
 import { PARA_SPACING } from '@/lib/defaults';
 
 import { inlinesToRuns } from './inlines';
@@ -35,16 +35,23 @@ export function blockToDocBuilder(
     case 'Para':
     case 'Plain': {
       const runs = inlinesToRuns(blk.c as PandocInline[], { values, schema: ctx.schema });
+      const spacing = { ...PARA_SPACING, ...(ctx.paraSpacing ?? {}) };
       if (ctx.indent) {
         // Document-level first-line indent — legal block style.
         return [new Paragraph({
-          spacing: PARA_SPACING,
+          spacing,
           alignment: AlignmentType.JUSTIFIED,
-          indent: { firstLine: 720 },
+          indent: { firstLine: ctx.bodyIndent ?? 540 },
           children: runs,
         })];
       }
-      return [p(...runs)];
+      // Plain body paragraph — same defaults as `p()` but with overridable
+      // spacing.
+      return [new Paragraph({
+        spacing,
+        alignment: AlignmentType.JUSTIFIED,
+        children: runs,
+      })];
     }
 
     case 'Div': {
@@ -70,8 +77,10 @@ export function blockToDocBuilder(
       const gap = classes.includes('gap');
 
       // Empty {.gap} — emit a tall blank paragraph (~one line height).
+      // Configurable via `style.gap` in front-matter (default 240 twips).
+      const gapTwips = ctx.gap ?? 240;
       if (gap && children.length === 0) {
-        return [new Paragraph({ spacing: { before: 240, after: 240 }, children: [] })];
+        return [new Paragraph({ spacing: { before: gapTwips, after: gapTwips }, children: [] })];
       }
       // Empty {.pageBreak} — emit a standalone page-break paragraph. Useful
       // as a "break here" mark via the inline form `::: {.pageBreak} :::`.
@@ -88,14 +97,15 @@ export function blockToDocBuilder(
           // Match the default body-paragraph styling (justified, 1.5 line,
           // before/after spacing) so Div paragraphs flow with the same
           // breathing room as plain prose. Center overrides justification.
-          // {.gap} adds extra `before` spacing for vertical breathing room.
+          // {.gap} adds extra `before` spacing (= 2× style.gap) for vertical
+          // breathing room above the first child paragraph.
           const spacing = gap
-            ? { ...PARA_SPACING, before: 480 }
+            ? { ...PARA_SPACING, before: gapTwips * 2 }
             : PARA_SPACING;
           out.push(new Paragraph({
             spacing,
             alignment: center ? AlignmentType.CENTER : AlignmentType.JUSTIFIED,
-            ...(indent ? { indent: { firstLine: 720 } } : {}),
+            ...(indent ? { indent: { firstLine: ctx.bodyIndent ?? 540 } } : {}),
             ...(!pageBreakApplied ? { pageBreakBefore: true } : {}),
             children: inlinesToRuns(child.c as PandocInline[], { values, schema: ctx.schema }),
           }));
@@ -116,24 +126,60 @@ export function blockToDocBuilder(
 
     case 'OrderedList':
     case 'BulletList': {
-      const items: PandocBlock[][] = blk.t === 'OrderedList'
-        ? (blk.c as [unknown, PandocBlock[][]])[1]
-        : blk.c as PandocBlock[][];
-      const itemsAsRuns = items.map((itemBlocks) => {
-        const allInlines: PandocInline[] = [];
+      // Pandoc OrderedList carries a list-style attribute distinguishing
+      // `1. 2. 3.` (Decimal/DefaultStyle) from `a. b. c.` (LowerAlpha) etc.
+      // We use it to pick the right numbering format.
+      let lowerAlpha = false;
+      let items: PandocBlock[][];
+      if (blk.t === 'OrderedList') {
+        const [attrs, listItems] = blk.c as [
+          [number, { t: string }, { t: string }],
+          PandocBlock[][],
+        ];
+        lowerAlpha = attrs[1]?.t === 'LowerAlpha';
+        items = listItems;
+      } else {
+        items = blk.c as PandocBlock[][];
+      }
+      const isNumbered = blk.t === 'OrderedList' && !lowerAlpha;
+      // One numbering instance for the whole list — shared across items so
+      // they render as a single continuous (1)(2)(3) sequence. Trailing
+      // blocks inside an item (nested lists, code blocks) emit between
+      // items but use their own instances.
+      const instance = nextListInstance();
+      const makeItem = isNumbered ? numberedListItem : listItem;
+      const out: DocNode[] = [];
+      for (const itemBlocks of items) {
+        const itemInlines: PandocInline[] = [];
+        const trailingBlocks: PandocBlock[] = [];
+        let textTaken = false;
         for (const ib of itemBlocks) {
-          if (ib.t === 'Plain' || ib.t === 'Para') allInlines.push(...(ib.c as PandocInline[]));
+          if (!textTaken && (ib.t === 'Plain' || ib.t === 'Para')) {
+            itemInlines.push(...(ib.c as PandocInline[]));
+            textTaken = true;
+          } else {
+            trailingBlocks.push(ib);
+          }
         }
-        return inlinesToRuns(allInlines, { values, schema: ctx.schema });
-      });
-      return list(...itemsAsRuns);
+        const runs = inlinesToRuns(itemInlines, { values, schema: ctx.schema });
+        out.push(makeItem(runs, instance));
+        for (const tb of trailingBlocks) {
+          out.push(...blockToDocBuilder(tb, values, ctx));
+        }
+      }
+      return out;
     }
 
     case 'CodeBlock': {
       const [attrs, content] = blk.c as [[string, string[], unknown[]], string];
       const [, classes] = attrs;
       const lang = classes[0];
-      if (lang === 'fields') return [parseFieldsBlock(content, values, ctx.schema)];
+      if (lang === 'fields') {
+        // Wrap with spacers so the table has symmetric breathing room above
+        // and below — preceding paragraph's `after` puts space on top, but
+        // tables have no inherent `after` spacing, so add one explicitly.
+        return [spacer(), parseFieldsBlock(content, values, ctx.schema), spacer()];
+      }
       if (lang === 'sig')    return parseSigBlock(content, values);
       if (lang === 'grid')   return parseGridBlock(content, ctx, values);
       console.warn('Unknown fenced block:', lang);

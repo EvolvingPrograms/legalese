@@ -82,10 +82,16 @@ export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Pro
     '$1::: $2\n$1:::',
   );
   const ast = runPandoc(preprocessed);
+  const style = (meta.style ?? {}) as Record<string, any>;
   const ctx = {
     baseDir: opts.baseDir ?? process.cwd(),
     schema,
     indent: meta.indent === true,
+    bodyIndent: style.body?.indent as number | undefined,
+    gap: style.gap as number | undefined,
+    paraSpacing: style.spacing as
+      | { before?: number; after?: number; line?: number }
+      | undefined,
   };
   const docBody = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
 
@@ -101,5 +107,6 @@ export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): Pro
     title,
     output,
     body: docBody,
+    style: meta.style as Record<string, unknown> | undefined,
   });
 }

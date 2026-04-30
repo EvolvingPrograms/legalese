@@ -2,7 +2,7 @@
 
 import { AlignmentType, HeadingLevel, Paragraph, TextRun } from 'docx';
 
-import { PARA_SPACING, LIST_SPACING, SUBLIST_REF } from '@/lib/defaults';
+import { PARA_SPACING, LIST_SPACING, SUBLIST_REF, TOPLIST_REF } from '@/lib/defaults';
 import { asRun, t } from '@/lib/runs';
 import type { RunChild } from '@/lib/runs';
 
@@ -40,24 +40,52 @@ export const h2 = (text: string, opts: { pageBreak?: boolean } = {}) => new Para
   children: [t(text)],
 });
 
-// Each list() call gets its own numbering instance so the (a)(b)(c)… counter
-// restarts per list — legal-doc convention. Without this, all paragraphs sharing
-// SUBLIST_REF render as one continuous list.
+// Each list gets its own numbering instance so the counter restarts per
+// list — legal-doc convention. Without this, all paragraphs sharing the
+// same numbering reference would render as one continuous list across the
+// doc. Callers that interleave list items with non-list blocks (e.g. nested
+// lists) call `nextListInstance()` once and pass the result to each
+// `listItem()` / `numberedListItem()` call.
 let listInstanceCounter = 0;
+export const nextListInstance = () => listInstanceCounter++;
+
+/** Single lettered (a)(b)(c) list-item paragraph using the given instance. */
+export const listItem = (runs: ParaChild, instance: number) => {
+  const children = (Array.isArray(runs) ? runs : [runs]).flat().map(asRun);
+  return new Paragraph({
+    numbering: { reference: SUBLIST_REF, level: 0, instance },
+    spacing: LIST_SPACING,
+    alignment: AlignmentType.JUSTIFIED,
+    children,
+  });
+};
+
+/** Single decimal-numbered (1.)(2.)(3.) list-item paragraph using the given
+ *  instance. Hanging indent so wrapped body lines align with body text. */
+export const numberedListItem = (runs: ParaChild, instance: number) => {
+  const children = (Array.isArray(runs) ? runs : [runs]).flat().map(asRun);
+  return new Paragraph({
+    numbering: { reference: TOPLIST_REF, level: 0, instance },
+    spacing: PARA_SPACING,
+    alignment: AlignmentType.JUSTIFIED,
+    children,
+  });
+};
 
 /** Lowercase-lettered sublist — (a) (b) (c) …
  *  Each item is a string or an array of children. Returns an array of Paragraphs;
  *  build() flattens automatically. */
 export const list = (...items: ParaChild[]) => {
-  const instance = listInstanceCounter++;
-  return items.map((item) => {
-    const children = (Array.isArray(item) ? item : [item]).flat().map(asRun);
-    return new Paragraph({
-      numbering: { reference: SUBLIST_REF, level: 0, instance },
-      spacing: LIST_SPACING,
-      children,
-    });
-  });
+  const instance = nextListInstance();
+  return items.map((item) => listItem(item, instance));
+};
+
+/** Top-level numbered list — 1. 2. 3. … with hanging indent so wrapped body
+ *  lines align with the body text, not the number. Used for legal-doc section
+ *  layouts where each section is a numbered item with a bold lead-in title. */
+export const numberedList = (...items: ParaChild[]) => {
+  const instance = nextListInstance();
+  return items.map((item) => numberedListItem(item, instance));
 };
 
 /** Blank line for vertical breathing room. */

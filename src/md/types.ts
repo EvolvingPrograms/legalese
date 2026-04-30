@@ -31,6 +31,14 @@ export interface ConvertCtx {
   /** When true, every body paragraph gets a first-line indent (legal block
    *  style). Per-paragraph Div attributes (`::: {.indent}`) compose with this. */
   indent?: boolean;
+  /** Body first-line indent in twips. Default 540 — matches the top-level
+   *  list body indent so paragraph + list bodies share the same left edge. */
+  bodyIndent?: number;
+  /** Twips of breathing room emitted by `::: {.gap}` blocks. Default 240. */
+  gap?: number;
+  /** Body paragraph spacing — overrides PARA_SPACING for plain prose
+   *  paragraphs. Doesn't affect table cells or list items. */
+  paraSpacing?: { before?: number; after?: number; line?: number };
 }
 
 /** Schema entry for a single value — either a bare type alias or a full descriptor. */
@@ -61,6 +69,61 @@ export type SchemaEntry =
 /** Map of value keys to schema entries declared in front-matter `schema:`. */
 export type Schema = Record<string, SchemaEntry>;
 
+/** Style overrides. All optional; fields not set fall back to house defaults.
+ *  Set in front-matter under `style:`. Sizes are in twips unless noted
+ *  (1440 twips = 1"). Font sizes are in points. */
+export interface DocStyle {
+  /** Font family name (e.g. "Times New Roman", "Garamond", "EB Garamond").
+   *  The font must be installed where the doc is opened, or Word will
+   *  substitute. Default "Times New Roman". */
+  font?: string;
+  /** Body font size in points. Default 12. */
+  size?: number;
+  /** Heading 1 font size in points. Default 14. */
+  h1_size?: number;
+  /** Heading 2 font size in points. Default 12. */
+  h2_size?: number;
+
+  /** Page margins. Each side in twips OR a single number that applies to
+   *  all sides. Default 1440 (1") on all sides. */
+  margin?: number | { top?: number; right?: number; bottom?: number; left?: number };
+
+  /** Body paragraph spacing. */
+  spacing?: {
+    /** Twips before each paragraph. Default 120. */
+    before?: number;
+    /** Twips after each paragraph. Default 120. */
+    after?: number;
+    /** Line height in 240ths (240 = single, 360 = 1.5, 480 = double).
+     *  Default 360 (1.5 lines). */
+    line?: number;
+  };
+
+  list?: {
+    /** Top-level numbered list: marker→body horizontal distance, in twips.
+     *  Default 540 (~0.375"). */
+    indent?: number;
+    /** Lettered sub-list: body indent in twips. Default 900. */
+    sub_indent?: number;
+    /** Lettered sub-list: marker→body distance. Default 360. */
+    sub_hanging?: number;
+    /** Render top-level numbers bold (matches a `**Title.**` lead-in).
+     *  Default true. Set false for plain numbering. */
+    bold_marker?: boolean;
+  };
+  body?: {
+    /** First-line indent (twips) applied when document-level `indent: true`
+     *  or a `::: {.indent}` Div is in effect. Default 540 (~0.375"). */
+    indent?: number;
+  };
+
+  /** Vertical breathing room produced by `::: {.gap}` blocks. Empty
+   *  `::: {.gap} :::` emits a blank paragraph with this much before/after
+   *  spacing; non-empty `{.gap}` adds `before` (× 2) to the first child
+   *  paragraph. Default 240 twips. */
+  gap?: number;
+}
+
 /** Parsed YAML front matter. Open-ended so callers can add document-specific keys. */
 export interface FrontMatter {
   title?: string;
@@ -70,5 +133,7 @@ export interface FrontMatter {
   /** Document-level first-line indent on every body paragraph (legal block
    *  style). Equivalent to wrapping the entire body in `::: {.indent}`. */
   indent?: boolean;
+  /** Per-document style overrides. */
+  style?: DocStyle;
   [k: string]: unknown;
 }

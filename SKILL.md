@@ -475,6 +475,63 @@ markers, lose the visual hierarchy lawyers expect, and read as run-on
 prose. Always break clauses onto their own lines as a real lettered list
 even when nesting isn't available.
 
+## Style overrides
+
+Set in front-matter under `style:` to override house defaults. All fields
+are optional. Sizes are in **twips** (1440 twips = 1") unless noted; font
+sizes are in **points**.
+
+```yaml
+---
+title: ...
+indent: true                 # document-level: first-line indent on every body paragraph
+style:
+  font: Garamond             # body font family — Word substitutes if not installed
+  size: 12                   # body font size in points (default 12)
+  h1_size: 14                # Heading 1 size (default 14)
+  h2_size: 12                # Heading 2 size (default 12)
+
+  # Page margins. Single number → all four sides; object → per-side.
+  margin: 1440               # 1" all around (default)
+  # margin:
+  #   top: 1440
+  #   bottom: 1440
+  #   left: 1800             # 1.25" left for binding
+  #   right: 1440
+
+  # Body paragraph spacing. Applies only to plain prose paragraphs —
+  # cells and list items keep their own minimal spacing.
+  spacing:
+    before: 120              # twips before each paragraph (default 120)
+    after: 120               # twips after (default 120)
+    line: 360                # line height in 240ths (240=single, 360=1.5x, 480=2x)
+
+  # Top-level numbered list (`1. **Title.** ...`).
+  list:
+    indent: 540              # marker→body distance, twips (default 540 ≈ 0.375")
+    sub_indent: 900          # lettered sub-list body indent (default 900)
+    sub_hanging: 360         # sub-list marker→body distance (default 360)
+    bold_marker: true        # bold the top-level number (default true)
+
+  # First-line indent applied by document-level `indent: true` and
+  # `::: {.indent}` Divs. Default 540 — matches list body so paragraph
+  # bodies and list bodies share the same left edge.
+  body:
+    indent: 540
+
+  # Vertical breathing room emitted by `::: {.gap}` blocks. Default 240.
+  gap: 240
+---
+```
+
+When to override:
+- **Different firm style?** Set `font` and `size`.
+- **Block-style first-line indent throughout?** `indent: true` (already used by the landscaping example).
+- **Wider binding margin?** `margin: { left: 1800 }`.
+- **Double-spaced (e.g. court filings)?** `spacing: { line: 480 }`.
+- **Plain numbering, no bold?** `style.list.bold_marker: false`.
+- **Tighter list indents?** `style.list.indent: 360`.
+
 ## Caveats to surface
 
 - Template-grade, not legal advice.

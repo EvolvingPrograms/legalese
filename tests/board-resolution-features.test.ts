@@ -180,7 +180,7 @@ test('::: {.indent} ... ::: applies first-line indent to each child paragraph', 
   const pStart = xml.lastIndexOf('<w:p', idx);
   const pEnd = xml.indexOf('</w:p>', idx);
   const para = xml.slice(pStart, pEnd + 6);
-  expect(para).toMatch(/<w:ind\s+w:firstLine="720"/);
+  expect(para).toMatch(/<w:ind\s+w:firstLine="540"/);
 });
 
 test('document-level `indent: true` applies first-line indent to every body paragraph', async () => {
@@ -196,7 +196,7 @@ test('document-level `indent: true` applies first-line indent to every body para
     'Second paragraph here.',
   ].join('\n'));
   // Both body paragraphs should have firstLine indent.
-  const matches = xml.match(/<w:ind\s+w:firstLine="720"/g) ?? [];
+  const matches = xml.match(/<w:ind\s+w:firstLine="540"/g) ?? [];
   expect(matches.length).toBeGreaterThanOrEqual(2);
 });
 
@@ -209,7 +209,7 @@ test('document-level indent omitted (default) does NOT apply first-line indent',
     '',
     'Plain paragraph.',
   ].join('\n'));
-  expect(xml).not.toMatch(/<w:ind\s+w:firstLine="720"/);
+  expect(xml).not.toMatch(/<w:ind\s+w:firstLine="540"/);
 });
 
 // — pageBreak Div —
