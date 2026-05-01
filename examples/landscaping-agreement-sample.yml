@@ -27,6 +27,20 @@ contractor_name:    Greenline Landscaping, Inc.
 contractor_entity:  Illinois corporation
 contractor_address: 4421 W Industrial Park Rd, Naperville, IL 60563
 
+# Per-deal defined-term expansions. Each is the prose that appears before
+# the parenthetical define when the term is introduced —
+#   {{$the_Monthly_fee}} → "$1,850.00 per Location per month (the *"Monthly Fee"*)"
+# Change these for a different deal without touching the template.
+initial_term:        an initial term of two (2) years
+renewal_term:        successive renewal terms of one (1) year each
+monthly_fee:         $1,850.00 per Location per month
+cure_period:         thirty (30) days
+insurance_floor:     $2,000,000 per occurrence
+payment_date:        the fifteenth (15th) day of each calendar month
+late_fee_rate:       one and one-half percent (1.5%) per month
+non_renewal_notice:  sixty (60) days
+insurance_notice:    thirty (30) days
+
 governing_law: State of Illinois
 venue:         Cook County, Illinois
 

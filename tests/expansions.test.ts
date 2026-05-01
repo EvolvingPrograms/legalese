@@ -153,6 +153,56 @@ test('{{$a_key}} (no expansion) renders inline-styled with auto-picked indefinit
   expect(plain(body)).toContain('A “Composition” is owned by Writer.');
 });
 
+// — Fill-in-blank for required-but-missing introductions —
+
+test('{{$the_key}} renders a fill-in blank when the value is missing AND schema marks the key required', async () => {
+  // Required + no value supplied → render `<BLANK> (the *"Term"*)` so
+  // the unfilled spot is visually obvious in a draft. Re-running with
+  // values fills the blank seamlessly.
+  const { BLANK } = await import('@/md/inlines');
+  const body = await renderSourceToXml('_xp_required_blank', [
+    '---',
+    'title: TEST',
+    'output: _xp_required_blank.docx',
+    'schema:',
+    '  monthly_fee:',
+    '    term: Monthly Fee',
+    '    required: true',
+    '---',
+    '',
+    'Customer shall pay {{$the_Monthly_fee}}.',
+  ].join('\n'));
+  expect(plain(body)).toContain(`Customer shall pay ${BLANK} (the “Monthly Fee”).`);
+});
+
+test('{{$key}} (required, no value) does NOT fill-in-blank when value is supplied at runtime', async () => {
+  // Sanity: providing the value still wins over the blank treatment.
+  const { convertMarkdown } = await import('@/md/convert');
+  const path = await import('node:path');
+  const { ROOT, readDocumentXml } = await import('./_helpers');
+  const { BLANK } = await import('@/md/inlines');
+  const out = path.resolve(OUT, '_xp_required_filled.docx');
+  await convertMarkdown([
+    '---',
+    'title: TEST',
+    'output: _xp_required_filled.docx',
+    'schema:',
+    '  monthly_fee:',
+    '    term: Monthly Fee',
+    '    required: true',
+    '---',
+    '',
+    'Customer shall pay {{$the_Monthly_fee}}.',
+  ].join('\n'), {
+    output: out,
+    baseDir: ROOT,
+    values: { monthly_fee: '$1,850.00 per month' },
+  });
+  const body = plain(readDocumentXml(out));
+  expect(body).toContain('Customer shall pay $1,850.00 per month (the “Monthly Fee”).');
+  expect(body).not.toContain(BLANK);
+});
+
 // — Literal define forms (unchanged) —
 
 test('{{Term}} renders the literal-define parenthetical with "the"', async () => {

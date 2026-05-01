@@ -33,6 +33,12 @@ type Run = TextRun;
 
 const KEY_RE = /^[a-z][a-z0-9_]*$/i;
 
+/** Fill-in blank rendered for required-but-missing introductions
+ *  (`{{$the_X}}` where the schema marks `X` as `required: true` and no
+ *  value was supplied). Single source of truth — tests reference this
+ *  export so a width change here doesn't ripple into expectations. */
+export const BLANK = '__________________';
+
 interface MarkerCtx {
   values: Record<string, unknown>;
   schema: Schema | undefined;
@@ -181,6 +187,7 @@ function emitMarker(
   // {{$key}} / {{$the_key}} / {{$a_key}} — introduce a defined term.
   if (isIntroduce) {
     const value = ctx.values[lookupKey];
+    const valueIsMissing = value === undefined || value === null || value === '';
     const expansion = formatExpansion(value) ?? termDef(lookupKey, ctx.schema) ?? '';
     const rawLabel = termLabel(lookupKey, ctx.schema);
     const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
@@ -197,9 +204,28 @@ function emitMarker(
       out.push(makeRun(`${exp} `, bold, italic));
       emitDefine(label, parenArticle, bold, italic, out);
     } else {
-      // No expansion → inline-styled. Article here is in prose position, so
-      // capitalize per the marker case signal.
-      emitInline(label, resolveArticle(label), false, bold, italic, out);
+      // No value, no def. Two cases share this path:
+      //   1. Schema marks the key `required: true` — author expects a
+      //      per-deal value here, so render a fill-in blank with the
+      //      parenthetical define so the unfilled spot is visually
+      //      obvious in a draft. Once the blank is hand-filled (or the
+      //      doc re-rendered with values) the prose reads correctly.
+      //   2. Otherwise — author intentionally omitted def/value to use
+      //      the introduce form as an inline-styled definition (no
+      //      parens), e.g. "individually {{$a_Party}}" → "individually
+      //      a *Party*". Preserve that stylistic idiom.
+      const entry = ctx.schema?.[lookupKey];
+      const isRequired = typeof entry === 'object' && entry !== null && entry.required === true;
+      // Only fill-in-blank when the value is actually missing. If the
+      // caller supplied something but it wasn't a usable expansion
+      // (e.g. object array for a grid catalog), preserve the old
+      // inline-styled fallback.
+      if (isRequired && valueIsMissing) {
+        out.push(makeRun(`${BLANK} `, bold, italic));
+        emitDefine(label, parenArticle, bold, italic, out);
+      } else {
+        emitInline(label, resolveArticle(label), false, bold, italic, out);
+      }
     }
     return;
   }

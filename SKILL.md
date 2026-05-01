@@ -73,67 +73,100 @@ two pieces drawn from different schema/values fields:
 - **`term`** = the short label inside the parens (e.g. `"Agreement"`,
   `"Monthly Fee"`). Defaults to snake_case → Title Case.
 
-- **`def`** = the prose expansion that appears *before* the parens. Use
-  for **static** content baked into the template — full deal name, fixed
-  percentages, dollar amounts, durations, anything that won't change
-  between renders.
+- **`def`** = the prose expansion baked into the template. Use ONLY for
+  content that's truly stable across every render: the contract type
+  (`agreement.def: "Landscaping Services Agreement"`), generic party
+  labels (`customer.def: "Customer"`), or a fee that's defined by law.
 
-- **`values[key]`** = a runtime override of the expansion. Use for
-  **dynamic** per-deal data — party names, addresses, effective dates,
-  amounts that vary per contract. Wins over `def:`.
+- **`values[key]`** = the expansion supplied at render time. Use for
+  **everything else** — fees, durations, dates, party names, cure
+  periods, insurance floors, anything that varies per deal. Wins over
+  `def:` when both are set.
+
+**Mental test for `def:` vs `values:`:** "If I render this template for a
+different deal next month, would this string change?" If yes → values.
+If no → def. Resist the urge to bake a dollar amount or duration into
+`def:` because it's "what we usually use" — that's a template default
+disguised as a constant, and it silently misrenders the next deal.
+
+**Graceful degradation when a value is missing:**
+
+- Schema entry has `required: true` AND no value supplied → the
+  introduce form renders a fill-in blank with the parenthetical define:
+  `{{$the_Monthly_fee}}` → `__________ (the *"Monthly Fee"*)`. The blank
+  makes the unfilled spot visually obvious in a draft, and the prose
+  reads correctly once the blank is hand-filled or the doc re-rendered
+  with values.
+
+- Schema entry NOT marked required (and no value, no def) → the
+  introduce form is treated as an intentional inline-styled definition:
+  `{{$a_Party}}` → `a *"Party"*`, no parens. Use this for in-prose
+  defined-term introductions like *"individually a *Party*"*.
+
+`legalese my.md --schema` lists every required-but-missing key under
+`missing:` so the user knows exactly what the values file needs.
 
 Example template `schema:`:
 
 ```yaml
 schema:
-  # Dynamic — values supply the expansion at render time
+  # Template-static — the contract type doesn't change between deals,
+  # so `def:` bakes it in.
   agreement:
-    def: "Agreement"
+    def: "Landscaping Services Agreement"
+
+  # Empty entries — register the slug; label auto-derives from
+  # snake → Title Case ("Customer" / "Contractor"). No `def:` needed
+  # because those are exactly what the auto-derive produces. The values
+  # file supplies the per-deal expansion (full party description).
   customer:
-    def: "Customer"
   contractor:
-    def: "Contractor"
+
+  # Form fields supplied per deal.
   effective_date:
     type: date
     required: true
 
-  # Static — `def:` bakes the expansion into the template
+  # Per-deal expansions — schema declares only the label (and `required:`
+  # so the dump catches a missing fill-in). The expansion comes from the
+  # values file at render time.
   publishers_share:
     term: "Publisher's Share"
-    def: "a 50% share"
+    required: true
   monthly_fee:
     term: "Monthly Fee"
-    def: "$1,850.00 per Location"
+    required: true
   cure_period:
     term: "Cure Period"
-    def: "thirty (30) days"
+    required: true
   insurance_floor:
     term: "Insurance Floor"
-    def: "$2,000,000 per occurrence"
+    required: true
 ```
 
 Companion values YAML (passed as `--values-file landscaping.yml`):
 
 ```yaml
-# values.yml — only the dynamic fields need entries here.
-effective_date: "June 1, 2026"
-agreement:  "Landscaping Services Agreement"
-customer:   "McDonald's USA, LLC"
-contractor: "Greenline Landscaping, Inc."
+# values.yml — supplies all per-deal expansions.
+effective_date:    "June 1, 2026"
+customer:          "McDonald's USA, LLC"
+contractor:        "Greenline Landscaping, Inc."
+monthly_fee:       "$1,850.00 per Location"
+publishers_share:  "a 50% share"
+cure_period:       "thirty (30) days"
+insurance_floor:   "$2,000,000 per occurrence"
 ```
 
 `{{$the_Agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
-(value beats `def:`); `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the
-***"Monthly Fee"***)` (no value, falls back to `def:`).
-
-Now references like `{{$the_Publishers_share}}` always render `a 50% share (the
-***"Publisher's Share"***)` regardless of values, and `{{$the_Monthly_fee}}`
-always renders `$1,850.00 per Location (the ***"Monthly Fee"***)`.
+(no value supplied, so the template's `def:` is used). `{{$the_Customer}}` →
+`McDonald's USA, LLC (the ***"Customer"***)` (value beats the `"Customer"`
+default). `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the ***"Monthly
+Fee"***)` (value supplies the expansion; schema has only `term:`).
 
 After first introduction, use the plain reference form everywhere:
 `{{the_Publishers_share}}` → "the Publisher's Share"; `{{the_Monthly_fee}}` →
-"the Monthly Fee". Body reads natural English; one `def:` edit at the top
-changes the dollar amount everywhere it's introduced.
+"the Monthly Fee". Body reads natural English; one values edit changes the
+dollar amount everywhere it's introduced.
 
 #### Bake the article into `def:` when prose needs it
 

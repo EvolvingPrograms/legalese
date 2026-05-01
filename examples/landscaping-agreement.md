@@ -19,33 +19,41 @@ schema:
   # Single-line definitions.
   agreement:
     def: Landscaping Services Agreement
-  customer:
-    def: Customer
-  contractor:
-    def: Contractor
 
+  # `customer` / `contractor` need no `def:` — the auto-derived label
+  # (snake → Title Case) already produces "Customer" / "Contractor". The
+  # values file supplies the per-deal entity description (full legal
+  # name + entity type + address) which becomes the introduce expansion.
+  customer:
+  contractor:
+
+  # Per-deal expansions — supplied by the values file at render time, not
+  # baked here. With no value, `{{$the_Monthly_fee}}` gracefully renders as
+  # just `the *"Monthly Fee"*` (term reference only, no expansion prose);
+  # `--schema` lists missing values under `missing:` so the user knows
+  # what to fill in.
   initial_term:
-    def: an initial term of two (2) years
+    required: true
   renewal_term:
-    def: successive renewal terms of one (1) year each
+    required: true
   monthly_fee:
-    def: $1,850.00 per Location per month
+    required: true
   cure_period:
-    def: thirty (30) days
+    required: true
   insurance_floor:
-    def: $2,000,000 per occurrence
+    required: true
   payment_date:
-    def: the fifteenth (15th) day of each calendar month
+    required: true
   late_fee_rate:
-    def: one and one-half percent (1.5%) per month
+    required: true
 
   # `term:` needed where the rendered label differs from the auto-derived one.
   non_renewal_notice:
     term: Non-Renewal Notice Period
-    def: sixty (60) days
+    required: true
   insurance_notice:
     term: Insurance Notice Period
-    def: thirty (30) days
+    required: true
 
   # Form fields. `type: string` is the implicit default; only declare `type:`
   # when it differs (date, list, etc.).

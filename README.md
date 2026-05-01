@@ -100,10 +100,11 @@ output: ./Landscaping_Agreement.docx     # optional; CLI flag wins
 schema:
   agreement:
     def: "Landscaping Services Agreement"
+  # `customer` / `contractor` need no `def:` — the auto-derived label
+  # (snake → Title Case) already gives "Customer" / "Contractor". The
+  # values file supplies the per-deal expansion.
   customer:
-    def: "Customer"
   contractor:
-    def: "Contractor"
   effective_date:
     type: date
     required: true
@@ -113,15 +114,16 @@ schema:
            services described in this Agreement"
   monthly_fee:
     term: "Monthly Fee"
-    def: "$1,850.00 per Location"
+    required: true                       # value supplied per deal
   governing_law:
     type: string
     default: "State of Delaware"
 
 values:                       # or pass --values-file foo.yml
   effective_date: "June 1, 2026"
-  customer:   "McDonald's USA, LLC"
-  contractor: "Greenline Landscaping, Inc."
+  customer:      "McDonald's USA, LLC"
+  contractor:    "Greenline Landscaping, Inc."
+  monthly_fee:   "$1,850.00 per Location"
 
 style:
   font: EB Garamond           # bundled; embeds into the .docx
@@ -292,10 +294,10 @@ import { convertMarkdown, convertMarkdownToBuffer } from 'legalese';
 const src = `---
 title: NDA
 schema:
+  # No `def:` needed — auto-derived "Disclosing Party" / "Receiving Party"
+  # is exactly what we want; values supply the actual party identifiers.
   disclosing_party:
-    def: "Disclosing Party"
   receiving_party:
-    def: "Receiving Party"
 values:
   disclosing_party: "Acme Inc."
   receiving_party:  "Beta LLC"

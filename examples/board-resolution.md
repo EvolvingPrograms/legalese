@@ -5,13 +5,14 @@ title: |-
   {{COMPANY}}
 
 style:
-  font: EB Garamond   # bundled Google Font — embedded in the .docx.
+  font: EB Garamond   # bundled Google Font — embedded in the .docx. See fonts/.
 
 schema:
-  # Defined terms — `definition:` (alias `def:`) baked into the template,
-  # value override per-deal. Block form (one key per line) avoids the
-  # flow-context quote rules — values with commas / parens / apostrophes
-  # can be unquoted. Use `>-` (folded scalar) to wrap long values.
+  # Defined terms. `def:` is reserved for template-static prose — the
+  # generic legal concepts that don't change per deal. Per-deal numbers
+  # (advance amount, royalty splits, term length) come from the values
+  # file; with no value, the introduce form gracefully renders as just
+  # `the *"Term"*` and `--schema` flags the key under `missing:`.
 
   # Empty entries — register the slug; label auto-derives from snake→Title.
   writer:
@@ -21,31 +22,29 @@ schema:
   recordings:
     term: Master Recordings
 
-  # Single-line definitions.
-  company:
-    def: Sample Records, Inc.
+  # Template-static prose — generic legal concepts and the contract type
+  # this resolution is about. These rarely change between deals.
   agreement:
     def: an Exclusive Recording and Publishing Agreement
-  advance:
-    def: a recoupable advance of $25,000.00
-
-  # `term:` needed for these — apostrophes break the auto-derive.
-  publishers_share:
-    term: Publisher's Share
-    def: a fifty percent (50%) share of all publisher rights
-  writers_share:
-    term: Writer's Share
-    def: the remaining fifty percent (50%) share
-
-  # Multi-line definitions — `>-` folds the wrapped lines into one sentence.
-  term:
-    def: >-
-      an initial three (3) year term, automatically renewable for successive
-      one-year periods
   net_proceeds:
     def: >-
       all gross revenues actually received by the Company, less direct
       distribution and collection costs
+
+  # Per-deal expansions — schema declares the label only; values file
+  # supplies the prose at render time.
+  company:
+    required: true
+  advance:
+    required: true
+  publishers_share:
+    term: Publisher's Share        # apostrophe breaks the snake→Title auto-derive
+    required: true
+  writers_share:
+    term: Writer's Share
+    required: true
+  term:
+    required: true
 
   # Form fields — supplied per-deal via --values-file. `type: string` is the
   # implicit default; only declare `type:` when it differs (date, list, etc.).

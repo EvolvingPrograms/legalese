@@ -16,6 +16,18 @@ writer: >-
   Sample Writer, an individual residing in Brooklyn, NY and professionally
   known as "Sample"
 
+# Per-deal defined-term expansions. Each is the prose that appears before
+# the parenthetical define when the term is introduced —
+#   {{$the_Advance}} → "a recoupable advance of $25,000.00 (the *"Advance"*)"
+# Change these for a different deal without touching the template.
+company:           Sample Records, Inc.
+advance:           a recoupable advance of $25,000.00
+publishers_share:  a fifty percent (50%) share of all publisher rights
+writers_share:     the remaining fifty percent (50%) share
+term: >-
+  an initial three (3) year term, automatically renewable for successive
+  one-year periods
+
 governing_law: State of Delaware
 
 # Director sig values — paired into two two-sided sig blocks (1+2, 3+4)
