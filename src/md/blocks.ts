@@ -180,8 +180,8 @@ export function blockToDocBuilder(
         // tables have no inherent `after` spacing, so add one explicitly.
         return [spacer(), parseFieldsBlock(content, values, ctx.schema), spacer()];
       }
-      if (lang === 'sig')    return parseSigBlock(content, values);
-      if (lang === 'grid')   return parseGridBlock(content, ctx, values);
+      if (lang === 'sig')    return parseSigBlock(content, values, ctx.schema);
+      if (lang === 'grid')   return parseGridBlock(content, ctx, values, ctx.schema);
       console.warn('Unknown fenced block:', lang);
       return [];
     }
