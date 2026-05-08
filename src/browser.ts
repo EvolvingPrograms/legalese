@@ -17,7 +17,6 @@ import {
   convertMarkdown as convertMarkdownNode,
   convertMarkdownToBuffer as convertMarkdownToBufferNode,
   type ConvertOptions,
-  type ParseFn,
 } from './md/convert';
 
 export { runPandocWasm } from './md/pandoc-wasm';
@@ -32,15 +31,20 @@ export function convertMarkdownToBuffer(
   return convertMarkdownToBufferNode(srcText, { parse: runPandocWasm, ...opts });
 }
 
-/** Markdown → .docx written to `output`, parsing via pandoc-wasm. Node
- *  only — the browser entry exposes this for symmetry, but calling it
- *  outside Node will throw on `fs.writeFileSync`. Prefer
- *  `convertMarkdownToBuffer` in the browser. */
-export function convertMarkdown(
-  srcText: string,
-  opts: ConvertOptions = {},
-): Promise<string> {
-  return convertMarkdownNode(srcText, { parse: runPandocWasm, ...opts });
+/** Markdown → docx / json / markdown, parsing via pandoc-wasm. Same
+ *  shape as the Node `convertMarkdown` (format + optional output) but
+ *  pre-bound to the WASM engine. Pass an `output` path only when running
+ *  in Node — `fs.writeFileSync` will throw in the browser. Default
+ *  format is `'docx'`; pass `format: 'json'` to drive interactive UIs.
+ *
+ *  See `ConvertOptions` and `DocumentJson` for the full contract. */
+export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): ReturnType<typeof convertMarkdownNode> {
+  // Cast to satisfy the overloaded signature; we just defer to the Node
+  // implementation with the WASM parser pre-bound.
+  return (convertMarkdownNode as (s: string, o: ConvertOptions) => ReturnType<typeof convertMarkdownNode>)(
+    srcText,
+    { parse: runPandocWasm, ...opts },
+  );
 }
 
 export * from './blocks';
@@ -49,7 +53,9 @@ export { buildToBuffer, build } from './lib/build';
 
 export type { BodyEntry } from './types';
 export type { DocStyleOpts, BuildArgs } from './lib/build';
-export type { ConvertOptions, ParseFn };
+export type { ConvertFormat, ParseFn, DocumentJson } from './md/convert';
+export type { ConvertOptions };
+export { substituteMarkers } from './md/substitute';
 
 // Import directly from leaf modules — going through ./md (the barrel)
 // would re-export ./md/pandoc, which pulls in `node:child_process` and

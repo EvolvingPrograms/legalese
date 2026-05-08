@@ -281,70 +281,109 @@ override — is documented in [`SKILL.md`](./SKILL.md).
 
 ## Programmatic API
 
-Two flavours of every entry point: one that writes to a file, one that returns
-the bytes in memory. Use the buffer variants when you don't have (or don't want)
-a filesystem — browsers, serverless handlers, anywhere you'd rather hold the
-document and stream it back to a caller.
-
-### Markdown → .docx (Node, system pandoc)
+A single entry point handles everything: pass a `format` and an optional
+`output` path. Without an `output` path you get the result in memory; with
+one, the result is written to disk and the function resolves to the path.
 
 ```ts
-import { convertMarkdown, convertMarkdownToBuffer } from 'legalese';
+import { convertMarkdown } from 'legalese';                  // Node
+import { convertMarkdown } from 'legalese/browser';          // Browser (WASM pandoc)
 
-const src = `---
-title: NDA
-schema:
-  # No `def:` needed — auto-derived "Disclosing Party" / "Receiving Party"
-  # is exactly what we want; values supply the actual party identifiers.
-  disclosing_party:
-  receiving_party:
-values:
-  disclosing_party: "Acme Inc."
-  receiving_party:  "Beta LLC"
----
+// To .docx:
+const buf  = await convertMarkdown(src);                          // Buffer
+const path = await convertMarkdown(src, { output: 'nda.docx' });  // path
 
-This NDA is between {{$the_Disclosing_party}} and {{$the_Receiving_party}}.
-`;
+// To structured JSON — drives interactive UIs:
+const doc = await convertMarkdown(src, { format: 'json' });
+//   doc.meta     — front-matter (title, style, schema, …)
+//   doc.blocks   — Pandoc AST with all {{markers}} resolved
+//   doc.values   — merged values (caller > frontmatter > defaults)
+//   doc.schema   — the schema as declared, for form generation
+//   doc.missing  — required schema keys with no value supplied
 
-// Write to disk:
-await convertMarkdown(src, { output: './nda.docx' });
-
-// Or hold the bytes in memory:
-const buf: Buffer = await convertMarkdownToBuffer(src);
+// To resolved markdown (for piping to remark / pandoc HTML / your own tooling):
+const md = await convertMarkdown(src, { format: 'markdown' });
 ```
 
-Both functions accept caller-supplied `values` (which override the `values:`
-block in the source), `title`, `baseDir`, and a `strict` flag that throws if any
-`required: true` schema fields are missing.
+Same options work in both Node and browser entries:
 
-### Markdown → .docx (browser, WASM pandoc)
+| `format` | No `output` | With `output` |
+|---|---|---|
+| `'docx'` *(default)* | `Buffer` | writes `.docx`, resolves to path |
+| `'json'` | `DocumentJson` | writes `.json`, resolves to path |
+| `'markdown'` | resolved markdown `string` | writes `.md`, resolves to path |
+
+Other options: `values` (overrides front-matter `values:`), `title`,
+`baseDir`, `strict` (throws on missing required values), and `parse`
+(custom markdown parser — defaults to system pandoc in Node, pandoc-wasm
+in browser).
+
+### Driving an interactive UI with `format: 'json'`
+
+```tsx
+// Re-renders the preview every time the user fills in a value.
+// React example, but the shape is framework-agnostic.
+import { convertMarkdown, type DocumentJson } from 'legalese/browser';
+
+function Editor({ src }: { src: string }) {
+  const [values, setValues] = useState({});
+  const [doc, setDoc] = useState<DocumentJson | null>(null);
+
+  useEffect(() => {
+    convertMarkdown(src, { format: 'json', values }).then(setDoc);
+  }, [src, values]);
+
+  if (!doc) return null;
+  return (
+    <>
+      {/* Render a form from doc.schema, surfacing doc.missing */}
+      <Form schema={doc.schema} missing={doc.missing}
+            values={values} onChange={setValues} />
+      {/* Walk doc.blocks (Pandoc AST) to render the preview */}
+      <Preview blocks={doc.blocks} />
+      <button onClick={async () => download(await convertMarkdown(src, { values }))}>
+        Download .docx
+      </button>
+    </>
+  );
+}
+```
+
+The blocks have all `{{...}}` markers already resolved into ordinary
+`Str` / `Emph` / `Strong` AST nodes — you walk a normal Pandoc tree.
+Defined-term parentheticals come through as bold-italic nested in
+`Strong`/`Emph`. Required-but-missing values render as a `__________`
+placeholder inline so unfilled spots are visible in the preview.
+
+### Browser specifics (`legalese/browser`)
 
 ```ts
-import { convertMarkdownToBuffer } from 'legalese/browser';
+import { convertMarkdown } from 'legalese/browser';
 
 // pandoc-wasm is an optional peer dep — install it explicitly:
 //   npm i pandoc-wasm    (~56 MB on disk, ~15 MB gzipped over the wire)
 
-const bytes = await convertMarkdownToBuffer(src);
+const bytes = await convertMarkdown(src);
 const blob = new Blob([bytes], {
   type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 });
 // Hand to <a download>, fetch upload, FileSystemAccess API, etc.
 ```
 
-The `legalese/browser` subpath is byte-identical to `legalese` except its
-`convertMarkdown*` defaults to the WASM engine. It deliberately never imports
-`node:child_process`, so bundlers (Vite, esbuild, Rollup, etc.) don't end up
-trying to polyfill the system-pandoc shell-out.
+The browser entry has the same surface as the Node one; it just defaults
+the parser to pandoc-wasm and deliberately never imports
+`node:child_process`, so bundlers (Vite, esbuild, Rollup, etc.) don't
+need to polyfill the system-pandoc shell-out.
 
 ### Lower-level pieces
 
-If you want to walk the parsed AST, render block-by-block, or stop short of
-producing a docx:
+If you want to walk the AST yourself, substitute markers without
+running pandoc, or stop short of producing a docx:
 
 ```ts
 import {
   splitFrontMatter,    // string  → { meta, body }
+  substituteMarkers,   // body    → marker-resolved markdown
   runPandoc,           // body    → PandocAst (Node)
   runPandocWasm,       // body    → PandocAst (browser/Node)
   blockToDocBuilder,   // AST block → BodyEntry[]
@@ -352,16 +391,17 @@ import {
 } from 'legalese';
 
 const { meta, body } = splitFrontMatter(src);
-const ast = await runPandocWasm(body);
+const resolved = substituteMarkers(body, { schema: meta.schema, values: meta.values });
+const ast = await runPandocWasm(resolved);   // or runPandoc
 const entries = ast.blocks.flatMap((b) =>
   blockToDocBuilder(b, meta.values ?? {}, { baseDir: '/' }),
 );
 const docx = await buildToBuffer({ title: meta.title, body: entries });
 ```
 
-You can also inject any parser into `convertMarkdown*` via the `parse` option —
-useful for caching the AST, plugging in a custom markdown flavour, or running
-tests against a synthetic AST without spinning up pandoc at all.
+You can also inject any parser into `convertMarkdown` via the `parse`
+option — useful for caching the AST, plugging in a custom markdown
+flavour, or running tests against a synthetic AST.
 
 ### As a global CLI
 

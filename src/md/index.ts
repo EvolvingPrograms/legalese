@@ -7,4 +7,5 @@ export * from './pandoc-wasm';
 export * from './inlines';
 export * from './blocks';
 export * from './fenced';
+export * from './substitute';
 export * from './types';

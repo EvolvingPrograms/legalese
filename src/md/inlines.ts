@@ -63,7 +63,7 @@ function makeRun(text: string, bold: boolean, italic: boolean, smallCaps = false
  *  Internal newlines fold into spaces — YAML `|-` block scalars used to wrap
  *  long single-sentence values shouldn't introduce hard line breaks into
  *  prose. Use markdown paragraph breaks if you actually want a break. */
-function formatExpansion(value: unknown): string | null {
+export function formatExpansion(value: unknown): string | null {
   if (value == null) return null;
   if (Array.isArray(value)) {
     if (value.some((v) => v != null && typeof v === 'object')) return null;
