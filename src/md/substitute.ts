@@ -131,10 +131,14 @@ function renderMarker(raw: string, ctx: MarkerCtx): string {
   const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
 
   // {{$key}} / {{$the_key}} / {{$a_key}} — introduce.
+  // Compose value + def with a comma when both are set; matches the
+  // standard legal "Acme Inc., a Delaware corporation (the *X*)" pattern.
   if (isIntroduce) {
     const value = ctx.values[lookupKey];
     const valueIsMissing = value === undefined || value === null || value === '';
-    const expansion = formatExpansion(value) ?? termDef(lookupKey, ctx.schema) ?? '';
+    const valuePart = formatExpansion(value);
+    const defPart = termDef(lookupKey, ctx.schema);
+    const expansion = [valuePart, defPart].filter((s): s is string => !!s).join(', ');
 
     const parenArticle = articleRaw
       ? (articleRaw === 'the' ? 'the' : pickAOrAn(label))

@@ -46,6 +46,21 @@ describe('substituteMarkers (primitive)', () => {
     expect(out).toContain('Acme Corp (the ***“Customer”***)');
   });
 
+  test('introduce form composes value + def with a comma when both are set', () => {
+    // Standard legal-pattern: party name followed by entity-type qualifier.
+    const out = substituteMarkers('{{$the_Company}} hereby certifies.', {
+      schema: {
+        company: {
+          def: 'a Delaware corporation',
+        },
+      },
+      values: { company: 'Evolving Programs, Inc.' },
+    });
+    expect(out).toContain(
+      'Evolving Programs, Inc., a Delaware corporation (the ***“Company”***)',
+    );
+  });
+
   test('introduce form with def fallback', () => {
     const out = substituteMarkers('Use {{$the_Agreement}}.', {
       schema: { agreement: { def: 'Test Agreement' } },

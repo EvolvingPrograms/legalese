@@ -204,10 +204,16 @@ function emitMarker(
   }
 
   // {{$key}} / {{$the_key}} / {{$a_key}} — introduce a defined term.
+  // Compose value + def with a comma when both are set: this matches the
+  // standard legal pattern "Acme Inc., a Delaware corporation (the *X*)".
+  // If only one is set, use it alone; if neither, fall through to the
+  // missing-value branch below.
   if (isIntroduce) {
     const value = ctx.values[lookupKey];
     const valueIsMissing = value === undefined || value === null || value === '';
-    const expansion = formatExpansion(value) ?? termDef(lookupKey, ctx.schema) ?? '';
+    const valuePart = formatExpansion(value);
+    const defPart = termDef(lookupKey, ctx.schema);
+    const expansion = [valuePart, defPart].filter((s): s is string => !!s).join(', ');
     const rawLabel = termLabel(lookupKey, ctx.schema);
     const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
     // Article inside the parenthetical define stays lowercase even when the

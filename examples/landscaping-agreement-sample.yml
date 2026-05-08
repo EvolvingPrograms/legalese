@@ -6,11 +6,11 @@
 
 effective_date: June 1, 2026
 
-# Dynamic introduce expansions — value beats schema `def:`. Don't list a
-# value here that's identical to `def:` (e.g. agreement) — `def:` alone
-# already produces the right rendering, and a duplicate just adds noise.
-# Use `|-` block scalars for long entries so you can wrap lines without
-# quote-escape gymnastics.
+# Per-deal introduce expansions. `{{$the_X}}` composes the value here
+# with any `def:` in schema, comma-joined, then attaches the parenthetical
+# define. For these entries the schema sets no `def:`, so the value alone
+# becomes the introduction prose. Use `>-` (folded) for long values so
+# you can wrap lines without quote-escape gymnastics.
 customer: >-
   McDonald's USA, LLC, a Delaware limited liability company, with offices at
   110 N Carpenter St, Chicago, IL 60607

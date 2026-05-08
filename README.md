@@ -155,9 +155,24 @@ The article rides in the marker prefix; the term comes from schema.
 | `{{KEY}}`         | uppercased label *(use `{{=KEY}}` for uppercased value)* |
 
 The `$` forms **introduce** a term (with its expansion + parenthetical
-definition); plain forms reference it after introduction. Lookups are
-case-insensitive; plurals auto-derive (`location` → `Locations`); `a_` / `an_`
-auto-flips by the first letter of the resolved term.
+definition); plain forms reference it after introduction. When both
+`schema[key].def` and `values[key]` are set, the `$` introduce form
+composes them with a comma — the standard legal "[name], [qualifier]
+(the *Label*)" pattern in one marker. Lookups are case-insensitive;
+plurals auto-derive (`location` → `Locations`); `a_` / `an_` auto-flips
+by the first letter of the resolved term.
+
+Composition example:
+
+```yaml
+schema:
+  company:
+    def: "a Delaware corporation"
+values:
+  company: "Evolving Programs, Inc."
+```
+
+`{{$the_Company}}` → `Evolving Programs, Inc., a Delaware corporation (the ***"Company"***)`.
 
 ```
 This {{$the_Agreement}}, dated {{$the_Effective_date}}, is between

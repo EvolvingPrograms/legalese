@@ -21,9 +21,11 @@ const PANGRAM_TEMPLATE = [
   'title: TEST',
   'output: _skill_pangram.docx',
   'schema:',
-  '  agreement:    { def: "Agreement" }',
-  '  customer:     { def: "Customer" }',
-  '  contractor:   { def: "Contractor" }',
+  // Auto-derived labels match exactly ("Agreement" / "Customer" /
+  // "Contractor"), so no def: needed — would just duplicate.
+  '  agreement:',
+  '  customer:',
+  '  contractor:',
   '  party:        { term: "Party" }',
   '  location:     { term: "Location" }',
   '  insurance:    { term: "Insurance" }',

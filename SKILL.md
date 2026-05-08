@@ -68,27 +68,47 @@ irregulars use `plural: "People"` in schema.
 
 ### `term` vs `def` vs `values[key]`
 
-Every `{{$the_X}}` introduce form renders **`<expansion> (the *"Term"*)`** —
-two pieces drawn from different schema/values fields:
+A schema entry can carry up to three orthogonal pieces of data, each
+addressed by its own marker form:
 
-- **`term`** = the short label inside the parens (e.g. `"Agreement"`,
-  `"Monthly Fee"`). Defaults to snake_case → Title Case.
+| Source | Marker | Renders | Use for |
+|---|---|---|---|
+| **`term`** | `{{Term}}` / `{{the_Term}}` | `Term` / `the Term` | the short label inside the parens. Defaults to snake → Title. |
+| **`def`** | (composed by `{{$the_X}}`) | the qualifier prose | the *static* descriptor — entity type, royalty split definition, anything that doesn't change per deal. |
+| **`values[key]`** | `{{=Key}}` (raw) | the entity itself | the per-deal data — name, address, dollar amount, duration. |
 
-- **`def`** = the prose expansion baked into the template. Use ONLY for
-  content that's truly stable across every render: the contract type
-  (`agreement.def: "Landscaping Services Agreement"`), generic party
-  labels (`customer.def: "Customer"`), or a fee that's defined by law.
+**The introduce form `{{$the_X}}` composes value and def with a comma when
+both are set** — that's the standard legal "[name], [qualifier] (the
+*Label*)" pattern in one marker:
 
-- **`values[key]`** = the expansion supplied at render time. Use for
-  **everything else** — fees, durations, dates, party names, cure
-  periods, insurance floors, anything that varies per deal. Wins over
-  `def:` when both are set.
+```yaml
+schema:
+  company:
+    def: "a Delaware corporation"
+values:
+  company: "Evolving Programs, Inc."
+```
 
-**Mental test for `def:` vs `values:`:** "If I render this template for a
-different deal next month, would this string change?" If yes → values.
-If no → def. Resist the urge to bake a dollar amount or duration into
-`def:` because it's "what we usually use" — that's a template default
-disguised as a constant, and it silently misrenders the next deal.
+```markdown
+{{$the_Company}} hereby certifies.
+```
+
+renders:
+
+> Evolving Programs, Inc., a Delaware corporation (the *"Company"*) hereby certifies.
+
+If only one is set, the other is omitted from the comma-join — set just
+`def:` for "a 50% share (the *"Publisher's Share"*)", set just `values:`
+for "Acme Inc. (the *"Customer"*)".
+
+**Mental test for what goes where:**
+- "Does this string change between deals?" → `values`.
+- "Is this descriptor part of the template's structure?" → `def`.
+- "Is this just a short label?" → `term` (or rely on the auto-derive).
+
+Bake `def:` only for truly static prose — contract type, jurisdiction
+qualifier when the template targets one state, royalty-share definitions.
+Per-deal numbers (fees, durations, dates) belong in `values:`.
 
 **Graceful degradation when a value is missing:**
 
@@ -159,10 +179,20 @@ insurance_floor:   "$2,000,000 per occurrence"
 ```
 
 `{{$the_Agreement}}` → `Landscaping Services Agreement (the ***"Agreement"***)`
-(no value supplied, so the template's `def:` is used). `{{$the_Customer}}` →
-`McDonald's USA, LLC (the ***"Customer"***)` (value beats the `"Customer"`
-default). `{{$the_Monthly_fee}}` → `$1,850.00 per Location (the ***"Monthly
-Fee"***)` (value supplies the expansion; schema has only `term:`).
+(only `def:` set, no value). `{{$the_Customer}}` → `McDonald's USA, LLC (the
+***"Customer"***)` (only value set, no `def:` — auto-derived label). If you
+want the standard "name, qualifier" pattern on one marker, set both:
+
+```yaml
+schema:
+  company:
+    def: "a Delaware corporation"
+values:
+  company: "Evolving Programs, Inc."
+```
+
+`{{$the_Company}}` → `Evolving Programs, Inc., a Delaware corporation (the
+***"Company"***)`.
 
 After first introduction, use the plain reference form everywhere:
 `{{the_Publishers_share}}` → "the Publisher's Share"; `{{the_Monthly_fee}}` →
