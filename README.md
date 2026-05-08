@@ -150,7 +150,9 @@ The article rides in the marker prefix; the term comes from schema.
 | `{{$the_key}}`    | `<expansion> (the ***"Key"***)`          |
 | `{{!Term}}`       | `***"Term"***` *(literal, inline-styled)*|
 | `{{^WHEREAS}}`    | small-caps run                           |
-| `{{KEY}}`         | uppercased — useful in titles            |
+| `{{=key}}`        | bare value, no parens / styling          |
+| `{{=KEY}}`        | bare value, uppercased                   |
+| `{{KEY}}`         | uppercased label *(use `{{=KEY}}` for uppercased value)* |
 
 The `$` forms **introduce** a term (with its expansion + parenthetical
 definition); plain forms reference it after introduction. Lookups are

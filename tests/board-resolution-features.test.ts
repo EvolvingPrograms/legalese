@@ -73,14 +73,18 @@ test('title with \\n produces line breaks inside one centered Heading 1 paragrap
   expect(h1Match![0]).toContain('Sample Records, Inc.');
 });
 
-test('title marker {{Company}} (mixed case) resolves via values then schema.def, preserves case', async () => {
+// Title markers go through the same `substituteMarkers` pipeline as body
+// prose (no title-only special case). For value substitution use
+// `{{=key}}`; `{{key}}` resolves to the term label like everywhere else.
+
+test('title `{{=company}}` substitutes the value (falls back through def → label)', async () => {
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml, plain } = await import('./_helpers');
   const out = path.resolve(OUT, '_title_markers.docx');
   await convertMarkdown([
     '---',
-    'title: "Resolutions of {{Company}}"',
+    'title: "Resolutions of {{=company}}"',
     'schema:',
     '  company: { def: "Sample Records, Inc." }',
     '---',
@@ -95,14 +99,14 @@ test('title marker {{Company}} (mixed case) resolves via values then schema.def,
   expect(body).toContain('Resolutions of Sample Records, Inc.');
 });
 
-test('title marker {{COMPANY}} (all caps) uppercases the substituted text', async () => {
+test('title `{{=COMPANY}}` uppercases the substituted value', async () => {
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml, plain } = await import('./_helpers');
   const out = path.resolve(OUT, '_title_allcaps.docx');
   await convertMarkdown([
     '---',
-    'title: "RESOLUTIONS OF {{COMPANY}}"',
+    'title: "RESOLUTIONS OF {{=COMPANY}}"',
     'schema:',
     '  company: { def: "Sample Records, Inc." }',
     '---',
@@ -117,14 +121,14 @@ test('title marker {{COMPANY}} (all caps) uppercases the substituted text', asyn
   expect(body).toContain('RESOLUTIONS OF SAMPLE RECORDS, INC.');
 });
 
-test('title marker prefers value over schema.def; all-caps still uppercases', async () => {
+test('title `{{=COMPANY}}` prefers value over schema.def; uppercases value', async () => {
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml, plain } = await import('./_helpers');
   const out = path.resolve(OUT, '_title_value_wins.docx');
   await convertMarkdown([
     '---',
-    'title: "RESOLUTIONS OF {{COMPANY}}"',
+    'title: "RESOLUTIONS OF {{=COMPANY}}"',
     'schema:',
     '  company: { def: "Default Co." }',
     '---',
@@ -136,10 +140,9 @@ test('title marker prefers value over schema.def; all-caps still uppercases', as
     values: { company: "Override Co." },
   });
   const body = plain(readDocumentXml(out));
-  // All-caps marker → uppercased value substitution.
   expect(body).toContain('RESOLUTIONS OF OVERRIDE CO.');
   expect(body).not.toContain('Default Co.');
-  expect(body).not.toContain('Override Co.');  // not present in original case
+  expect(body).not.toContain('Override Co.');  // original case absent
 });
 
 test('body marker {{COMPANY}} (all caps) uppercases the resolved label', async () => {

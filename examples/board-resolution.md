@@ -2,7 +2,7 @@
 title: |-
   WRITTEN CONSENT OF THE BOARD OF DIRECTORS
   OF
-  {{COMPANY}}
+  {{=COMPANY}}
 
 style:
   font: EB Garamond   # bundled Google Font — embedded in the .docx. See fonts/.

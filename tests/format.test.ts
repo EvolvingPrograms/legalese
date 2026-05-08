@@ -110,6 +110,59 @@ describe('substituteMarkers (primitive)', () => {
     expect(out).not.toContain('(');
   });
 
+  // — Bare value substitution: {{=key}} —
+  // Pure value substitute, no parens, no styling. Resolves values → def
+  // → label so it gracefully degrades to the term name in a draft.
+
+  test('{{=key}} substitutes the resolved value verbatim', () => {
+    const out = substituteMarkers('Filed by {{=customer}} today.', {
+      schema: { customer: { term: 'Customer' } },
+      values: { customer: 'Acme Inc.' },
+    });
+    expect(out).toBe('Filed by Acme Inc. today.');
+  });
+
+  test('{{=KEY}} uppercases the substituted value', () => {
+    const out = substituteMarkers('RESOLUTIONS OF {{=COMPANY}}', {
+      schema: { company: { term: 'Company' } },
+      values: { company: 'Sample Records, Inc.' },
+    });
+    expect(out).toBe('RESOLUTIONS OF SAMPLE RECORDS, INC.');
+  });
+
+  test('{{=Key}} capitalizes the first letter of the value', () => {
+    const out = substituteMarkers('{{=customer}} signs first.', {
+      values: { customer: 'acme inc.' },
+    });
+    // Lowercase marker → as-is.
+    expect(out).toBe('acme inc. signs first.');
+    const out2 = substituteMarkers('{{=Customer}} signs first.', {
+      values: { customer: 'acme inc.' },
+    });
+    expect(out2).toBe('Acme inc. signs first.');
+  });
+
+  test('{{=key}} falls back through def then label when no value supplied', () => {
+    const out = substituteMarkers('Filed by {{=customer}} today.', {
+      schema: { customer: { def: 'a Delaware corporation' } },
+    });
+    expect(out).toBe('Filed by a Delaware corporation today.');
+
+    // No value, no def → label (auto-derived).
+    const out2 = substituteMarkers('Filed by {{=customer}} today.', {});
+    expect(out2).toBe('Filed by Customer today.');
+  });
+
+  test('{{=key}} does NOT add parens or styling', () => {
+    const out = substituteMarkers('{{=Company}}', {
+      values: { company: 'Acme Inc.' },
+    });
+    expect(out).not.toContain('(');
+    expect(out).not.toContain('*');
+    expect(out).not.toContain('"');
+    expect(out).not.toContain('“');
+  });
+
   test('all-caps marker uppercases the label (body-position behavior)', () => {
     // In body position, `{{COMPANY}}` uppercases the label — same as the
     // docx pipeline. (Title position uses value/def/term fallback; that's

@@ -153,6 +153,45 @@ test('{{$a_key}} (no expansion) renders inline-styled with auto-picked indefinit
   expect(plain(body)).toContain('A “Composition” is owned by Writer.');
 });
 
+// — Bare value substitution: {{=key}} (docx path) —
+
+test('{{=key}} renders just the value (no parens, no styling) in docx', async () => {
+  const xml = await renderSourceToXml('_xp_eq_value', [
+    '---',
+    'title: TEST',
+    'output: _xp_eq_value.docx',
+    'schema:',
+    '  company:',
+    '    term: Company',
+    'values:',
+    '  company: Sample Records, Inc.',
+    '---',
+    '',
+    'Filed by {{=company}} today.',
+  ].join('\n'));
+  expect(plain(xml)).toContain('Filed by Sample Records, Inc. today.');
+  // No parenthetical define, no italic-quoted term emphasis.
+  expect(plain(xml)).not.toContain('(the');
+  expect(plain(xml)).not.toContain('“Company”');
+});
+
+test('{{=KEY}} uppercases the substituted value in docx', async () => {
+  const xml = await renderSourceToXml('_xp_eq_caps', [
+    '---',
+    'title: TEST',
+    'output: _xp_eq_caps.docx',
+    'schema:',
+    '  company:',
+    '    term: Company',
+    'values:',
+    '  company: Sample Records, Inc.',
+    '---',
+    '',
+    'BOARD RESOLUTIONS OF {{=COMPANY}}',
+  ].join('\n'));
+  expect(plain(xml)).toContain('BOARD RESOLUTIONS OF SAMPLE RECORDS, INC.');
+});
+
 // — Fill-in-blank for required-but-missing introductions —
 
 test('{{$the_key}} renders a fill-in blank when the value is missing AND schema marks the key required', async () => {

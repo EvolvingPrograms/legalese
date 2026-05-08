@@ -15,7 +15,7 @@ import type { BodyEntry } from '@/types';
 import { splitFrontMatter } from './front-matter';
 import { blockToDocBuilder } from './blocks';
 import { substituteMarkers } from './substitute';
-import { mergeValues, schemaDefaults, missingRequired, termLabel, termDef } from './values';
+import { mergeValues, schemaDefaults, missingRequired } from './values';
 import type { FrontMatter, PandocAst, PandocBlock, Schema } from './types';
 
 // System-pandoc default parser. Loaded lazily so the browser entry point
@@ -26,36 +26,9 @@ async function defaultParse(body: string): Promise<PandocAst> {
   return runPandoc(body);
 }
 
-/** Resolve `{{key}}` plain-reference markers in a title string. Strips
- *  $/!/article-prefix decorators (titles take the bare label, not the
- *  introduce/literal/article forms). Multi-line via "\n" passes through.
- *
- *  All-caps marker (`{{COMPANY}}`) uppercases the substituted text — useful
- *  for title-style headings that want the company name in caps regardless
- *  of how it's stored in values/schema. */
-function substituteTitleMarkers(
-  title: string,
-  schema: Schema | undefined,
-  values: Record<string, unknown>,
-): string {
-  return title.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => {
-    let inner = raw.trim();
-    if (inner.startsWith('$') || inner.startsWith('!') || inner.startsWith('^')) {
-      inner = inner.slice(1).trim();
-    }
-    const articleMatch = inner.match(/^(the|a|an)_/i);
-    if (articleMatch) inner = inner.slice(articleMatch[0].length);
-    const lookupKey = inner.toLowerCase();
-    const allCaps = /^[A-Z][A-Z0-9_]*$/.test(inner);
-    // Prefer runtime value (deal-specific), then schema.def (template-baked
-    // expansion), then the bare label.
-    const v = values[lookupKey];
-    let resolved: string;
-    if (typeof v === 'string' && v.trim() !== '') resolved = v;
-    else resolved = termDef(lookupKey, schema) ?? termLabel(lookupKey, schema);
-    return allCaps ? resolved.toUpperCase() : resolved;
-  });
-}
+// Title markers go through the same `substituteMarkers` pipeline as body
+// prose, so `{{=COMPANY}}` substitutes the value uppercased and `{{Term}}`
+// resolves to the term label — same semantics regardless of position.
 
 /** Markdown → Pandoc AST. The default uses the system `pandoc` binary
  *  (Node only). Pass `runPandocWasm` from `@/md/pandoc-wasm` — or import
@@ -146,7 +119,7 @@ async function srcToDocBody(srcText: string, opts: ConvertOptions) {
   const docBody: BodyEntry[] = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
 
   const rawTitle = opts.title ?? meta.title;
-  const title = rawTitle ? substituteTitleMarkers(rawTitle, schema, values) : undefined;
+  const title = rawTitle ? substituteMarkers(rawTitle, { schema, values }) : undefined;
 
   return { title, body: docBody, style: meta.style as Record<string, unknown> | undefined, output: meta.output };
 }

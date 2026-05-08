@@ -83,6 +83,26 @@ function renderMarker(raw: string, ctx: MarkerCtx): string {
     return `<span class="legalese-smallcaps">${text}</span>`;
   }
 
+  // {{=key}} — bare value substitution. Resolves through values → def →
+  // label and emits just the resolved string with case applied per the
+  // case signal in the marker:
+  //   {{=customer}} → "Acme Inc." (verbatim)
+  //   {{=Customer}} → "Acme Inc." (first letter cap)
+  //   {{=CUSTOMER}} → "ACME INC." (uppercase)
+  // No parens, no styling — useful for "BLAH BLAH OF {{=COMPANY}}".
+  if (inner.startsWith('=')) {
+    const tag = inner.slice(1).trim();
+    const tagAllCaps = /^[A-Z][A-Z0-9_]*$/.test(tag);
+    const tagWantsCap = /^[A-Z]/.test(tag);
+    const tagKey = tag.toLowerCase();
+    const value = ctx.values[tagKey];
+    const valueExp = formatExpansion(value);
+    const resolved = valueExp ?? termDef(tagKey, ctx.schema) ?? termLabel(tagKey, ctx.schema);
+    if (tagAllCaps) return resolved.toUpperCase();
+    if (tagWantsCap) return cap(resolved);
+    return resolved;
+  }
+
   // Strip introduce / literal prefix BEFORE article detection.
   let work = inner;
   const isIntroduce = work.startsWith('$');

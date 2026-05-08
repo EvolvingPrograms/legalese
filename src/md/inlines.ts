@@ -153,6 +153,25 @@ function emitMarker(
     return;
   }
 
+  // {{=key}} — bare value substitution. Resolves values → def → label and
+  // emits just the resolved string (no parens, no styling) with case
+  // applied per the marker's case signal. Useful for headings like
+  // "BOARD RESOLUTIONS OF {{=COMPANY}}".
+  if (inner.startsWith('=')) {
+    const tag = inner.slice(1).trim();
+    const tagAllCaps = /^[A-Z][A-Z0-9_]*$/.test(tag);
+    const tagWantsCap = /^[A-Z]/.test(tag);
+    const tagKey = tag.toLowerCase();
+    const value = ctx.values[tagKey];
+    const valueExp = formatExpansion(value);
+    const resolved = valueExp ?? termDef(tagKey, ctx.schema) ?? termLabel(tagKey, ctx.schema);
+    let text = resolved;
+    if (tagAllCaps) text = text.toUpperCase();
+    else if (tagWantsCap) text = text[0]!.toUpperCase() + text.slice(1);
+    out.push(makeRun(text, bold, italic));
+    return;
+  }
+
   // {{$key}} — introduce a defined term (parens with article).
   const isIntroduce = inner.startsWith('$');
   if (isIntroduce) inner = inner.slice(1).trim();
