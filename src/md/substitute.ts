@@ -40,7 +40,7 @@ function pickAOrAn(label: string): string {
 }
 
 function cap(s: string): string {
-  return s ? s[0]!.toUpperCase() + s.slice(1) : s;
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 }
 
 /** `***"Term"***` — bold + italic, curly-quoted. Used inside parens for
@@ -186,11 +186,25 @@ function renderMarker(raw: string, ctx: MarkerCtx): string {
 
 /** Substitute every `{{...}}` marker in `body` with its rendered markdown
  *  text. The output is valid markdown — pipe to pandoc, marked, remark,
- *  etc. for HTML / JSON / further processing. */
+ *  etc. for HTML / JSON / further processing.
+ *
+ *  Trailing-dot swallow: if a substitution ends with `.` (e.g. value =
+ *  "Spellcraft Inc.") and the immediately-following source character is
+ *  also `.` (sentence terminator), the substitution's trailing dot is
+ *  dropped to avoid `Inc..`. Common legal data ends in abbreviation
+ *  periods, and forcing template authors to know which values do is
+ *  worse than collapsing the doubled dot here. */
 export function substituteMarkers(
   body: string,
   opts: { schema?: Schema; values?: Record<string, unknown> } = {},
 ): string {
   const ctx: MarkerCtx = { schema: opts.schema, values: opts.values ?? {} };
-  return body.replace(/\{\{([^}]+)\}\}/g, (_, raw: string) => renderMarker(raw, ctx));
+  return body.replace(/\{\{([^}]+)\}\}/g, (match: string, raw: string, offset: number) => {
+    let rendered = renderMarker(raw, ctx);
+    const nextChar = body[offset + match.length];
+    if (nextChar === '.' && rendered.endsWith('.')) {
+      rendered = rendered.slice(0, -1);
+    }
+    return rendered;
+  });
 }

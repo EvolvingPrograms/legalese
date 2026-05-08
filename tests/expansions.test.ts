@@ -175,6 +175,25 @@ test('{{=key}} renders just the value (no parens, no styling) in docx', async ()
   expect(plain(xml)).not.toContain('“Company”');
 });
 
+test('{{=key}} swallows doubled trailing dot in docx (Inc..)', async () => {
+  const xml = await renderSourceToXml('_xp_eq_dot', [
+    '---',
+    'title: TEST',
+    'output: _xp_eq_dot.docx',
+    'schema:',
+    '  company:',
+    '    term: Company',
+    'values:',
+    '  company: Spellcraft Inc.',
+    '---',
+    '',
+    'Filed by {{=company}}.',
+  ].join('\n'));
+  const body = plain(xml);
+  expect(body).toContain('Filed by Spellcraft Inc.');
+  expect(body).not.toContain('Inc..');
+});
+
 test('{{=KEY}} uppercases the substituted value in docx', async () => {
   const xml = await renderSourceToXml('_xp_eq_caps', [
     '---',

@@ -141,6 +141,11 @@ function emitMarker(
   italic: boolean,
   out: Run[],
   ctx: MarkerCtx,
+  /** The source character immediately after this marker's `}}`, if any.
+   *  Used by the `{{=key}}` branch to swallow a trailing abbreviation
+   *  period when the source already supplies a sentence terminator
+   *  (avoids `Spellcraft Inc..`). */
+  nextChar?: string,
 ): void {
   let inner = rawInner.trim();
 
@@ -166,8 +171,12 @@ function emitMarker(
     const valueExp = formatExpansion(value);
     const resolved = valueExp ?? termDef(tagKey, ctx.schema) ?? termLabel(tagKey, ctx.schema);
     let text = resolved;
+    // Swallow trailing abbreviation dot when the source supplies one too,
+    // so `{{=Company}}.` with value "Spellcraft Inc." renders as
+    // "Spellcraft Inc." not "Spellcraft Inc.."
+    if (nextChar === '.' && text.endsWith('.')) text = text.slice(0, -1);
     if (tagAllCaps) text = text.toUpperCase();
-    else if (tagWantsCap) text = text[0]!.toUpperCase() + text.slice(1);
+    else if (tagWantsCap) text = text.charAt(0).toUpperCase() + text.slice(1);
     out.push(makeRun(text, bold, italic));
     return;
   }
@@ -296,8 +305,9 @@ function emitText(
     if (m.index > last) {
       out.push(makeRun(text.slice(last, m.index), bold, italic));
     }
-    emitMarker(m[1]!, bold, italic, out, ctx);
     last = m.index + m[0].length;
+    const inner = m[1] ?? '';
+    emitMarker(inner, bold, italic, out, ctx, text[last]);
   }
 
   if (last < text.length) {

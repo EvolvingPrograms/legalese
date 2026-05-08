@@ -168,6 +168,26 @@ describe('substituteMarkers (primitive)', () => {
     expect(out2).toBe('Filed by Customer today.');
   });
 
+  test('{{=key}} swallows trailing dot when source already supplies one (Inc..)', () => {
+    // Common case: value ends with abbreviation period, source has
+    // sentence-end period. Without the swallow you'd see "Inc.." which
+    // reads as a typo.
+    const out = substituteMarkers('Filed by {{=company}}. Today.', {
+      values: { company: 'Spellcraft Inc.' },
+    });
+    expect(out).toBe('Filed by Spellcraft Inc. Today.');
+    expect(out).not.toContain('Inc..');
+  });
+
+  test('{{=key}} preserves trailing dot when source does NOT have one', () => {
+    // Sanity: the swallow only fires when both substitution and source
+    // would produce a doubled period.
+    const out = substituteMarkers('Filed by {{=company}} today.', {
+      values: { company: 'Spellcraft Inc.' },
+    });
+    expect(out).toBe('Filed by Spellcraft Inc. today.');
+  });
+
   test('{{=key}} does NOT add parens or styling', () => {
     const out = substituteMarkers('{{=Company}}', {
       values: { company: 'Acme Inc.' },
