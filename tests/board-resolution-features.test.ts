@@ -77,7 +77,7 @@ test('title with \\n produces line breaks inside one centered Heading 1 paragrap
 // prose (no title-only special case). For value substitution use
 // `{{=key}}`; `{{key}}` resolves to the term label like everywhere else.
 
-test('title `{{=company}}` substitutes the value (falls back through def → label)', async () => {
+test('title `{{=company}}` substitutes the value when supplied', async () => {
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml, plain } = await import('./_helpers');
@@ -85,15 +85,13 @@ test('title `{{=company}}` substitutes the value (falls back through def → lab
   await convertMarkdown([
     '---',
     'title: "Resolutions of {{=company}}"',
-    'schema:',
-    '  company: { def: "Sample Records, Inc." }',
     '---',
     '',
     'Body.',
   ].join('\n'), {
     output: out,
     baseDir: ROOT,
-    values: {},  // no value → falls back to schema.def
+    values: { company: 'Sample Records, Inc.' },
   });
   const body = plain(readDocumentXml(out));
   expect(body).toContain('Resolutions of Sample Records, Inc.');
@@ -107,15 +105,13 @@ test('title `{{=COMPANY}}` uppercases the substituted value', async () => {
   await convertMarkdown([
     '---',
     'title: "RESOLUTIONS OF {{=COMPANY}}"',
-    'schema:',
-    '  company: { def: "Sample Records, Inc." }',
     '---',
     '',
     'Body.',
   ].join('\n'), {
     output: out,
     baseDir: ROOT,
-    values: {},
+    values: { company: 'Sample Records, Inc.' },
   });
   const body = plain(readDocumentXml(out));
   expect(body).toContain('RESOLUTIONS OF SAMPLE RECORDS, INC.');

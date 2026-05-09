@@ -6,7 +6,7 @@ import { p, list, listItem, numberedListItem, nextListInstance, spacer } from '@
 import { PARA_SPACING } from '@/lib/defaults';
 
 import { inlinesToRuns } from './inlines';
-import { parseFieldsBlock, parseSigBlock, parseGridBlock } from './fenced';
+import { parseFieldsBlock, parseSigBlock, parseGridBlock, parsePanelBlock } from './fenced';
 import type { PandocBlock, PandocInline, ConvertCtx } from './types';
 
 type DocNode = Paragraph | Table;
@@ -182,6 +182,7 @@ export function blockToDocBuilder(
       }
       if (lang === 'sig')    return parseSigBlock(content, values, ctx.schema);
       if (lang === 'grid')   return parseGridBlock(content, ctx, values, ctx.schema);
+      if (lang === 'panel')  return parsePanelBlock(content, values, ctx.schema);
       console.warn('Unknown fenced block:', lang);
       return [];
     }

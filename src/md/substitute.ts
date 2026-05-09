@@ -83,13 +83,15 @@ function renderMarker(raw: string, ctx: MarkerCtx): string {
     return `<span class="legalese-smallcaps">${text}</span>`;
   }
 
-  // {{=key}} — bare value substitution. Resolves through values → def →
-  // label and emits just the resolved string with case applied per the
-  // case signal in the marker:
-  //   {{=customer}} → "Acme Inc." (verbatim)
-  //   {{=Customer}} → "Acme Inc." (first letter cap)
-  //   {{=CUSTOMER}} → "ACME INC." (uppercase)
-  // No parens, no styling — useful for "BLAH BLAH OF {{=COMPANY}}".
+  // {{=key}} — bare value substitution. If a value is supplied it's
+  // emitted verbatim (with case applied per the marker's case signal);
+  // otherwise the marker renders as a fill-in BLANK so the unfilled spot
+  // is visible in the draft. No def/label fallback — `{{=key}}` is
+  // explicitly "the value, or empty space".
+  //   {{=customer}} → "Acme Inc."     (with value)
+  //   {{=Customer}} → "Acme Inc."     (first letter cap)
+  //   {{=CUSTOMER}} → "ACME INC."     (uppercased)
+  //   {{=customer}} → "__________"    (no value)
   if (inner.startsWith('=')) {
     const tag = inner.slice(1).trim();
     const tagAllCaps = /^[A-Z][A-Z0-9_]*$/.test(tag);
@@ -97,10 +99,10 @@ function renderMarker(raw: string, ctx: MarkerCtx): string {
     const tagKey = tag.toLowerCase();
     const value = ctx.values[tagKey];
     const valueExp = formatExpansion(value);
-    const resolved = valueExp ?? termDef(tagKey, ctx.schema) ?? termLabel(tagKey, ctx.schema);
-    if (tagAllCaps) return resolved.toUpperCase();
-    if (tagWantsCap) return cap(resolved);
-    return resolved;
+    if (valueExp === null || valueExp === '') return BLANK;
+    if (tagAllCaps) return valueExp.toUpperCase();
+    if (tagWantsCap) return cap(valueExp);
+    return valueExp;
   }
 
   // Strip introduce / literal prefix BEFORE article detection.

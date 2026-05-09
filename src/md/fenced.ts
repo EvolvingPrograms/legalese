@@ -8,7 +8,7 @@ import { Paragraph } from 'docx';
 import type { Table } from 'docx';
 
 import type { FieldRow, GridColumn, GridRow, SigRow } from '@/blocks';
-import { fieldTable, signatureTable, gridTable, spacer } from '@/blocks';
+import { fieldTable, signatureTable, gridTable, panelTable, spacer } from '@/blocks';
 import { b } from '@/lib/runs';
 
 import { fieldLabel } from './values';
@@ -238,4 +238,25 @@ export function parseGridBlock(
     rows = Array.from({ length: cfg.empty_rows }, () => ({}));
   }
   return [gridTable({ columns, rows: rows.map(expandRow) })];
+}
+
+// Borderless 2-column "panel" — execution blocks, notarization panels,
+// address blocks. YAML body with `left:` and/or `right:` arrays of
+// strings (one per row). Rows align across columns; the shorter side is
+// padded with empty cells. Markers in entries are resolved.
+export function parsePanelBlock(
+  content: string,
+  values: Record<string, unknown>,
+  schema?: Schema,
+): (Paragraph | Table)[] {
+  const cfg = (yaml.load(content) || {}) as { left?: unknown; right?: unknown };
+  const expand = (s: string) => expandText(s, schema, values);
+  const toStringList = (raw: unknown): string[] | undefined => {
+    if (!Array.isArray(raw)) return undefined;
+    return raw.map((entry) => typeof entry === 'string' ? expand(entry) : String(entry ?? ''));
+  };
+  return [panelTable({
+    left:  toStringList(cfg.left),
+    right: toStringList(cfg.right),
+  })];
 }

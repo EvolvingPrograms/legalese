@@ -157,15 +157,18 @@ describe('substituteMarkers (primitive)', () => {
     expect(out2).toBe('Acme inc. signs first.');
   });
 
-  test('{{=key}} falls back through def then label when no value supplied', () => {
+  test('{{=key}} renders the BLANK placeholder when no value is supplied', async () => {
+    // `{{=key}}` is explicitly "value or empty space" — no def/label
+    // fallback. Without a value the marker emits the fill-in blank so
+    // the unfilled spot is visible in the draft.
+    const { BLANK } = await import('@/md/inlines');
     const out = substituteMarkers('Filed by {{=customer}} today.', {
       schema: { customer: { def: 'a Delaware corporation' } },
     });
-    expect(out).toBe('Filed by a Delaware corporation today.');
+    expect(out).toBe(`Filed by ${BLANK} today.`);
 
-    // No value, no def → label (auto-derived).
     const out2 = substituteMarkers('Filed by {{=customer}} today.', {});
-    expect(out2).toBe('Filed by Customer today.');
+    expect(out2).toBe(`Filed by ${BLANK} today.`);
   });
 
   test('{{=key}} swallows trailing dot when source already supplies one (Inc..)', () => {
@@ -186,6 +189,14 @@ describe('substituteMarkers (primitive)', () => {
       values: { company: 'Spellcraft Inc.' },
     });
     expect(out).toBe('Filed by Spellcraft Inc. today.');
+  });
+
+  test('{{=key}} BLANK does not get uppercased by the case signal', async () => {
+    // The case signal applies only when there's a value to apply it to;
+    // an empty fill-in blank stays as plain underscores.
+    const { BLANK } = await import('@/md/inlines');
+    const out = substituteMarkers('{{=COMPANY}}', { values: {} });
+    expect(out).toBe(BLANK);
   });
 
   test('{{=key}} does NOT add parens or styling', () => {

@@ -150,7 +150,7 @@ The article rides in the marker prefix; the term comes from schema.
 | `{{$the_key}}`    | `<expansion> (the ***"Key"***)`          |
 | `{{!Term}}`       | `***"Term"***` *(literal, inline-styled)*|
 | `{{^WHEREAS}}`    | small-caps run                           |
-| `{{=key}}`        | bare value, no parens / styling          |
+| `{{=key}}`        | bare value (or `__________` if missing)  |
 | `{{=KEY}}`        | bare value, uppercased                   |
 | `{{KEY}}`         | uppercased label *(use `{{=KEY}}` for uppercased value)* |
 

@@ -169,8 +169,14 @@ function emitMarker(
     const tagKey = tag.toLowerCase();
     const value = ctx.values[tagKey];
     const valueExp = formatExpansion(value);
-    const resolved = valueExp ?? termDef(tagKey, ctx.schema) ?? termLabel(tagKey, ctx.schema);
-    let text = resolved;
+    // No value → fill-in BLANK so the unfilled spot is visible in a
+    // draft. No def/label fallback for `{{=key}}` — the form is
+    // explicitly "the value, or empty space".
+    if (valueExp === null || valueExp === '') {
+      out.push(makeRun(BLANK, bold, italic));
+      return;
+    }
+    let text = valueExp;
     // Swallow trailing abbreviation dot when the source supplies one too,
     // so `{{=Company}}.` with value "Spellcraft Inc." renders as
     // "Spellcraft Inc." not "Spellcraft Inc.."

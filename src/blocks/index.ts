@@ -6,3 +6,4 @@ export * from './paragraphs';
 export * from './field-table';
 export * from './grid-table';
 export * from './signature-table';
+export * from './panel';
