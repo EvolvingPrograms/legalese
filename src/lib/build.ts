@@ -228,7 +228,7 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
         }),
       },
       children: [
-        ...(title ? [h1(title)] : []),
+        ...(title ? [h1(title, { font: FONT_FAMILY })] : []),
         // Cast through unknown[] before re-casting: TS2589 bails on deeply
         // recursive BodyEntry[] when flat(Infinity) is typed directly.
         ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),

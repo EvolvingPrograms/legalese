@@ -153,6 +153,29 @@ test('{{$a_key}} (no expansion) renders inline-styled with auto-picked indefinit
   expect(plain(body)).toContain('A “Composition” is owned by Writer.');
 });
 
+// — Title font is set explicitly on the run, defeating theme inheritance —
+
+test('title TextRuns carry an explicit font (defeats theme major-font inheritance)', async () => {
+  // Word's built-in Heading 1 references the theme major font; renderers
+  // like DocuSign use that over our paragraph-style override. Setting
+  // `font` on the TextRun itself emits explicit `w:ascii` per run.
+  const xml = await renderSourceToXml('_xp_title_font', [
+    '---',
+    'title: SAMPLE TITLE',
+    'output: _xp_title_font.docx',
+    'style:',
+    '  font: EB Garamond',
+    '---',
+    '',
+    'Body.',
+  ].join('\n'));
+  // Find the H1 paragraph and confirm its run carries an explicit font.
+  const h1Match = xml.match(/<w:p>[^]*?Heading1[^]*?<\/w:p>/);
+  expect(h1Match).not.toBeNull();
+  const h1Xml = (h1Match?.[0]) ?? '';
+  expect(h1Xml).toMatch(/<w:rFonts[^>]*w:ascii="EB Garamond"/);
+});
+
 // — Underline via pandoc bracketed_spans —
 
 test('[text]{.underline} renders an underlined run in docx', async () => {
