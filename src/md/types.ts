@@ -39,6 +39,12 @@ export interface ConvertCtx {
   /** Body paragraph spacing — overrides PARA_SPACING for plain prose
    *  paragraphs. Doesn't affect table cells or list items. */
   paraSpacing?: { before?: number; after?: number; line?: number };
+  /** Document font, sourced from `style.font:` in front-matter. Headings
+   *  apply this directly to each TextRun so the `w:rFonts` lands on the
+   *  run, not just the style — Word's theme-major-font reference
+   *  otherwise wins for built-in heading styles in some renderers
+   *  (notably DocuSign). */
+  font?: string;
 }
 
 /** Schema entry for a single value — either a bare type alias or a full descriptor. */

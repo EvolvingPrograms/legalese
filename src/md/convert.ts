@@ -115,6 +115,7 @@ async function srcToDocBody(srcText: string, opts: ConvertOptions) {
     paraSpacing: style.spacing as
       | { before?: number; after?: number; line?: number }
       | undefined,
+    font: style.font as string | undefined,
   };
   const docBody: BodyEntry[] = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
 

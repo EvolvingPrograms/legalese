@@ -22,7 +22,10 @@ export function blockToDocBuilder(
       const [, classes] = attrs;
       const pageBreak = classes.includes('pageBreak') || classes.includes('pagebreak');
       const center = classes.includes('center');
-      const runs = inlinesToRuns(inlines, { values, schema: ctx.schema });
+      // Pass `font` so each emitted run carries an explicit `w:rFonts` —
+      // without it, Word's built-in heading styles fall back to the
+      // theme major font in renderers that honor theme references.
+      const runs = inlinesToRuns(inlines, { values, schema: ctx.schema, font: ctx.font });
       const headingLevel = level === 1 ? HeadingLevel.HEADING_1 : HeadingLevel.HEADING_2;
       return [new Paragraph({
         heading: headingLevel,
