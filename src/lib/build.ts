@@ -157,34 +157,27 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
           run: { font: FONT_FAMILY, size: SIZE },
           paragraph: { spacing: { before: 0, after: 0, line: 240 } },
         },
-      },
-      paragraphStyles: [
-        {
-          id: 'Heading1', name: 'Heading 1',
-          basedOn: 'Normal', next: 'Normal', quickFormat: true,
+        // Override Word's built-in Heading 1 / Heading 2 styles. docx-js
+        // ignores `paragraphStyles[]` entries with these reserved IDs;
+        // the `default.heading1` / `default.heading2` slots are how you
+        // actually replace the built-ins. Without this, Word applies its
+        // own Quick Style spacing (notably a 1.5×-ish line height) which
+        // leaves visible padding inside the heading paragraph below the
+        // text, regardless of what we set elsewhere.
+        heading1: {
           run: { size: H1_SZ, bold: true, font: FONT_FAMILY },
           paragraph: {
-            spacing: { before: 240, after: 360 },
-            outlineLevel: 0,
+            spacing: { before: 240, after: 360, line: 240 },
             alignment: AlignmentType.CENTER,
           },
         },
-        {
-          id: 'Heading2', name: 'Heading 2',
-          basedOn: 'Normal', next: 'Normal', quickFormat: true,
+        heading2: {
           run: { size: H2_SZ, bold: true, font: FONT_FAMILY },
           paragraph: {
-            // Lock line height to single — without an explicit `line:`,
-            // Word inherits the body's 1.5× line into the heading and
-            // leaves visible padding inside the heading paragraph below
-            // the text, making the heading appear to sit closer to the
-            // PRECEDING section than to the following one.
             spacing: { before: 280, after: 120, line: 240 },
-            outlineLevel: 1,
-            keepNext: true,
           },
         },
-      ],
+      },
     },
     numbering: {
       config: [
