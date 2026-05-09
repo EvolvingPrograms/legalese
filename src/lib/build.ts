@@ -174,7 +174,12 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
           basedOn: 'Normal', next: 'Normal', quickFormat: true,
           run: { size: H2_SZ, bold: true, font: FONT_FAMILY },
           paragraph: {
-            spacing: { before: 280, after: 120 },
+            // Lock line height to single — without an explicit `line:`,
+            // Word inherits the body's 1.5× line into the heading and
+            // leaves visible padding inside the heading paragraph below
+            // the text, making the heading appear to sit closer to the
+            // PRECEDING section than to the following one.
+            spacing: { before: 280, after: 120, line: 240 },
             outlineLevel: 1,
             keepNext: true,
           },
