@@ -153,6 +153,24 @@ test('{{$a_key}} (no expansion) renders inline-styled with auto-picked indefinit
   expect(plain(body)).toContain('A “Composition” is owned by Writer.');
 });
 
+// — Underline via pandoc bracketed_spans —
+
+test('[text]{.underline} renders an underlined run in docx', async () => {
+  const xml = await renderSourceToXml('_xp_underline', [
+    '---', 'title: TEST', 'output: _xp_underline.docx', '---',
+    '',
+    'See [EXHIBIT A]{.underline} for details.',
+  ].join('\n'));
+  // Find the run containing EXHIBIT A and check for underline element.
+  const idx = xml.indexOf('EXHIBIT A');
+  expect(idx).toBeGreaterThan(-1);
+  const runStart = xml.lastIndexOf('<w:r>', idx);
+  const runEnd = xml.indexOf('</w:r>', idx);
+  const run = xml.slice(runStart, runEnd + 6);
+  expect(run).toMatch(/<w:u\b/);  // <w:u w:val="single"/> is the underline element
+  expect(plain(xml)).toContain('See EXHIBIT A for details.');
+});
+
 // — Bare value substitution: {{=key}} (docx path) —
 
 test('{{=key}} renders just the value (no parens, no styling) in docx', async () => {

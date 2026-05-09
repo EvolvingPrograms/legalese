@@ -44,13 +44,20 @@ interface MarkerCtx {
   schema: Schema | undefined;
 }
 
-// Only set bold/italic when true so heading-style bold isn't overridden.
-function makeRun(text: string, bold: boolean, italic: boolean, smallCaps = false): Run {
+// Only set bold/italic/etc. when true so heading-style bold isn't overridden.
+function makeRun(
+  text: string,
+  bold: boolean,
+  italic: boolean,
+  smallCaps = false,
+  underline = false,
+): Run {
   return new TextRun({
     text,
     ...(bold      ? { bold: true }      : {}),
     ...(italic    ? { italics: true }   : {}),
     ...(smallCaps ? { smallCaps: true } : {}),
+    ...(underline ? { underline: {} }   : {}),
   });
 }
 
@@ -295,13 +302,15 @@ function emitMarker(
 }
 
 // Scan plain text for `{{...}}` markers, emitting runs for both the surrounding
-// text and each marker.
+// text and each marker. `underline` applies only to the surrounding text;
+// markers render in their own styling.
 function emitText(
   text: string,
   bold: boolean,
   italic: boolean,
   out: Run[],
   ctx: MarkerCtx,
+  underline = false,
 ): void {
   const re = /\{\{([^}]+)\}\}/g;
   let last = 0;
@@ -309,7 +318,7 @@ function emitText(
 
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) {
-      out.push(makeRun(text.slice(last, m.index), bold, italic));
+      out.push(makeRun(text.slice(last, m.index), bold, italic, false, underline));
     }
     last = m.index + m[0].length;
     const inner = m[1] ?? '';
@@ -317,7 +326,7 @@ function emitText(
   }
 
   if (last < text.length) {
-    out.push(makeRun(text.slice(last), bold, italic));
+    out.push(makeRun(text.slice(last), bold, italic, false, underline));
   }
 }
 
@@ -344,11 +353,11 @@ function gatherText(inlines: PandocInline[], start: number): { text: string; end
 export function inlinesToRuns(
   inlines: PandocInline[],
   opts: {
-    bold?: boolean; italic?: boolean;
+    bold?: boolean; italic?: boolean; underline?: boolean;
     values?: Record<string, unknown>; schema?: Schema;
   } = {},
 ): Run[] {
-  const { bold = false, italic = false, values = {}, schema } = opts;
+  const { bold = false, italic = false, underline = false, values = {}, schema } = opts;
   const ctx: MarkerCtx = { values, schema };
   const out: Run[] = [];
 
@@ -361,43 +370,58 @@ export function inlinesToRuns(
       case 'SoftBreak':
       case 'LineBreak': {
         const { text, end } = gatherText(inlines, i);
-        emitText(text, bold, italic, out, ctx);
+        emitText(text, bold, italic, out, ctx, underline);
         i = end - 1;
         break;
       }
 
       case 'Strong':
-        out.push(...inlinesToRuns(node.c as PandocInline[], { bold: true, italic, values, schema }));
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold: true, italic, underline, values, schema }));
         break;
 
       case 'Emph':
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic: true, underline, values, schema }));
+        break;
+
       case 'Underline':
-        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic: true, values, schema }));
+        // Pandoc emits this for `[text]{.underline}` (with +bracketed_spans,
+        // which we enable). Standard idiom for underlined exhibit/schedule
+        // headings: `[EXHIBIT A]{.underline}`.
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic, underline: true, values, schema }));
         break;
 
       case 'Strikeout':
-        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic, values, schema }));
+        out.push(...inlinesToRuns(node.c as PandocInline[], { bold, italic, underline, values, schema }));
         break;
 
       case 'Quoted': {
         const [quoteType, contents] = node.c as [{ t: string }, PandocInline[]];
         const open  = quoteType.t === 'DoubleQuote' ? '“' : '‘';
         const close = quoteType.t === 'DoubleQuote' ? '”' : '’';
-        out.push(makeRun(open, bold, italic));
-        out.push(...inlinesToRuns(contents, { bold, italic, values, schema }));
-        out.push(makeRun(close, bold, italic));
+        out.push(makeRun(open, bold, italic, false, underline));
+        out.push(...inlinesToRuns(contents, { bold, italic, underline, values, schema }));
+        out.push(makeRun(close, bold, italic, false, underline));
         break;
       }
 
       case 'Code': {
         const [, text] = node.c as [unknown, string];
-        out.push(makeRun(text, bold, italic));
+        out.push(makeRun(text, bold, italic, false, underline));
         break;
       }
 
       case 'Span': {
-        const contents = (node.c as [unknown, PandocInline[]])[1];
-        out.push(...inlinesToRuns(contents, { bold, italic, values, schema }));
+        // [text]{.smallcaps} or [text]{.underline} — pandoc emits these as
+        // Span with the class in the attribute list. We pick up Underline
+        // separately above; for Span, honor the smallcaps class and
+        // otherwise pass styling through unchanged.
+        const [attrs, contents] = node.c as [[string, string[], unknown[]], PandocInline[]];
+        const classes = attrs[1] ?? [];
+        if (classes.includes('underline')) {
+          out.push(...inlinesToRuns(contents, { bold, italic, underline: true, values, schema }));
+        } else {
+          out.push(...inlinesToRuns(contents, { bold, italic, underline, values, schema }));
+        }
         break;
       }
 

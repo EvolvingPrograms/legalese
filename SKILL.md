@@ -56,6 +56,7 @@ The article rides in the marker prefix; the term comes from schema.
 | `{{Term}}` | `(the ***Term***)` | literal define, parens (label not in schema) |
 | `{{!Term}}` | `***Term***` | literal define, inline-styled (sentence-start) |
 | `{{^TEXT}}` | small-caps run | "WHEREAS", "RESOLVED", "WITNESSETH" — formal recital/resolution keywords. Wrap in `**…**` for bold + small caps. |
+| `[text]{.underline}` | underlined run | Markdown has no native underline; pandoc's bracketed-span extension provides it. Use for exhibit / schedule headings: `[EXHIBIT A]{.underline}`. Combinable with `**bold**` and `*italic*`. |
 | `{{=key}}` | `<value>` | bare value substitution — no parens, no styling. Use for "BOARD RESOLUTIONS OF {{=COMPANY}}" → "BOARD RESOLUTIONS OF SAMPLE RECORDS, INC." `{{=Key}}` capitalizes first letter; `{{=KEY}}` uppercases. **No value supplied → renders the fill-in BLANK** (`__________`); no def/label fallback. Same in title and body. |
 | `{{KEY}}` | uppercased label | Uppercases the *label* only ("Company" → "COMPANY"). For uppercased *value*, use `{{=KEY}}`. |
 
