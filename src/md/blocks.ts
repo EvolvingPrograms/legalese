@@ -78,6 +78,30 @@ export function blockToDocBuilder(
       const indent = classes.includes('indent');
       const pageBreak = classes.includes('pageBreak') || classes.includes('pagebreak');
       const gap = classes.includes('gap');
+      const title = classes.includes('title');
+
+      // ::: {.title} — promote contained paragraph(s) to Heading 1.
+      // Pandoc's ATX heading consumes only one line, so a multi-line
+      // exhibit/title block isn't authorable as `# foo\nbar`. Wrapping
+      // in a `.title` Div lets the author write a single paragraph with
+      // hard breaks (`\` at line end) and have it render as one
+      // Heading 1 paragraph at H1 size. Combine with `.pageBreak` to
+      // start a new page (Heading 1 is centered by default).
+      if (title) {
+        const out: DocNode[] = [];
+        let pageBreakApplied = !pageBreak;
+        for (const child of children) {
+          if (child.t === 'Para' || child.t === 'Plain') {
+            out.push(new Paragraph({
+              heading: HeadingLevel.HEADING_1,
+              ...(pageBreakApplied ? {} : { pageBreakBefore: true }),
+              children: inlinesToRuns(child.c as PandocInline[], { values, schema: ctx.schema, font: ctx.font }),
+            }));
+            pageBreakApplied = true;
+          }
+        }
+        return out;
+      }
 
       // Empty {.gap} — emit a tall blank paragraph (~one line height).
       // Configurable via `style.gap` in front-matter (default 240 twips).

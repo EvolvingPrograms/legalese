@@ -19,14 +19,18 @@ export const p = (...children: ParaChild[]) => new Paragraph({
 /** Centered title. Multi-line via "\n" — each line emits as a soft break
  *  inside one Heading 1 paragraph so vertical spacing stays tight (rather
  *  than emitting one heading per line, which would over-pad). */
-export const h1 = (text: string, opts: { pageBreak?: boolean; font?: string } = {}) => {
+export const h1 = (text: string, opts: { pageBreak?: boolean; font?: string; size?: number } = {}) => {
   const lines = text.split('\n');
-  // Explicit run-level font defeats theme inheritance — Word's built-in
-  // Heading 1 style references the theme's major font ("majorHAnsi"),
-  // which some renderers (notably DocuSign) honor over our paragraph-
-  // style font override. Setting `font` on each TextRun emits an
-  // explicit `w:ascii` that any conformant renderer must respect.
-  const runOpts: { break?: number; font?: string } = opts.font ? { font: opts.font } : {};
+  // Explicit run-level font/size defeats theme inheritance — Word's
+  // built-in Heading 1 references theme major font + theme size, and
+  // some renderers (notably DocuSign and certain Word configs) honor
+  // those over our paragraph-style overrides. Setting `font`/`size`
+  // on each TextRun emits explicit `w:ascii`/`w:sz` that any conformant
+  // renderer must respect.
+  const runOpts: { font?: string; size?: number } = {
+    ...(opts.font ? { font: opts.font } : {}),
+    ...(opts.size ? { size: opts.size } : {}),
+  };
   const children: TextRun[] = [];
   lines.forEach((line, i) => {
     if (i > 0) children.push(new TextRun({ break: 1, ...runOpts }));

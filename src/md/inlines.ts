@@ -335,17 +335,19 @@ function emitText(
   }
 }
 
-// Flatten consecutive Str/Space/SoftBreak/LineBreak nodes into a single text
-// string so `{{Multi Word Term}}` markers that pandoc split across tokens can
-// be matched by emitText's regex.
+// Flatten consecutive Str/Space/SoftBreak nodes into a single text string so
+// `{{Multi Word Term}}` markers that pandoc split across tokens can be
+// matched by emitText's regex. LineBreak is NOT absorbed — it represents
+// a hard break (markdown `\` or two trailing spaces) and should emit a
+// real `<w:br/>` in the output, not a space.
 function gatherText(inlines: PandocInline[], start: number): { text: string; end: number } {
   let text = '';
   let i = start;
 
   while (i < inlines.length) {
     const n = inlines[i]!;
-    if      (n.t === 'Str')                                                   text += n.c as string;
-    else if (n.t === 'Space' || n.t === 'SoftBreak' || n.t === 'LineBreak')   text += ' ';
+    if      (n.t === 'Str')                              text += n.c as string;
+    else if (n.t === 'Space' || n.t === 'SoftBreak')     text += ' ';
     else break;
     i++;
   }
@@ -377,13 +379,23 @@ export function inlinesToRuns(
     switch (node.t) {
       case 'Str':
       case 'Space':
-      case 'SoftBreak':
-      case 'LineBreak': {
+      case 'SoftBreak': {
         const { text, end } = gatherText(inlines, i);
         emitText(text, bold, italic, out, ctx, underline, font);
         i = end - 1;
         break;
       }
+
+      case 'LineBreak':
+        // Markdown hard break (`\` at line end or two trailing spaces) →
+        // emit `<w:br/>` so the next text starts on a fresh line within
+        // the same paragraph. Without this, pandoc's LineBreak nodes
+        // collapse into spaces and a multi-line title block runs together.
+        out.push(new TextRun({
+          break: 1,
+          ...(font ? { font } : {}),
+        }));
+        break;
 
       case 'Strong':
         out.push(...inlinesToRuns(node.c as PandocInline[], { bold: true, italic, underline, font, values, schema }));
