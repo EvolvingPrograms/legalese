@@ -1,212 +1,185 @@
-// Resolve `{{...}}` markers into markdown text.
+// Resolve `{{...}}` markers into markdown text, using the markdsl
+// framework's prefix-dispatch registry. The five legalese marker
+// forms each become a small handler that composes markdsl primitives
+// (parse / lookup / format / pickArticle / emitDefine / emitInline):
 //
-// The docx pipeline walks the Pandoc AST and emits TextRuns for each marker
-// (see inlines.ts). For HTML / JSON / markdown output we'd rather not
-// reimplement the whole AST-walking renderer — we substitute markers in the
-// SOURCE markdown with their rendered form (using markdown's own emphasis
-// syntax: `*italic*`, `**bold**`, `***bold italic***`, `"quoted"`), then let
-// pandoc parse the substituted source into a normal AST.
+//   ^  small-caps           — literal pass-through with HTML span
+//   =  bare value           — value or BLANK; case-signal applied
+//   $  introduce            — value+def composed; parenthetical define
+//   !  literal inline       — `***"Term"***`
+//   '' (no prefix)          — plain reference / literal define
 //
-// The output is plain markdown that:
-//   - reads correctly in any markdown renderer,
-//   - parses to a Pandoc AST with proper Emph / Strong / Quoted nodes when
-//     piped to pandoc with the same `+smart` flag the docx pipeline uses,
-//   - has no leftover `{{...}}` patterns.
-//
-// Behaviour mirrors processInline (inlines.ts) so the rendered text matches
-// what the docx pipeline produces; differences are limited to small-caps
-// (no native markdown for it — emit `<span class="legalese-smallcaps">`
-// which any HTML pipeline can style).
+// Per-marker legalese policy (BLANK fallback for required-missing,
+// value+def comma-compose, trailing-dot swallow, the wantsCap rule
+// that distinguishes `the_X` from `The_X`) lives in the handlers.
+// Mechanics live in markdsl.
 
-import { BLANK } from './inlines';
-import { formatExpansion } from './inlines';
 import {
+  defineMarker,
+  substituteMarkers as markdslSubstitute,
+  parseMarker,
+  pickArticle,
+  applyTextCase,
+  emitDefine,
+  emitInline,
+  formatValue,
+  lookupValue,
   termLabel,
   termDef,
-} from './values';
+  type MarkerHandler,
+  type MarkerRegistry,
+} from 'markdsl';
+
+import { BLANK } from './inlines';
 import type { Schema, SchemaEntry } from './types';
 
-// Unicode curly quotes — `+smart` would convert `"..."` itself, but keeping
-// them literal in the substitution lets the result render correctly in
-// markdown viewers that don't run smart punctuation.
+// ---- Helpers shared by handlers ----
+
+const KEY_RE = /^[a-z][a-z0-9_]*$/i;
 const LQ = '“';
 const RQ = '”';
 
-const KEY_RE = /^[a-z][a-z0-9_]*$/i;
-
-/** Pick `a` vs `an` based on the first letter of the resolved label. */
-function pickAOrAn(label: string): string {
-  return /^[aeiouAEIOU]/.test(label) ? 'an' : 'a';
-}
-
-function cap(s: string): string {
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-}
-
-/** `***"Term"***` — bold + italic, curly-quoted. Used inside parens for
- *  defined-term emphasis. */
 function emphTerm(label: string): string {
   return `***${LQ}${label}${RQ}***`;
 }
 
-/** `(${article} ***"Term"***)` — parenthetical define. */
-function emitDefine(label: string, article: string | null): string {
-  return article ? `(${article} ${emphTerm(label)})` : `(${emphTerm(label)})`;
+function isRequired(key: string, schema: Schema | undefined): boolean {
+  const entry: SchemaEntry | undefined = schema?.[key];
+  return typeof entry === 'object' && entry !== null && entry.required === true;
 }
 
-/** `${article} ***"Term"***` — inline-styled, no parens. `capArticle`
- *  capitalizes the article (sentence-start signal). */
-function emitInline(label: string, article: string | null, capArticle: boolean): string {
-  if (!article) return emphTerm(label);
-  return `${capArticle ? cap(article) : article} ${emphTerm(label)}`;
-}
+// ---- The five marker handlers ----
 
-/** `${article} ${label}` — plain reference, no styling. */
-function emitReference(label: string, article: string | null): string {
-  return article ? `${article} ${label}` : label;
-}
+/** {{^TEXT}} — small-caps run. No markdown native; HTML span is the
+ *  closest portable form. The literal text is preserved verbatim
+ *  (legacy doesn't swallow trailing dots inside small-caps). */
+const smallCapsHandler: MarkerHandler = defineMarker((rest) => {
+  return `<span class="legalese-smallcaps">${rest}</span>`;
+});
 
-interface MarkerCtx {
-  schema?: Schema;
-  values: Record<string, unknown>;
-}
-
-/** Render a single marker's inner contents (without the `{{` / `}}`) into
- *  markdown text. Mirrors processInline in inlines.ts. */
-function renderMarker(raw: string, ctx: MarkerCtx): string {
-  const inner = raw.trim();
-
-  // {{^TEXT}} — small-caps run. No markdown native; HTML span is the
-  // closest portable form.
-  if (inner.startsWith('^')) {
-    const text = inner.slice(1).trim();
-    return `<span class="legalese-smallcaps">${text}</span>`;
-  }
-
-  // {{=key}} — bare value substitution. If a value is supplied it's
-  // emitted verbatim (with case applied per the marker's case signal);
-  // otherwise the marker renders as a fill-in BLANK so the unfilled spot
-  // is visible in the draft. No def/label fallback — `{{=key}}` is
-  // explicitly "the value, or empty space".
-  //   {{=customer}} → "Acme Inc."     (with value)
-  //   {{=Customer}} → "Acme Inc."     (first letter cap)
-  //   {{=CUSTOMER}} → "ACME INC."     (uppercased)
-  //   {{=customer}} → "__________"    (no value)
-  if (inner.startsWith('=')) {
-    const tag = inner.slice(1).trim();
-    const tagAllCaps = /^[A-Z][A-Z0-9_]*$/.test(tag);
-    const tagWantsCap = /^[A-Z]/.test(tag);
-    const tagKey = tag.toLowerCase();
-    const value = ctx.values[tagKey];
-    const valueExp = formatExpansion(value);
-    if (valueExp === null || valueExp === '') return BLANK;
-    if (tagAllCaps) return valueExp.toUpperCase();
-    if (tagWantsCap) return cap(valueExp);
-    return valueExp;
-  }
-
-  // Strip introduce / literal prefix BEFORE article detection.
-  let work = inner;
-  const isIntroduce = work.startsWith('$');
-  const isLiteral = !isIntroduce && work.startsWith('!');
-  if (isIntroduce || isLiteral) work = work.slice(1).trim();
-
-  // Article prefix: the_, a_, an_ (case-preserving).
-  let articleRaw: string | null = null;
-  let wantsCap = false;
-  const articleMatch = work.match(/^(the|a|an)_/i);
-  if (articleMatch) {
-    const prefix = articleMatch[0];
-    articleRaw = prefix.slice(0, -1).toLowerCase();
-    wantsCap = /^[A-Z]/.test(prefix);
-    work = work.slice(prefix.length);
-  } else if (/^[A-Z]/.test(work)) {
-    wantsCap = true;
-  }
-
-  // ALL-CAPS marker → uppercase the substitution.
-  const allCaps = /^[A-Z][A-Z0-9_]*$/.test(work);
-  const lookupKey = work.toLowerCase();
-
-  // Resolve label.
-  const rawLabel = termLabel(lookupKey, ctx.schema);
-  const label = allCaps ? rawLabel.toUpperCase() : rawLabel;
-
-  // {{$key}} / {{$the_key}} / {{$a_key}} — introduce.
-  // Compose value + def with a comma when both are set; matches the
-  // standard legal "Acme Inc., a Delaware corporation (the *X*)" pattern.
-  if (isIntroduce) {
-    const value = ctx.values[lookupKey];
-    const valueIsMissing = value === undefined || value === null || value === '';
-    const valuePart = formatExpansion(value);
-    const defPart = termDef(lookupKey, ctx.schema);
-    const expansion = [valuePart, defPart].filter((s): s is string => !!s).join(', ');
-
-    const parenArticle = articleRaw
-      ? (articleRaw === 'the' ? 'the' : pickAOrAn(label))
-      : null;
-
-    if (expansion) {
-      let exp = wantsCap ? cap(expansion) : expansion;
-      if (allCaps) exp = exp.toUpperCase();
-      return `${exp} ${emitDefine(label, parenArticle)}`;
-    }
-
-    // No value, no def. If schema marks the key required → fill-in blank
-    // with parenthetical define; else preserve the inline-styled idiom.
-    const entry: SchemaEntry | undefined = ctx.schema?.[lookupKey];
-    const isRequired = typeof entry === 'object' && entry !== null && entry.required === true;
-    if (isRequired && valueIsMissing) {
-      return `${BLANK} ${emitDefine(label, parenArticle)}`;
-    }
-    return emitInline(label, articleRaw, wantsCap);
-  }
-
-  // {{!Term}} — literal inline-styled.
-  if (isLiteral) {
-    return emphTerm(label);
-  }
-
-  // Snake_case reference: {{key}} / {{the_key}} / {{a_key}}.
-  if (KEY_RE.test(work)) {
-    const isLowercase = work === lookupKey;
-    const directHit = ctx.schema?.[lookupKey] !== undefined;
-    const hasUnderscore = work.includes('_');
-    if (isLowercase || directHit || articleRaw || hasUnderscore) {
-      const article = articleRaw
-        ? (articleRaw === 'the'
-            ? (wantsCap ? 'The' : 'the')
-            : (wantsCap ? cap(pickAOrAn(label)) : pickAOrAn(label)))
-        : null;
-      return emitReference(label, article);
-    }
-  }
-
-  // {{Term}} — literal define, parenthetical "(the *"Term"*)".
-  return emitDefine(work, 'the');
-}
-
-/** Substitute every `{{...}}` marker in `body` with its rendered markdown
- *  text. The output is valid markdown — pipe to pandoc, marked, remark,
- *  etc. for HTML / JSON / further processing.
+/** {{=key}} — bare value substitution. Value or BLANK; case-signal is
+ *  applied to the value if present. No def/label fallback — the form
+ *  is explicitly "the value, or empty space".
  *
- *  Trailing-dot swallow: if a substitution ends with `.` (e.g. value =
- *  "Spellcraft Inc.") and the immediately-following source character is
- *  also `.` (sentence terminator), the substitution's trailing dot is
- *  dropped to avoid `Inc..`. Common legal data ends in abbreviation
- *  periods, and forcing template authors to know which values do is
- *  worse than collapsing the doubled dot here. */
+ *  Trailing-dot swallow: when the value ends with `.` (e.g. "Inc.")
+ *  AND the source has another `.` immediately after the marker, drop
+ *  the value's trailing dot to avoid `Inc..`. Using `ctx.next` from
+ *  markdsl. */
+const bareValueHandler: MarkerHandler = defineMarker((rest, ctx) => {
+  const p = parseMarker(rest);
+  const value = lookupValue(p.key, ctx.values);
+  const valueExp = formatValue(value);
+  if (valueExp === null || valueExp === '') return BLANK;
+  let text = applyTextCase(valueExp, p);
+  if (ctx.next === '.' && text.endsWith('.')) text = text.slice(0, -1);
+  return text;
+});
+
+/** {{$the_key}} — introduce form. Composes value + def with a comma
+ *  and attaches the parenthetical define. Falls through to a fill-in
+ *  BLANK (with the parenthetical) if required-and-missing, or an
+ *  inline-styled definition otherwise (the standard legal idiom for
+ *  "individually a *Party*").
+ *
+ *  Capitalization policy (matches legacy semantics):
+ *    - The article prefix's case governs sentence-start signal:
+ *        `{{$the_X}}`  → lowercase article, no expansion-cap
+ *        `{{$The_X}}`  → capital article, expansion gets cap'd
+ *    - Without an article, the post-strip key's leading case governs:
+ *        `{{$x}}`  → no cap on expansion
+ *        `{{$X}}`  → cap on expansion (sentence-start)
+ *    - ALL-CAPS key (`{{$X}}` with X fully uppercase) uppercases everything.
+ *    - In short: capContent ALONE doesn't trigger the cap; only
+ *      capArticle or no-article-with-cap. `applyTextCase` from markdsl
+ *      uses capContent unconditionally, so we don't reuse it here. */
+const introduceHandler: MarkerHandler = defineMarker((rest, ctx) => {
+  const p = parseMarker(rest);
+  const valuePart = formatValue(lookupValue(p.key, ctx.values));
+  const defPart = termDef(p.key, ctx.schema);
+  const expansion = [valuePart, defPart].filter((s): s is string => !!s).join(', ');
+
+  const rawLabel = termLabel(p.key, ctx.schema);
+  const label = p.upper ? rawLabel.toUpperCase() : rawLabel;
+  const article = pickArticle(label, p.article);
+
+  // wantsCap: capitalize the expansion at sentence start. Legacy
+  // semantics — see the docblock above.
+  const wantsCap = p.capArticle || (!p.article && p.capContent);
+
+  if (expansion) {
+    let exp = wantsCap ? expansion.charAt(0).toUpperCase() + expansion.slice(1) : expansion;
+    if (p.upper) exp = exp.toUpperCase();
+    return `${exp} ${emitDefine(label, article)}`;
+  }
+
+  // No value, no def. Required → fill-in blank; else inline-styled.
+  if (isRequired(p.key, ctx.schema) && (valuePart === null || valuePart === '')) {
+    return `${BLANK} ${emitDefine(label, article)}`;
+  }
+  return emitInline(label, article, p.capArticle);
+});
+
+/** {{!Term}} — literal inline-styled term, no parens. */
+const literalInlineHandler: MarkerHandler = defineMarker((rest, ctx) => {
+  const p = parseMarker(rest);
+  const rawLabel = termLabel(p.key, ctx.schema);
+  const label = p.upper ? rawLabel.toUpperCase() : rawLabel;
+  return emphTerm(label);
+});
+
+/** {{key}} / {{the_key}} / {{Term}} — plain reference (or literal
+ *  define if the key isn't a snake_case identifier and has no schema
+ *  entry). */
+const plainReferenceHandler: MarkerHandler = defineMarker((rest, ctx) => {
+  const p = parseMarker(rest);
+  const rawLabel = termLabel(p.key, ctx.schema);
+  const label = p.upper ? rawLabel.toUpperCase() : rawLabel;
+
+  if (KEY_RE.test(p.rest)) {
+    const isLowercase = p.rest === p.key;
+    const directHit = ctx.schema?.[p.key] !== undefined;
+    const hasUnderscore = p.rest.includes('_');
+    if (isLowercase || directHit || p.article || hasUnderscore) {
+      // Reference path — plain capitalized prose, no styling.
+      const article = p.article
+        ? (p.article === 'the'
+            ? (p.capArticle ? 'The' : 'the')
+            : (p.capArticle
+                ? pickArticle(label, p.article)?.charAt(0).toUpperCase() + (pickArticle(label, p.article)?.slice(1) ?? '')
+                : pickArticle(label, p.article)))
+        : null;
+      return article ? `${article} ${label}` : label;
+    }
+  }
+
+  // {{Term}} (capitalized single word, no schema hit) → literal-define
+  // parenthetical, conventional `(the *"Term"*)`.
+  return emitDefine(p.rest, 'the');
+});
+
+// ---- The registry ----
+
+/** Marker registry mirroring legalese's existing semantics. Pass to
+ *  `markdsl.substituteMarkers` (or use the wrapping `substituteMarkers`
+ *  helper below for trailing-dot swallow on top of markdsl's walker). */
+export const legaleseRegistry: MarkerRegistry = {
+  prefixes: {
+    '^': smallCapsHandler,
+    '=': bareValueHandler,
+    '$': introduceHandler,
+    '!': literalInlineHandler,
+    '':  plainReferenceHandler,
+  },
+};
+
+/** Substitute every `{{...}}` marker in `body` using legalese's marker
+ *  policies. Returns plain markdown — pipe to pandoc downstream. */
 export function substituteMarkers(
   body: string,
   opts: { schema?: Schema; values?: Record<string, unknown> } = {},
 ): string {
-  const ctx: MarkerCtx = { schema: opts.schema, values: opts.values ?? {} };
-  return body.replace(/\{\{([^}]+)\}\}/g, (match: string, raw: string, offset: number) => {
-    let rendered = renderMarker(raw, ctx);
-    const nextChar = body[offset + match.length];
-    if (nextChar === '.' && rendered.endsWith('.')) {
-      rendered = rendered.slice(0, -1);
-    }
-    return rendered;
+  return markdslSubstitute(body, legaleseRegistry, {
+    schema: opts.schema,
+    values: opts.values ?? {},
   });
 }
