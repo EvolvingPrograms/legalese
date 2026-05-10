@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   Document, Packer, AlignmentType, LevelFormat,
-  Footer, Paragraph as DocxParagraph, TextRun, PageNumber,
+  Footer, Paragraph as DocxParagraph, TextRun, PageNumber, SectionType,
 } from 'docx';
 import type { Paragraph, Table } from 'docx';
 
@@ -234,31 +234,70 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
         },
       ],
     },
-    sections: [{
-      properties: {
-        page: { size: PAGE, margin: MARGINS },
-        // Suppress page number on the title page; renumbering would also be
-        // possible via section breaks, but most legal docs are one section.
-        titlePage: false,
-        ...(COLUMNS ? { column: COLUMNS } : {}),
+    // Two sections — title in section 1 (always 1-column), body in
+    // section 2 (configured columns). When body uses multi-column
+    // layout, this gives the title a spanning-header look like academic
+    // journals. With single-column body, the visual is identical to one
+    // section. The "continuous" section break on section 2 means no
+    // page break between title and body.
+    sections: title ? [
+      {
+        properties: {
+          page: { size: PAGE, margin: MARGINS },
+          titlePage: false,
+        },
+        footers: {
+          default: new Footer({
+            children: [new DocxParagraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ children: [PageNumber.CURRENT] })],
+            })],
+          }),
+        },
+        children: [h1(title, { font: FONT_FAMILY, size: H1_SZ })],
       },
-      footers: {
-        // Bottom-centered numerals — standard legal convention. Kept simple
-        // ("1", "2", "3"); firms wanting "Page X of Y" can extend later.
-        default: new Footer({
-          children: [new DocxParagraph({
-            alignment: AlignmentType.CENTER,
-            children: [new TextRun({ children: [PageNumber.CURRENT] })],
-          })],
-        }),
+      {
+        properties: {
+          page: { size: PAGE, margin: MARGINS },
+          titlePage: false,
+          type: SectionType.CONTINUOUS,
+          ...(COLUMNS ? { column: COLUMNS } : {}),
+        },
+        footers: {
+          default: new Footer({
+            children: [new DocxParagraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ children: [PageNumber.CURRENT] })],
+            })],
+          }),
+        },
+        children: [
+          // Cast through unknown[] before re-casting: TS2589 bails on deeply
+          // recursive BodyEntry[] when flat(Infinity) is typed directly.
+          ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
+        ],
       },
-      children: [
-        ...(title ? [h1(title, { font: FONT_FAMILY, size: H1_SZ })] : []),
-        // Cast through unknown[] before re-casting: TS2589 bails on deeply
-        // recursive BodyEntry[] when flat(Infinity) is typed directly.
-        ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
-      ],
-    }],
+    ] : [
+      // No title: single section with the body.
+      {
+        properties: {
+          page: { size: PAGE, margin: MARGINS },
+          titlePage: false,
+          ...(COLUMNS ? { column: COLUMNS } : {}),
+        },
+        footers: {
+          default: new Footer({
+            children: [new DocxParagraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ children: [PageNumber.CURRENT] })],
+            })],
+          }),
+        },
+        children: [
+          ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
+        ],
+      },
+    ],
   });
 
   return doc;
