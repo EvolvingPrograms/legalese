@@ -675,6 +675,20 @@ style:
   body:
     indent: 540
 
+  # Title (H1) alignment. Default 'center'.
+  title:
+    alignment: left          # or: center | right | justified
+
+  # Multi-column page layout (academic-journal style). Title spans the
+  # full page width; body content flows into N columns below.
+  columns: 2                 # shorthand: 2 equal columns, 720-twip gap
+  # Or full control:
+  # columns:
+  #   count: 2
+  #   space: 720             # gap between columns (twips)
+  #   separate: true         # vertical separator line
+  #   equalWidth: true       # default true
+
   # Vertical breathing room emitted by `::: {.gap}` blocks. Default 240.
   gap: 240
 ---
@@ -687,6 +701,26 @@ When to override:
 - **Double-spaced (e.g. court filings)?** `spacing: { line: 480 }`.
 - **Plain numbering, no bold?** `style.list.bold_marker: false`.
 - **Tighter list indents?** `style.list.indent: 360`.
+- **Academic two-column paper?** `columns: 2`. Combine with `::: {.header}` (below) for author / affiliation / date in the spanning header.
+
+## Div classes (block attributes)
+
+`::: {.class} ... :::` blocks attach a class to a span of paragraphs.
+Combinable space-separated: `::: {.center .pageBreak}`.
+
+| Class | Effect |
+|---|---|
+| `.center` | center-aligns each contained paragraph |
+| `.indent` | first-line-indents each paragraph (legal block style) |
+| `.pageBreak` | starts a new page before this content |
+| `.gap` | empty Div emits a tall blank paragraph (≈ 1 line); non-empty adds extra `before` spacing |
+| `.title` | promotes contained paragraph(s) to Heading 1 — used to author multi-line title blocks (e.g., exhibit headers) since markdown ATX headings are single-line. Combine `\` (hard break) inside the paragraph for line breaks. |
+| `.header` | extracts contents into the document's spanning header section (above any column split). Used for academic-paper layouts: title + `::: {.header}` for author / affiliation / date. |
+
+Inline classes: `[text]{.underline}` underlines a span (markdown has no
+native underline; pandoc's bracketed-span extension provides it).
+Combine with bold/italic — `[**EXHIBIT A**]{.underline}` is bold +
+underlined.
 
 ## Caveats to surface
 

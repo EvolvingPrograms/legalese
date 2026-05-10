@@ -126,13 +126,18 @@ function resolveColumns(spec: DocStyleOpts['columns']):
 export interface BuildArgs {
   title?: string;
   body: BodyEntry[];
+  /** Additional content that lands in section 1 (above the column split)
+   *  alongside the title. Used by `::: {.header}` Divs in markdown to
+   *  put author / affiliation / date in the spanning header of an
+   *  academic-paper layout. Single-column docs see no visible difference. */
+  headerBody?: BodyEntry[];
   style?: DocStyleOpts | Record<string, unknown>;
 }
 
 /** Compose the Document object — shared by `buildToBuffer` (pure, returns
  *  bytes) and `build` (writes to disk). Splitting them out lets browser
  *  callers consume `buildToBuffer` without pulling in `node:fs`. */
-const composeDocument = ({ title, body, style }: BuildArgs) => {
+const composeDocument = ({ title, body, headerBody, style }: BuildArgs) => {
   const s  = (style ?? {}) as DocStyleOpts;
   const ls = s.list ?? {};
   const sp = s.spacing ?? {};
@@ -261,7 +266,12 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
             })],
           }),
         },
-        children: [h1(title, { font: FONT_FAMILY, size: H1_SZ })],
+        children: [
+          h1(title, { font: FONT_FAMILY, size: H1_SZ }),
+          ...(headerBody
+            ? ((headerBody as unknown[]).flat(Infinity) as (Paragraph | Table)[])
+            : []),
+        ],
       },
       {
         properties: {
@@ -284,8 +294,45 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
           ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
         ],
       },
+    ] : headerBody && headerBody.length ? [
+      // No title but explicit header content present — split into the
+      // same two-section shape so the header still spans columns.
+      {
+        properties: {
+          page: { size: PAGE, margin: MARGINS },
+          titlePage: false,
+        },
+        footers: {
+          default: new Footer({
+            children: [new DocxParagraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ children: [PageNumber.CURRENT] })],
+            })],
+          }),
+        },
+        children: ((headerBody as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
+      },
+      {
+        properties: {
+          page: { size: PAGE, margin: MARGINS },
+          titlePage: false,
+          type: SectionType.CONTINUOUS,
+          ...(COLUMNS ? { column: COLUMNS } : {}),
+        },
+        footers: {
+          default: new Footer({
+            children: [new DocxParagraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ children: [PageNumber.CURRENT] })],
+            })],
+          }),
+        },
+        children: [
+          ...((body as unknown[]).flat(Infinity) as (Paragraph | Table)[]),
+        ],
+      },
     ] : [
-      // No title: single section with the body.
+      // No title, no header — single section with the body.
       {
         properties: {
           page: { size: PAGE, margin: MARGINS },

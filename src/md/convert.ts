@@ -117,20 +117,46 @@ async function srcToDocBody(srcText: string, opts: ConvertOptions) {
       | undefined,
     font: style.font as string | undefined,
   };
-  const docBody: BodyEntry[] = ast.blocks.flatMap((blk) => blockToDocBuilder(blk, values, ctx));
+  // Split top-level blocks into header (rendered in section 1, spans
+  // page width) and body (section 2, can be multi-column). Any
+  // `::: {.header}` Div at the top level extracts its children into
+  // the header block list. Multi-column docs use this to put author /
+  // affiliation / date alongside the title; single-column docs see no
+  // visible difference.
+  const headerBody: BodyEntry[] = [];
+  const docBody: BodyEntry[] = [];
+  for (const blk of ast.blocks) {
+    if (blk.t === 'Div') {
+      const [attrs, children] = blk.c as [[string, string[], unknown[]], unknown[]];
+      const classes = attrs[1] ?? [];
+      if (classes.includes('header')) {
+        for (const child of children) {
+          headerBody.push(...blockToDocBuilder(child as never, values, ctx));
+        }
+        continue;
+      }
+    }
+    docBody.push(...blockToDocBuilder(blk, values, ctx));
+  }
 
   const rawTitle = opts.title ?? meta.title;
   const title = rawTitle ? substituteMarkers(rawTitle, { schema, values }) : undefined;
 
-  return { title, body: docBody, style: meta.style as Record<string, unknown> | undefined, output: meta.output };
+  return {
+    title,
+    body: docBody,
+    headerBody: headerBody.length ? headerBody : undefined,
+    style: meta.style as Record<string, unknown> | undefined,
+    output: meta.output,
+  };
 }
 
 /** Render markdown source to a .docx in memory and return the raw bytes —
  *  no filesystem access. Use in the browser, serverless handlers, or any
  *  place you want the document as a Buffer/Blob rather than a file. */
 export async function convertMarkdownToBuffer(srcText: string, opts: ConvertOptions = {}): Promise<Buffer> {
-  const { title, body, style } = await srcToDocBody(srcText, opts);
-  return buildToBuffer({ title, body, style });
+  const { title, body, headerBody, style } = await srcToDocBody(srcText, opts);
+  return buildToBuffer({ title, body, headerBody, style });
 }
 
 // — Unified convertMarkdown with format + optional output —
@@ -216,10 +242,10 @@ export async function convertMarkdown(
   }
 
   // format === 'docx'
-  const { title, body, style, output: metaOutput } = await srcToDocBody(srcText, opts);
+  const { title, body, headerBody, style, output: metaOutput } = await srcToDocBody(srcText, opts);
   const output = opts.output ?? metaOutput;
-  if (output) return build({ title, output, body, style });
-  return buildToBuffer({ title, body, style });
+  if (output) return build({ title, output, body, headerBody, style });
+  return buildToBuffer({ title, body, headerBody, style });
 }
 
 /** Re-emit YAML front-matter from the parsed object. Best-effort — uses

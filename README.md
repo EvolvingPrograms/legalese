@@ -293,8 +293,31 @@ Renders as a numbered, full-grid table:
 > **Nested lists aren't supported.** Use a flat lettered list (`a.`, `b.`, `c.`
 > with blank lines between) or a `grid` block.
 
-The full DSL — every marker form, schema field, grid `from:` repeater, and style
-override — is documented in [`SKILL.md`](./SKILL.md).
+### Other syntax
+
+- **Underline** — `[text]{.underline}` (pandoc bracketed-span). Combine with
+  bold/italic: `[**EXHIBIT A**]{.underline}`.
+- **Hard line break inside a paragraph** — backslash at line end (or two
+  trailing spaces). Used inside `::: {.title}` for multi-line headers:
+
+  ```markdown
+  ::: {.title}
+
+  {{=NEW_NAME}}\
+  AMENDED AND RESTATED CERTIFICATE OF INCORPORATION
+
+  :::
+  ```
+
+- **Block attributes** (Div classes): `::: {.center}`, `::: {.indent}`,
+  `::: {.pageBreak}`, `::: {.gap}`, `::: {.title}` (multi-line H1),
+  `::: {.header}` (spans columns when `style.columns` is set).
+- **Multi-column layout** — `style.columns: 2` (or full config). The title
+  and any `::: {.header}` content span the page; body flows in columns.
+
+The full DSL — every marker form, schema field, grid `from:` repeater, style
+override, Div class, and the `panel` block — is documented in
+[`SKILL.md`](./SKILL.md).
 
 ## Programmatic API
 
