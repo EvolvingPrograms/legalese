@@ -29,7 +29,8 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 
 import { convertMarkdown } from '@/md/convert';
-import { splitFrontMatter } from '@/md/front-matter';
+import { splitFrontMatter } from 'markdsl';
+import type { FrontMatter } from '@/md/types';
 import {
   parseValuesYaml, parseSetFlag, mergeValues, schemaDefaults, missingRequired,
   type Values,
@@ -146,7 +147,7 @@ if (!args.inputFile) { printUsage(); process.exit(1); }
 
 const inputAbs = path.resolve(args.inputFile);
 const src = fs.readFileSync(inputAbs, 'utf8');
-const { meta } = splitFrontMatter(src);
+const { meta } = splitFrontMatter<FrontMatter>(src);
 
 // Build the override values map from CLI flags + file/stdin.
 const overrides: Values = {};

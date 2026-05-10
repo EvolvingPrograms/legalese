@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import { build, buildToBuffer } from '@/lib/build';
 import type { BodyEntry } from '@/types';
 
-import { splitFrontMatter } from './front-matter';
+import { splitFrontMatter } from 'markdsl';
 import { blockToDocBuilder } from './blocks';
 import { substituteMarkers } from './substitute';
 import { mergeValues, schemaDefaults, missingRequired } from './values';
@@ -79,7 +79,7 @@ export interface DocumentJson {
  *  resolved title and style. Shared by both the Buffer-returning and
  *  filesystem-writing entry points. */
 async function srcToDocBody(srcText: string, opts: ConvertOptions) {
-  const { meta, body } = splitFrontMatter(srcText);
+  const { meta, body } = splitFrontMatter<FrontMatter>(srcText);
   const schema = meta.schema as Schema | undefined;
 
   const values = mergeValues(
@@ -200,7 +200,7 @@ export async function convertMarkdown(
   const format = opts.format ?? 'docx';
 
   if (format === 'json' || format === 'markdown') {
-    const { meta, body } = splitFrontMatter(srcText);
+    const { meta, body } = splitFrontMatter<FrontMatter>(srcText);
     const schema = meta.schema as Schema | undefined;
     const values = mergeValues(
       schemaDefaults(schema),

@@ -60,4 +60,4 @@ export { substituteMarkers } from './md/substitute';
 // Import directly from leaf modules — going through ./md (the barrel)
 // would re-export ./md/pandoc, which pulls in `node:child_process` and
 // defeats the point of a browser-friendly entry.
-export { splitFrontMatter } from './md/front-matter';
+export { splitFrontMatter } from 'markdsl';
