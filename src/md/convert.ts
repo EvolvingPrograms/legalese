@@ -20,18 +20,20 @@ import { mergeValues, schemaDefaults, missingRequired } from './values';
 import type { FrontMatter, PandocAst, PandocBlock, Schema } from './types';
 
 /** Marker-substitution engine selector.
- *  - 'legacy' (default for now) — the hand-rolled walker in
- *    `./substitute.ts`. Stable, tested, what every existing render
- *    has used. Becomes deletable once the migration completes.
- *  - 'markdsl' — the second rail built on the markdsl framework
- *    primitives. Output parity is asserted by
- *    `tests/markdsl-substitute-parity.test.ts`. */
+ *  - 'markdsl' (default) — the framework-based substituter in
+ *    `./markdsl-substitute.ts`. Built on the `markdsl` package's
+ *    prefix-dispatch registry; legalese policy lives in five small
+ *    handlers that compose markdsl primitives.
+ *  - 'legacy' — the hand-rolled walker in `./substitute.ts`. Kept as
+ *    an escape hatch through Phase 3 of the migration so this commit
+ *    can be reverted in isolation; Phase 4 deletes it. Set
+ *    `LEGALESE_ENGINE=legacy` env var to flip back. */
 export type MarkerEngine = 'legacy' | 'markdsl';
 
 const DEFAULT_ENGINE: MarkerEngine =
-  (typeof process !== 'undefined' && process.env.LEGALESE_ENGINE === 'markdsl')
-    ? 'markdsl'
-    : 'legacy';
+  (typeof process !== 'undefined' && process.env.LEGALESE_ENGINE === 'legacy')
+    ? 'legacy'
+    : 'markdsl';
 
 function substituteMarkers(
   body: string,
