@@ -5,7 +5,7 @@
     "": {
       "name": "legalese",
       "dependencies": {
-        "markdsl": "^0.0.1",
+        "markdsl": "^0.0.2",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -58,7 +58,7 @@
 
     "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
 
-    "markdsl": ["markdsl@0.0.1", "", { "dependencies": { "docx": "^9.6.1" }, "peerDependencies": { "pandoc-wasm": "^1.0.1", "typescript": "^5" }, "optionalPeers": ["pandoc-wasm"] }, "sha512-SVSYi210SUdRHVXCt57FchsHa6mQxEeEVDq7Bi/3d8mSHWaUECx/eNuhqQ0etzxKs1r0PDAtQC6LE2WsIBNl5Q=="],
+    "markdsl": ["markdsl@0.0.2", "", { "dependencies": { "docx": "^9.6.1", "jszip": "^3.10.1" }, "peerDependencies": { "pandoc-wasm": "^1.0.1", "typescript": "^5" }, "optionalPeers": ["pandoc-wasm"] }, "sha512-TnWchtPb7xGbqzdhHRH8y03PivnywnX2/RGrVS2V6aVpnvQpaoOfFE5JCwKW9B0vx4u7OyZMBeld73aQaVIygg=="],
 
     "minimalistic-assert": ["minimalistic-assert@1.0.1", "", {}, "sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A=="],
 
