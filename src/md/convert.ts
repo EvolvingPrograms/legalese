@@ -22,7 +22,7 @@ import type { FrontMatter, PandocAst, PandocBlock, Schema } from './types';
 // (which always passes `parse: runPandocWasm`) doesn't statically pull
 // `node:child_process` into the bundler graph.
 async function defaultParse(body: string): Promise<PandocAst> {
-  const { runPandoc } = await import('./pandoc');
+  const { runPandoc } = await import('markdsl');
   return runPandoc(body);
 }
 

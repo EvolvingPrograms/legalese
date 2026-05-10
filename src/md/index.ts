@@ -2,8 +2,7 @@
 
 export * from './convert';
 export { splitFrontMatter } from 'markdsl';
-export * from './pandoc';
-export * from './pandoc-wasm';
+export { runPandoc, runPandocWasm } from 'markdsl';
 export * from './inlines';
 export * from './blocks';
 export * from './fenced';

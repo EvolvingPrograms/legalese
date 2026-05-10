@@ -19,8 +19,25 @@ import {
   type ConvertOptions,
 } from './md/convert';
 
-export { runPandocWasm } from './md/pandoc-wasm';
-import { runPandocWasm } from './md/pandoc-wasm';
+import { runPandocWasm as runPandocWasmRaw, type PandocWasmConvert } from 'markdsl';
+
+// Resolve `pandoc-wasm` from the consumer's location and inject the
+// `convert` function into markdsl. Markdsl's own dynamic
+// `import('pandoc-wasm')` resolves relative to its source location;
+// when markdsl is consumed via a `file:` dep through symlinks, that
+// resolution can miss the consumer's `node_modules`. Resolving here
+// (legalese's own location) sidesteps the problem.
+let cachedConvert: PandocWasmConvert | null = null;
+async function loadConvert(): Promise<PandocWasmConvert> {
+  if (cachedConvert) return cachedConvert;
+  const mod = (await import('pandoc-wasm')) as unknown as { convert: PandocWasmConvert };
+  cachedConvert = mod.convert;
+  return cachedConvert;
+}
+
+export async function runPandocWasm(body: string) {
+  return runPandocWasmRaw(body, await loadConvert());
+}
 
 /** Markdown → .docx Buffer, parsing via pandoc-wasm. Pure: never touches
  *  the filesystem; safe in the browser and in serverless handlers. */

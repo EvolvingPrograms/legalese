@@ -31,5 +31,10 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/**/*.ts", "scripts/**/*", "tests/**/*"]
+  "include": [
+    "src/**/*.ts",
+    "scripts/**/*",
+    "tests/**/*",
+    "node_modules/markdsl/src/types/*.d.ts"
+  ]
 }
