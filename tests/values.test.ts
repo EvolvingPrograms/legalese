@@ -93,7 +93,7 @@ test('missingRequired flags required keys whose merged value is missing or empty
     description:   { type: 'string' },                   // not required
   };
   expect(missingRequired({ writer_name: 'Lewis' }, schema)).toEqual(['effective_date']);
-  expect(missingRequired({ writer_name: '' },      schema)).toEqual(['writer_name', 'effective_date']);
+  expect(missingRequired({ writer_name: '' },      schema)).toEqual(['effective_date', 'writer_name']);
   expect(missingRequired({ writer_name: 'L', effective_date: '2026-04-29' }, schema)).toEqual([]);
 });
 
