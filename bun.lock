@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "legal-doc-builder",
+      "dependencies": {
+        "markdsl": "file:../markdsl",
+      },
       "devDependencies": {
         "@types/bun": "latest",
         "@types/js-yaml": "^4.0.9",
@@ -53,6 +56,8 @@
     "jszip": ["jszip@3.10.1", "", { "dependencies": { "lie": "~3.3.0", "pako": "~1.0.2", "readable-stream": "~2.3.6", "setimmediate": "^1.0.5" } }, "sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g=="],
 
     "lie": ["lie@3.3.0", "", { "dependencies": { "immediate": "~3.0.5" } }, "sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ=="],
+
+    "markdsl": ["markdsl@file:../markdsl", { "devDependencies": { "@types/bun": "latest", "@types/js-yaml": "^4.0.9", "js-yaml": "^4.1.1" }, "peerDependencies": { "typescript": "^5" } }],
 
     "minimalistic-assert": ["minimalistic-assert@1.0.1", "", {}, "sha512-UtJcAD4yEaGtjPezWuO9wC4nwUnVH/8/Im3yEHQP4b67cXlD/Qr9hdITCU1xDbSEXg2XKNaP8jsReV7vQd00/A=="],
 

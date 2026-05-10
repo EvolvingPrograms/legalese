@@ -35,6 +35,9 @@
     "build": "bun build scripts/legalese.ts --target=node --minify --outfile=dist/legalese.js && chmod +x dist/legalese.js",
     "pack": "bun run build && zip -FSqr plugin.zip dist examples fonts README.md SKILL.md package.json"
   },
+  "dependencies": {
+    "markdsl": "file:../markdsl"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
