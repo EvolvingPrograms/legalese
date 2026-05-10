@@ -38,14 +38,14 @@
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.1",
-    "markdsl": "^0.0.2",
+    "markdsl": "^0.0.3",
     "pandoc-wasm": "^1.0.1",
     "pre-commit": "^2.0.0"
   },
   "pre-commit": ["typecheck", "test"],
   "peerDependencies": {
     "typescript": "^5",
-    "markdsl": "^0.0.2",
+    "markdsl": "^0.0.3",
     "pandoc-wasm": "^1.0.1"
   },
   "peerDependenciesMeta": {
