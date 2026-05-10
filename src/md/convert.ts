@@ -14,9 +14,34 @@ import type { BodyEntry } from '@/types';
 
 import { splitFrontMatter } from './front-matter';
 import { blockToDocBuilder } from './blocks';
-import { substituteMarkers } from './substitute';
+import { substituteMarkers as substituteMarkersLegacy } from './substitute';
+import { substituteMarkersViaMarkdsl } from './markdsl-substitute';
 import { mergeValues, schemaDefaults, missingRequired } from './values';
 import type { FrontMatter, PandocAst, PandocBlock, Schema } from './types';
+
+/** Marker-substitution engine selector.
+ *  - 'legacy' (default for now) — the hand-rolled walker in
+ *    `./substitute.ts`. Stable, tested, what every existing render
+ *    has used. Becomes deletable once the migration completes.
+ *  - 'markdsl' — the second rail built on the markdsl framework
+ *    primitives. Output parity is asserted by
+ *    `tests/markdsl-substitute-parity.test.ts`. */
+export type MarkerEngine = 'legacy' | 'markdsl';
+
+const DEFAULT_ENGINE: MarkerEngine =
+  (typeof process !== 'undefined' && process.env.LEGALESE_ENGINE === 'markdsl')
+    ? 'markdsl'
+    : 'legacy';
+
+function substituteMarkers(
+  body: string,
+  opts: { schema?: Schema; values?: Record<string, unknown> },
+  engine: MarkerEngine,
+): string {
+  return engine === 'markdsl'
+    ? substituteMarkersViaMarkdsl(body, opts)
+    : substituteMarkersLegacy(body, opts);
+}
 
 // System-pandoc default parser. Loaded lazily so the browser entry point
 // (which always passes `parse: runPandocWasm`) doesn't statically pull
@@ -56,6 +81,12 @@ export interface ConvertOptions {
    *  for browser/no-system-pandoc use; the `legalese/browser` entry point
    *  pre-wires this. */
   parse?: ParseFn;
+  /** Marker-substitution engine. Default: `'legacy'`. Set to
+   *  `'markdsl'` to route through the framework-based substituter
+   *  built on the `markdsl` package. Output should be byte-identical;
+   *  see `tests/markdsl-substitute-parity.test.ts`. The
+   *  `LEGALESE_ENGINE=markdsl` env var also flips the default. */
+  engine?: MarkerEngine;
 }
 
 /** Structured JSON output for interactive UIs. The blocks have all
@@ -81,6 +112,7 @@ export interface DocumentJson {
 async function srcToDocBody(srcText: string, opts: ConvertOptions) {
   const { meta, body } = splitFrontMatter(srcText);
   const schema = meta.schema as Schema | undefined;
+  const engine: MarkerEngine = opts.engine ?? DEFAULT_ENGINE;
 
   const values = mergeValues(
     schemaDefaults(schema),
@@ -140,7 +172,7 @@ async function srcToDocBody(srcText: string, opts: ConvertOptions) {
   }
 
   const rawTitle = opts.title ?? meta.title;
-  const title = rawTitle ? substituteMarkers(rawTitle, { schema, values }) : undefined;
+  const title = rawTitle ? substituteMarkers(rawTitle, { schema, values }, engine) : undefined;
 
   return {
     title,
@@ -211,7 +243,9 @@ export async function convertMarkdown(
       const m = missingRequired(values, schema);
       if (m.length) throw new Error(`Missing required values: ${m.join(', ')}`);
     }
-    const resolvedBody = substituteMarkers(body, { schema, values });
+
+    const engine: MarkerEngine = opts.engine ?? DEFAULT_ENGINE;
+    const resolvedBody = substituteMarkers(body, { schema, values }, engine);
 
     if (format === 'markdown') {
       // Reassemble front-matter + body so callers get a self-contained
