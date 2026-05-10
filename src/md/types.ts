@@ -1,23 +1,12 @@
-// Shared types for lib/md/. Single-file-only types live inline in their modules.
+// Legalese-specific types. The generic ones (PandocAst/Block/Inline,
+// Schema, SchemaEntry, FrontMatter base) come from markdsl. Anything
+// here is either docx-rendering-specific (DocStyle, ConvertCtx, …) or
+// extends the markdsl FrontMatter with legalese fields.
 
-/** A single block node from the Pandoc JSON AST. */
-export interface PandocBlock {
-  t: string;
-  c?: unknown;
-}
+import type { Schema, FrontMatter as MarkdslFrontMatter } from 'markdsl';
 
-/** A single inline node from the Pandoc JSON AST. */
-export interface PandocInline {
-  t: string;
-  c?: unknown;
-}
-
-/** Top-level Pandoc JSON output. */
-export interface PandocAst {
-  blocks: PandocBlock[];
-  'pandoc-api-version'?: number[];
-  meta?: unknown;
-}
+export type { PandocAst, PandocBlock, PandocInline } from 'markdsl';
+export type { Schema, SchemaEntry } from 'markdsl';
 
 /** Context passed to pandoc block parsers that need filesystem access. */
 export interface ParseCtx {
@@ -46,36 +35,6 @@ export interface ConvertCtx {
    *  (notably DocuSign). */
   font?: string;
 }
-
-/** Schema entry for a single value — either a bare type alias or a full descriptor. */
-export type SchemaEntry =
-  | string
-  | {
-      type?: string;
-      required?: boolean;
-      default?: unknown;
-      /** Short-form label used by the defined-term marker. Defaults to snake_case → Title Case. */
-      term?: string;
-      /** Definition expansion used by `{{$key}}` introductions when no value
-       *  is set. Renders as `<def> (the *"Term"*)` — the prose that the
-       *  defined-term parenthetical attaches to. */
-      def?: string;
-      /** Article used for singular references and `{{$key}}` introductions.
-       *    true   → "the" (default)
-       *    false  → none (proper-noun: `(*“Term”*)`)
-       *    string → use this article verbatim (e.g. `"a"` → `(a *“Term”*)`,
-       *             `"an"` for vowel-sound singulars) */
-      article?: boolean | string;
-      /** Article used for plural references when the singular article doesn't fit
-       *  ("a Recording" but "the Recordings"). Falls back to `article` if unset. */
-      plural_article?: boolean | string;
-      /** Explicit plural label for irregulars ("Person" → "People"). Defaults to common English rules. */
-      plural?: string;
-      description?: string;
-    };
-
-/** Map of value keys to schema entries declared in front-matter `schema:`. */
-export type Schema = Record<string, SchemaEntry>;
 
 /** Style overrides. All optional; fields not set fall back to house defaults.
  *  Set in front-matter under `style:`. Sizes are in twips unless noted
@@ -150,16 +109,13 @@ export interface DocStyle {
   };
 }
 
-/** Parsed YAML front matter. Open-ended so callers can add document-specific keys. */
-export interface FrontMatter {
+/** Legalese front-matter: extends markdsl's base with title/output/indent/style. */
+export interface FrontMatter extends MarkdslFrontMatter {
   title?: string;
   output?: string;
-  values?: Record<string, unknown>;
-  schema?: Schema;
   /** Document-level first-line indent on every body paragraph (legal block
    *  style). Equivalent to wrapping the entire body in `::: {.indent}`. */
   indent?: boolean;
   /** Per-document style overrides. */
   style?: DocStyle;
-  [k: string]: unknown;
 }
