@@ -34,8 +34,8 @@ test('landscaping-agreement.md → valid .docx', async () => {
   expect(fs.statSync(out).size).toBeGreaterThan(5000);
 });
 
-test('public API surface exports expected helpers', async () => {
-  const lib = await import('@/index') as Record<string, unknown>;
+test('docx primitives are reachable through markdsl/docx', async () => {
+  const lib = await import('markdsl/docx') as Record<string, unknown>;
   for (const name of [
     't', 'b', 'i', 'bi', 'dt',
     'p', 'h1', 'h2', 'list', 'spacer', 'raw',

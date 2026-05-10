@@ -9,7 +9,8 @@ import { test, expect, describe, beforeAll } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
-import { build, buildToBuffer, convertMarkdown, convertMarkdownToBuffer, p, h2 } from '@/index';
+import { convertMarkdown, convertMarkdownToBuffer } from '@/index';
+import { build, buildToBuffer, p, h2 } from 'markdsl/docx';
 import { OUT, ROOT } from './_helpers';
 
 beforeAll(() => {
@@ -137,7 +138,6 @@ describe('legalese/browser entry', () => {
   test('exports `convertMarkdownToBuffer` and round-trips via WASM pandoc', async () => {
     const browser = await import('@/browser');
     expect(typeof browser.convertMarkdownToBuffer).toBe('function');
-    expect(typeof browser.buildToBuffer).toBe('function');
     expect(typeof browser.runPandocWasm).toBe('function');
 
     const src = [

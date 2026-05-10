@@ -3,8 +3,8 @@
 // tests/markers.test.ts and tests/cli.test.ts.
 
 import { test, expect } from 'bun:test';
+import { parseValuesYaml } from '@/md/values';
 import {
-  parseValuesYaml,
   parseSetFlag,
   mergeValues,
   schemaDefaults,
@@ -15,7 +15,7 @@ import {
   termArticle,
   termDef,
   fieldLabel,
-} from '@/md/values';
+} from 'markdsl';
 
 // — parseValuesYaml —
 

@@ -30,8 +30,8 @@ import {
   type MarkerRegistry,
 } from 'markdsl';
 
-import { BLANK } from './inlines';
-import type { Schema, SchemaEntry } from './types';
+import type { Schema, SchemaEntry } from 'markdsl';
+import { BLANK } from './marker-emitter';
 
 // ---- Helpers shared by handlers ----
 

@@ -29,12 +29,16 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 
 import { convertMarkdown } from '@/md/convert';
-import { splitFrontMatter } from 'markdsl';
-import type { FrontMatter } from '@/md/types';
+import { parseValuesYaml } from '@/md/values';
 import {
-  parseValuesYaml, parseSetFlag, mergeValues, schemaDefaults, missingRequired,
+  splitFrontMatter,
+  parseSetFlag,
+  mergeValues,
+  schemaDefaults,
+  missingRequired,
   type Values,
-} from '@/md/values';
+} from 'markdsl';
+import type { DocxFrontMatter as FrontMatter } from 'markdsl/docx';
 
 interface ParsedArgs {
   inputFile: string | null;

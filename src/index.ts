@@ -1,7 +1,5 @@
-// Public surface for the doc-builder library.
-// User code:  import { build, h2, p, fieldTable } from './src';
+// Public surface for the legalese library. Consumers needing docx
+// primitives (t, b, i, p, h1, build, etc.) import from `markdsl/docx`
+// directly — legalese only exposes the markdown / convert surface.
 
-export * from './lib';
-export * from './blocks';
 export * from './md';
-export * from './types';

@@ -1,39 +1,38 @@
-// Top-level: markdown source string -> .docx file on disk.
+// Top-level: markdown source string -> .docx file on disk (or .json /
+// resolved markdown). Thin wrapper around markdsl/docx — the docx
+// pipeline lives there now; legalese supplies the configuration:
 //
-// Output path resolution lives in the CLI (scripts/legalese.ts); this layer
-// just accepts a final `output` override or reads the front-matter `output:`.
-//
-// Values flow: caller passes `values` (already merged from CLI/file/stdin in
-// the CLI), front-matter `values:` and `schema[key].default` are merged
-// underneath. Caller > front-matter > schema-default.
+//   * fenced handlers (fields / sig / grid / panel)
+//   * marker emitter (the 5-prefix legalese grammar)
+//   * resolveText (title interpolation via the same markdsl substitute
+//     that handles fenced-block strings)
 
 import fs from 'node:fs';
 
-import { build, buildToBuffer } from '@/lib/build';
-import type { BodyEntry } from '@/types';
+import {
+  splitFrontMatter,
+  runPandoc,
+  mergeValues,
+  schemaDefaults,
+  missingRequired,
+  type PandocBlock,
+  type Schema,
+} from 'markdsl';
+import {
+  renderMarkdown as renderMarkdownDocx,
+  renderMarkdownToBuffer as renderMarkdownToBufferDocx,
+  spacer,
+  type DocxFrontMatter as FrontMatter,
+  type DocxRenderConfig,
+  type ParseFn,
+  type RenderMarkdownOptions,
+} from 'markdsl/docx';
 
-import { splitFrontMatter } from 'markdsl';
-import { blockToDocBuilder } from './blocks';
+import { parseFieldsBlock, parseSigBlock, parseGridBlock, parsePanelBlock } from './fenced';
+import { legaleseMarkerEmitter } from './marker-emitter';
 import { substituteMarkers } from './substitute';
-import { mergeValues, schemaDefaults, missingRequired } from './values';
-import type { FrontMatter, PandocAst, PandocBlock, Schema } from './types';
 
-// System-pandoc default parser. Loaded lazily so the browser entry point
-// (which always passes `parse: runPandocWasm`) doesn't statically pull
-// `node:child_process` into the bundler graph.
-async function defaultParse(body: string): Promise<PandocAst> {
-  const { runPandoc } = await import('markdsl');
-  return runPandoc(body);
-}
-
-// Title markers go through the same `substituteMarkers` pipeline as body
-// prose, so `{{=COMPANY}}` substitutes the value uppercased and `{{Term}}`
-// resolves to the term label — same semantics regardless of position.
-
-/** Markdown → Pandoc AST. The default uses the system `pandoc` binary
- *  (Node only). Pass `runPandocWasm` from `@/md/pandoc-wasm` — or import
- *  from `legalese/browser` — to use the WASM build instead. */
-export type ParseFn = (body: string) => PandocAst | Promise<PandocAst>;
+export type { ParseFn };
 
 /** Output formats for `convertMarkdown`. */
 export type ConvertFormat = 'docx' | 'json' | 'markdown';
@@ -41,10 +40,8 @@ export type ConvertFormat = 'docx' | 'json' | 'markdown';
 export interface ConvertOptions {
   /** Output format. Default: `'docx'`. */
   format?: ConvertFormat;
-  /** Optional output path. If set, the result is written to disk and the
-   *  function resolves to the path string. If omitted, the function
-   *  resolves to the in-memory result (Buffer for docx, DocumentJson for
-   *  json, string for markdown). */
+  /** Optional output path. Writes to disk and resolves to the path
+   *  string; otherwise returns the in-memory result. */
   output?: string;
   title?: string;
   baseDir?: string;
@@ -58,105 +55,47 @@ export interface ConvertOptions {
   parse?: ParseFn;
 }
 
-/** Structured JSON output for interactive UIs. The blocks have all
- *  `{{...}}` markers already resolved; consumers walk the AST to render
- *  the document and read `schema` / `missing` / `values` to drive an
- *  input form. */
+/** Structured JSON output for interactive UIs. */
 export interface DocumentJson {
-  /** Front-matter as parsed (title, schema, style, etc.). */
   meta: FrontMatter;
-  /** Marker-resolved Pandoc AST blocks. */
   blocks: PandocBlock[];
-  /** Merged values: caller > front-matter > schema defaults. */
   values: Record<string, unknown>;
-  /** Schema as declared in front-matter, undefined if none. */
   schema?: Schema;
-  /** Required schema keys with no value supplied. */
   missing: string[];
 }
 
-/** Internal: source string → ready-to-render `BodyEntry[]` plus the
- *  resolved title and style. Shared by both the Buffer-returning and
- *  filesystem-writing entry points. */
-async function srcToDocBody(srcText: string, opts: ConvertOptions) {
-  const { meta, body } = splitFrontMatter<FrontMatter>(srcText);
-  const schema = meta.schema as Schema | undefined;
+// Legalese's docx config: the 5-prefix marker grammar + the four
+// fenced blocks + title text interpolation. Fenced parsers wrap their
+// table return with surrounding spacers so docx layout breathes
+// correctly above and below.
+const legaleseConfig: DocxRenderConfig = {
+  markerEmitter: legaleseMarkerEmitter,
+  fencedHandlers: {
+    fields: (content, values, ctx) => [spacer(), parseFieldsBlock(content, values, ctx.schema), spacer()],
+    sig:    (content, values, ctx) => parseSigBlock(content, values, ctx.schema),
+    grid:   (content, values, ctx) => parseGridBlock(content, ctx, values, ctx.schema),
+    panel:  (content, values, ctx) => parsePanelBlock(content, values, ctx.schema),
+  },
+  resolveText: (text, ctx) => substituteMarkers(text, { schema: ctx.schema, values: ctx.values }),
+};
 
-  const values = mergeValues(
-    schemaDefaults(schema),
-    meta.values as Record<string, unknown> | undefined,
-    opts.values,
-  );
-
-  if (opts.strict) {
-    const missing = missingRequired(values, schema);
-    if (missing.length) {
-      throw new Error(`Missing required values: ${missing.join(', ')}`);
-    }
-  }
-
-  // Pre-process: expand collapsed empty Div fences `::: {.class} :::` into
-  // the two-line form pandoc requires. Linters that auto-format markdown
-  // often pull short fences onto one line; this keeps `::: {.gap} :::` etc.
-  // working as expected.
-  const preprocessed = body.replace(
-    /^(\s*):::\s*(\{[^}]+\})\s+:::\s*$/gm,
-    '$1::: $2\n$1:::',
-  );
-  const parse = opts.parse ?? defaultParse;
-  const ast = await parse(preprocessed);
-  const style = (meta.style ?? {}) as Record<string, any>;
-  const ctx = {
-    baseDir: opts.baseDir ?? (typeof process !== 'undefined' ? process.cwd() : '/'),
-    schema,
-    indent: meta.indent === true,
-    bodyIndent: style.body?.indent as number | undefined,
-    gap: style.gap as number | undefined,
-    paraSpacing: style.spacing as
-      | { before?: number; after?: number; line?: number }
-      | undefined,
-    font: style.font as string | undefined,
-  };
-  // Split top-level blocks into header (rendered in section 1, spans
-  // page width) and body (section 2, can be multi-column). Any
-  // `::: {.header}` Div at the top level extracts its children into
-  // the header block list. Multi-column docs use this to put author /
-  // affiliation / date alongside the title; single-column docs see no
-  // visible difference.
-  const headerBody: BodyEntry[] = [];
-  const docBody: BodyEntry[] = [];
-  for (const blk of ast.blocks) {
-    if (blk.t === 'Div') {
-      const [attrs, children] = blk.c as [[string, string[], unknown[]], unknown[]];
-      const classes = attrs[1] ?? [];
-      if (classes.includes('header')) {
-        for (const child of children) {
-          headerBody.push(...blockToDocBuilder(child as never, values, ctx));
-        }
-        continue;
-      }
-    }
-    docBody.push(...blockToDocBuilder(blk, values, ctx));
-  }
-
-  const rawTitle = opts.title ?? meta.title;
-  const title = rawTitle ? substituteMarkers(rawTitle, { schema, values }) : undefined;
-
+function renderOpts(opts: ConvertOptions): RenderMarkdownOptions {
   return {
-    title,
-    body: docBody,
-    headerBody: headerBody.length ? headerBody : undefined,
-    style: meta.style as Record<string, unknown> | undefined,
-    output: meta.output,
+    config: legaleseConfig,
+    parse: opts.parse,
+    values: opts.values,
+    strict: opts.strict,
+    title: opts.title,
+    baseDir: opts.baseDir,
   };
 }
 
-/** Render markdown source to a .docx in memory and return the raw bytes —
- *  no filesystem access. Use in the browser, serverless handlers, or any
- *  place you want the document as a Buffer/Blob rather than a file. */
-export async function convertMarkdownToBuffer(srcText: string, opts: ConvertOptions = {}): Promise<Buffer> {
-  const { title, body, headerBody, style } = await srcToDocBody(srcText, opts);
-  return buildToBuffer({ title, body, headerBody, style });
+/** Render markdown source to a .docx in memory and return the raw bytes. */
+export async function convertMarkdownToBuffer(
+  srcText: string,
+  opts: ConvertOptions = {},
+): Promise<Buffer> {
+  return renderMarkdownToBufferDocx(srcText, renderOpts(opts));
 }
 
 // — Unified convertMarkdown with format + optional output —
@@ -165,9 +104,6 @@ export async function convertMarkdownToBuffer(srcText: string, opts: ConvertOpti
 //   format: 'docx'      → Buffer (no output) | path string (with output)
 //   format: 'json'      → DocumentJson (no output) | path string (with output, JSON file)
 //   format: 'markdown'  → string (no output) | path string (with output, .md file)
-//
-// `format` defaults to 'docx' for backwards compatibility with the
-// pre-format API.
 
 export function convertMarkdown(
   srcText: string,
@@ -226,7 +162,7 @@ export async function convertMarkdown(
     }
 
     // format === 'json'
-    const parse = opts.parse ?? defaultParse;
+    const parse = opts.parse ?? runPandoc;
     const ast = await parse(resolvedBody);
     const result: DocumentJson = {
       meta,
@@ -243,10 +179,7 @@ export async function convertMarkdown(
   }
 
   // format === 'docx'
-  const { title, body, headerBody, style, output: metaOutput } = await srcToDocBody(srcText, opts);
-  const output = opts.output ?? metaOutput;
-  if (output) return build({ title, output, body, headerBody, style });
-  return buildToBuffer({ title, body, headerBody, style });
+  return renderMarkdownDocx(srcText, { ...renderOpts(opts), output: opts.output });
 }
 
 /** Re-emit YAML front-matter from the parsed object. Best-effort — uses
@@ -255,15 +188,12 @@ export async function convertMarkdown(
 function serializeFrontMatter(meta: FrontMatter): string {
   const keys = Object.keys(meta).filter((k) => meta[k] !== undefined);
   if (keys.length === 0) return '';
-  // Lazy import — js-yaml is a dev dep but works at runtime when present.
   let yaml: string;
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const jsYaml = require('js-yaml');
     yaml = jsYaml.dump(meta, { lineWidth: -1 });
   } catch {
-    // Manual fallback — only handles top-level scalar / object keys, good
-    // enough for round-tripping front-matter that came from this library.
     yaml = keys.map((k) => `${k}: ${JSON.stringify(meta[k])}`).join('\n') + '\n';
   }
   return `---\n${yaml}---\n\n`;

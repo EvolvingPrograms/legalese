@@ -258,7 +258,7 @@ test('{{$the_key}} renders a fill-in blank when the value is missing AND schema 
   // Required + no value supplied → render `<BLANK> (the *"Term"*)` so
   // the unfilled spot is visually obvious in a draft. Re-running with
   // values fills the blank seamlessly.
-  const { BLANK } = await import('@/md/inlines');
+  const { BLANK } = await import('@/md/marker-emitter');
   const body = await renderSourceToXml('_xp_required_blank', [
     '---',
     'title: TEST',
@@ -279,7 +279,7 @@ test('{{$key}} (required, no value) does NOT fill-in-blank when value is supplie
   const { convertMarkdown } = await import('@/md/convert');
   const path = await import('node:path');
   const { ROOT, readDocumentXml } = await import('./_helpers');
-  const { BLANK } = await import('@/md/inlines');
+  const { BLANK } = await import('@/md/marker-emitter');
   const out = path.resolve(OUT, '_xp_required_filled.docx');
   await convertMarkdown([
     '---',

@@ -4,16 +4,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'js-yaml';
 
-import { Paragraph } from 'docx';
-import type { Table } from 'docx';
+// All docx classes come from markdsl/docx so legalese constructs them
+// against the same docx instance the renderer uses internally — see
+// src/md/marker-emitter.ts for the cross-instance issue this avoids.
+import { Paragraph } from 'markdsl/docx';
+import type { Table, FieldRow, GridColumn, GridRow, SigRow, RenderCtx as ParseCtx } from 'markdsl/docx';
+import { fieldTable, signatureTable, gridTable, panelTable, spacer, b } from 'markdsl/docx';
 
-import type { FieldRow, GridColumn, GridRow, SigRow } from '@/blocks';
-import { fieldTable, signatureTable, gridTable, panelTable, spacer } from '@/blocks';
-import { b } from '@/lib/runs';
-
-import { fieldLabel } from './values';
+import { fieldLabel } from 'markdsl';
+import type { Schema } from 'markdsl';
 import { substituteMarkers } from './substitute';
-import type { ParseCtx, Schema } from './types';
 
 /** Resolve `{{...}}` markers in fenced-block user text (sig headers, grid
  *  headings, column labels, field sub/prefix). Body prose handles markers
