@@ -41,6 +41,7 @@ export interface DocStyleOpts {
     bold_marker?: boolean;
   };
   body?: { indent?: number };
+  title?: { alignment?: 'left' | 'center' | 'right' | 'justified' };
   columns?: number | {
     count: number;
     space?: number;
@@ -148,6 +149,12 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
 
   const MARGINS = resolveMargin(s.margin);
   const COLUMNS = resolveColumns(s.columns);
+  const TITLE_ALIGN = ({
+    left: AlignmentType.LEFT,
+    center: AlignmentType.CENTER,
+    right: AlignmentType.RIGHT,
+    justified: AlignmentType.JUSTIFIED,
+  } as const)[s.title?.alignment ?? 'center'];
 
   // If the requested font is one of our bundled families, embed it in the
   // .docx so the document renders correctly on systems without the font
@@ -194,7 +201,7 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
           run: { size: H1_SZ, bold: true, font: FONT_FAMILY },
           paragraph: {
             spacing: { before: 240, after: 360, line: 240 },
-            alignment: AlignmentType.CENTER,
+            alignment: TITLE_ALIGN,
           },
         },
         heading2: {

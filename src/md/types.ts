@@ -124,6 +124,11 @@ export interface DocStyle {
      *  or a `::: {.indent}` Div is in effect. Default 540 (~0.375"). */
     indent?: number;
   };
+  /** Title (H1) styling overrides. */
+  title?: {
+    /** Title alignment. Default 'center'. */
+    alignment?: 'left' | 'center' | 'right' | 'justified';
+  };
 
   /** Vertical breathing room produced by `::: {.gap}` blocks. Empty
    *  `::: {.gap} :::` emits a blank paragraph with this much before/after
