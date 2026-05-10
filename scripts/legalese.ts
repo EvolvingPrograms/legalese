@@ -29,11 +29,16 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 
 import { convertMarkdown } from '@/md/convert';
-import { splitFrontMatter } from '@/md/front-matter';
+import { parseValuesYaml } from '@/md/values';
 import {
-  parseValuesYaml, parseSetFlag, mergeValues, schemaDefaults, missingRequired,
+  splitFrontMatter,
+  parseSetFlag,
+  mergeValues,
+  schemaDefaults,
+  missingRequired,
   type Values,
-} from '@/md/values';
+} from 'markdsl';
+import type { DocxFrontMatter as FrontMatter } from 'markdsl/docx';
 
 interface ParsedArgs {
   inputFile: string | null;
@@ -146,7 +151,7 @@ if (!args.inputFile) { printUsage(); process.exit(1); }
 
 const inputAbs = path.resolve(args.inputFile);
 const src = fs.readFileSync(inputAbs, 'utf8');
-const { meta } = splitFrontMatter(src);
+const { meta } = splitFrontMatter<FrontMatter>(src);
 
 // Build the override values map from CLI flags + file/stdin.
 const overrides: Values = {};

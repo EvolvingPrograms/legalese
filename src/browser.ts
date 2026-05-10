@@ -19,11 +19,27 @@ import {
   type ConvertOptions,
 } from './md/convert';
 
-export { runPandocWasm } from './md/pandoc-wasm';
-import { runPandocWasm } from './md/pandoc-wasm';
+import { runPandocWasm as runPandocWasmRaw, splitFrontMatter, type PandocWasmConvert } from 'markdsl';
 
-/** Markdown → .docx Buffer, parsing via pandoc-wasm. Pure: never touches
- *  the filesystem; safe in the browser and in serverless handlers. */
+// Resolve `pandoc-wasm` from the consumer's location and inject the
+// `convert` function into markdsl. Markdsl's own dynamic
+// `import('pandoc-wasm')` resolves relative to its source location;
+// when markdsl is consumed via a `file:` dep through symlinks, that
+// resolution can miss the consumer's `node_modules`. Resolving here
+// (legalese's own location) sidesteps the problem.
+let cachedConvert: PandocWasmConvert | null = null;
+async function loadConvert(): Promise<PandocWasmConvert> {
+  if (cachedConvert) return cachedConvert;
+  const mod = (await import('pandoc-wasm')) as unknown as { convert: PandocWasmConvert };
+  cachedConvert = mod.convert;
+  return cachedConvert;
+}
+
+export async function runPandocWasm(body: string) {
+  return runPandocWasmRaw(body, await loadConvert());
+}
+
+/** Markdown → .docx Buffer, parsing via pandoc-wasm. */
 export function convertMarkdownToBuffer(
   srcText: string,
   opts: ConvertOptions = {},
@@ -31,33 +47,13 @@ export function convertMarkdownToBuffer(
   return convertMarkdownToBufferNode(srcText, { parse: runPandocWasm, ...opts });
 }
 
-/** Markdown → docx / json / markdown, parsing via pandoc-wasm. Same
- *  shape as the Node `convertMarkdown` (format + optional output) but
- *  pre-bound to the WASM engine. Pass an `output` path only when running
- *  in Node — `fs.writeFileSync` will throw in the browser. Default
- *  format is `'docx'`; pass `format: 'json'` to drive interactive UIs.
- *
- *  See `ConvertOptions` and `DocumentJson` for the full contract. */
+/** Markdown → docx / json / markdown, parsing via pandoc-wasm. */
 export function convertMarkdown(srcText: string, opts: ConvertOptions = {}): ReturnType<typeof convertMarkdownNode> {
-  // Cast to satisfy the overloaded signature; we just defer to the Node
-  // implementation with the WASM parser pre-bound.
   return (convertMarkdownNode as (s: string, o: ConvertOptions) => ReturnType<typeof convertMarkdownNode>)(
     srcText,
     { parse: runPandocWasm, ...opts },
   );
 }
 
-export * from './blocks';
-export * from './types';
-export { buildToBuffer, build } from './lib/build';
-
-export type { BodyEntry } from './types';
-export type { DocStyleOpts, BuildArgs } from './lib/build';
-export type { ConvertFormat, ParseFn, DocumentJson } from './md/convert';
-export type { ConvertOptions };
+export type { ConvertFormat, ParseFn, DocumentJson, ConvertOptions } from './md/convert';
 export { substituteMarkers } from './md/substitute';
-
-// Import directly from leaf modules — going through ./md (the barrel)
-// would re-export ./md/pandoc, which pulls in `node:child_process` and
-// defeats the point of a browser-friendly entry.
-export { splitFrontMatter } from './md/front-matter';

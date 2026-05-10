@@ -161,7 +161,7 @@ describe('substituteMarkers (primitive)', () => {
     // `{{=key}}` is explicitly "value or empty space" — no def/label
     // fallback. Without a value the marker emits the fill-in blank so
     // the unfilled spot is visible in the draft.
-    const { BLANK } = await import('@/md/inlines');
+    const { BLANK } = await import('@/md/marker-emitter');
     const out = substituteMarkers('Filed by {{=customer}} today.', {
       schema: { customer: { def: 'a Delaware corporation' } },
     });
@@ -194,7 +194,7 @@ describe('substituteMarkers (primitive)', () => {
   test('{{=key}} BLANK does not get uppercased by the case signal', async () => {
     // The case signal applies only when there's a value to apply it to;
     // an empty fill-in blank stays as plain underscores.
-    const { BLANK } = await import('@/md/inlines');
+    const { BLANK } = await import('@/md/marker-emitter');
     const out = substituteMarkers('{{=COMPANY}}', { values: {} });
     expect(out).toBe(BLANK);
   });
