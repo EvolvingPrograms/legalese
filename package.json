@@ -35,14 +35,16 @@
     "pack": "bun run build && zip -FSqr plugin.zip dist examples fonts README.md SKILL.md package.json"
   },
   "dependencies": {
-    "markdsl": "file:../markdsl"
+    "markdsl": "^0.0.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.1",
-    "pandoc-wasm": "^1.0.1"
+    "pandoc-wasm": "^1.0.1",
+    "pre-commit": "^2.0.0"
   },
+  "pre-commit": ["typecheck", "test"],
   "peerDependencies": {
     "typescript": "^5",
     "pandoc-wasm": "^1.0.1"
