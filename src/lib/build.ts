@@ -41,6 +41,12 @@ export interface DocStyleOpts {
     bold_marker?: boolean;
   };
   body?: { indent?: number };
+  columns?: number | {
+    count: number;
+    space?: number;
+    separate?: boolean;
+    equalWidth?: boolean;
+  };
 }
 
 /** Bundled font families (Google Fonts under OFL/Apache). Read from
@@ -97,6 +103,25 @@ function resolveMargin(spec: DocStyleOpts['margin']): { top: number; right: numb
   };
 }
 
+/** Resolve column spec into the docx-js column attributes object, or
+ *  `undefined` when no multi-column layout is requested. Accepts either
+ *  a bare count (`columns: 2`) or a detailed config object. */
+function resolveColumns(spec: DocStyleOpts['columns']):
+  | { count: number; space?: number; separate?: boolean; equalWidth?: boolean }
+  | undefined {
+  if (spec === undefined) return undefined;
+  if (typeof spec === 'number') {
+    if (spec < 2) return undefined;
+    return { count: spec, space: 720, equalWidth: true };
+  }
+  return {
+    count: spec.count,
+    space: spec.space ?? 720,
+    ...(spec.separate !== undefined ? { separate: spec.separate } : {}),
+    equalWidth: spec.equalWidth ?? true,
+  };
+}
+
 export interface BuildArgs {
   title?: string;
   body: BodyEntry[];
@@ -122,6 +147,7 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
   const PARA_LINE   = sp.line    ?? PARA_SPACING.line;
 
   const MARGINS = resolveMargin(s.margin);
+  const COLUMNS = resolveColumns(s.columns);
 
   // If the requested font is one of our bundled families, embed it in the
   // .docx so the document renders correctly on systems without the font
@@ -214,6 +240,7 @@ const composeDocument = ({ title, body, style }: BuildArgs) => {
         // Suppress page number on the title page; renumbering would also be
         // possible via section breaks, but most legal docs are one section.
         titlePage: false,
+        ...(COLUMNS ? { column: COLUMNS } : {}),
       },
       footers: {
         // Bottom-centered numerals — standard legal convention. Kept simple

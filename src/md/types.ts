@@ -130,6 +130,19 @@ export interface DocStyle {
    *  spacing; non-empty `{.gap}` adds `before` (× 2) to the first child
    *  paragraph. Default 240 twips. */
   gap?: number;
+
+  /** Multi-column page layout (academic-journal style). Supply a number
+   *  for the simple "N equal columns" case (default 720-twip gap), or an
+   *  object for full control. Applies document-wide. */
+  columns?: number | {
+    count: number;
+    /** Gap between columns in twips. Default 720 (~0.5"). */
+    space?: number;
+    /** Render a vertical separator line between columns. */
+    separate?: boolean;
+    /** All columns same width. Default true. */
+    equalWidth?: boolean;
+  };
 }
 
 /** Parsed YAML front matter. Open-ended so callers can add document-specific keys. */
